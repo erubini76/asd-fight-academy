@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iscrizione - A.S.D. Fight Academy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- SUPABASE SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 p-4 min-h-screen">
+  <div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-md border border-slate-200 mt-4">
+    
+    <!-- HEADER ASSOCIATIVO -->
+    <div class="text-center border-b pb-4 mb-6">
+      <h1 class="text-2xl font-bold text-red-700">A.S.D. FIGHT ACADEMY</h1>
+      <p class="text-xs text-slate-500 font-semibold">C.F. 91023520280 | Affiliata ASI VEN-PD0814</p>
+      <p class="text-xs text-slate-500">Sede Operativa: Via B. Powell 2, Este (PD)</p>
+      <h2 class="text-lg font-bold text-slate-700 mt-3">Domanda di Ammissione a Socio (A.A. 2026/2027)</h2>
+    </div>
+
+    <!-- MESSAGGIO DI STATO -->
+    <div id="statusMessage" class="hidden p-4 mb-4 rounded-lg text-sm font-semibold"></div>
+
+    <form id="formIscrizione" class="space-y-4">
+      
+      <!-- ANAGRAFICA SOCIO -->
+      <div>
+        <h3 class="font-semibold text-slate-700 border-b pb-1 mb-3">Dati Anagrafici Richiedente</h3>
+        <div class="grid grid-cols-1 gap-3">
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="nome" placeholder="Nome *" required class="p-2 border rounded">
+            <input type="text" id="cognome" placeholder="Cognome *" required class="p-2 border rounded">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="luogoNascita" placeholder="Luogo di Nascita *" required class="p-2 border rounded">
+            <input type="date" id="dataNascita" required class="p-2 border rounded">
+          </div>
+          <input type="text" id="codiceFiscale" placeholder="Codice Fiscale *" required class="w-full p-2 border rounded uppercase">
+          <input type="text" id="indirizzo" placeholder="Indirizzo e N° Civico *" required class="w-full p-2 border rounded">
+          <div class="grid grid-cols-3 gap-2">
+            <input type="text" id="citta" placeholder="Città *" required class="p-2 border rounded col-span-2">
+            <input type="text" id="cap" placeholder="CAP *" required class="p-2 border rounded">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="email" id="email" placeholder="Email *" required class="p-2 border rounded">
+            <input type="tel" id="telefono" placeholder="Cellulare *" required class="p-2 border rounded">
+          </div>
+        </div>
+      </div>
+
+      <!-- SELEZIONE CORSO (CHIAVI ENUM STANDARDIZZATE) -->
+      <div class="pt-2">
+        <h3 class="font-semibold text-slate-700 border-b pb-1 mb-3">Disciplina Scelta (A.A. 2026/2027)</h3>
+        <select id="corso" required class="w-full p-2 border rounded bg-slate-50 focus:ring-2 focus:ring-red-500" onchange="calcolaQuota()">
+          <option value="">-- Seleziona il Corso --</option>
+          <option value="ninjutsu_adulti">Ninjutsu Adulti/Ragazzi (Mar-Gio 19:30-21:00)</option>
+          <option value="ninjutsu_bambini">Ninjutsu Bambini (Mar-Gio 18:30-19:30)</option>
+          <option value="vietvodao_adulti">Vietvodao Adulti/Ragazzi (Lun-Mer 19:30-21:00)</option>
+          <option value="vietvodao_bambini">Vietvodao Bambini (Lun-Mer 18:30-19:30)</option>
+          <option value="shodo">Shodo Calligrafia (2 Venerdì/mese 20:00-21:30)</option>
+        </select>
+      </div>
+
+      <!-- BOX QUOTE INFORMATIVE -->
+      <div id="boxQuota" class="hidden p-3 bg-red-50 border border-red-200 rounded text-sm space-y-1">
+        <p class="font-bold text-red-800">Tesseramento/Assicurazione ASI: 15,00 €/anno</p>
+        <p id="dettaglioQuota" class="text-slate-700"></p>
+        <p id="modalitaPagamento" class="text-xs font-semibold text-slate-500 mt-1"></p>
+      </div>
+
+      <!-- CONSENSI E PRIVACY -->
+      <div class="pt-2 space-y-3">
+        <h3 class="font-semibold text-slate-700 border-b pb-1 mb-2">Consensi e Privacy</h3>
+        
+        <div class="p-3 bg-slate-50 border rounded text-xs space-y-2">
+          <p class="font-bold">Informativa Trattamento Dati (D.Lgs 196/2003 e Reg. UE 2016/679)</p>
+          <p>I dati forniti saranno trattati da A.S.D. Fight Academy esclusivamente per le finalità gestionali e associative istituzionali.</p>
+          <label class="flex items-center space-x-2 font-semibold">
+            <input type="checkbox" id="consensoGDPR" required class="w-4 h-4 text-red-600">
+            <span>Accetto il trattamento dei dati personali *</span>
+          </label>
+        </div>
+
+        <div class="p-3 bg-slate-50 border rounded text-xs space-y-2">
+          <p class="font-bold">Liberatoria Immagini e Video</p>
+          <p>Cedo a titolo gratuito il diritto di utilizzare foto/video dell'iscritto nell'ambito delle attività promozionali ed istituzionali dell'Associazione.</p>
+          <div class="flex space-x-4 font-semibold">
+            <label class="flex items-center space-x-1">
+              <input type="radio" name="consensoFoto" value="true" required>
+              <span>Accetto</span>
+            </label>
+            <label class="flex items-center space-x-1">
+              <input type="radio" name="consensoFoto" value="false">
+              <span>Non Accetto</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" id="btnSubmit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition shadow">
+        INVIA DOMANDA DI ADESIONE
+      </button>
+
+    </form>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://twiizsottstaacnvrxkg.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI";
+
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    function calcolaQuota() {
+      const corso = document.getElementById('corso').value;
+      const box = document.getElementById('boxQuota');
+      const dettaglio = document.getElementById('dettaglioQuota');
+      const pagamento = document.getElementById('modalitaPagamento');
+
+      if (!corso) {
+        box.classList.add('hidden');
+        return;
+      }
+
+      box.classList.remove('hidden');
+
+      if (corso === 'ninjutsu_adulti' || corso === 'vietvodao_adulti') {
+        dettaglio.innerText = "Quota corso: 50 €/mese oppure 45 €/mese in tranche solari (180€ Set-Dic | 135€ Gen-Mar | 135€ Apr-Giug).";
+        pagamento.innerText = "Pagamento consentito: Contanti o Bonifico Bancario.";
+      } else if (corso === 'ninjutsu_bambini' || corso === 'vietvodao_bambini') {
+        dettaglio.innerText = "Quota corso: 40 €/mese oppure 35 €/mese in tranche solari (140€ Set-Dic | 175€ Gen-Mag). Presenza min. 70% per esami.";
+        pagamento.innerText = "Pagamento consentito: TASSATIVAMENTE solo via Bonifico Bancario.";
+      } else if (corso === 'shodo') {
+        dettaglio.innerText = "Quota corso: 30 €/mese.";
+        pagamento.innerText = "Pagamento consentito: Contanti o Bonifico Bancario.";
+      }
+    }
+
+    document.getElementById('formIscrizione').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const btn = document.getElementById('btnSubmit');
+      const msg = document.getElementById('statusMessage');
+      
+      btn.disabled = true;
+      btn.innerText = "Invio in corso...";
+      msg.classList.add('hidden');
+
+      const consensoFotoVal = document.querySelector('input[name="consensoFoto"]:checked')?.value === "true";
+
+      const payload = {
+        nome: document.getElementById('nome').value.trim(),
+        cognome: document.getElementById('cognome').value.trim(),
+        luogo_nascita: document.getElementById('luogoNascita').value.trim(),
+        data_nascita: document.getElementById('dataNascita').value,
+        codice_fiscale: document.getElementById('codiceFiscale').value.trim().toUpperCase(),
+        residenza_indirizzo: document.getElementById('indirizzo').value.trim() + ", " + document.getElementById('cap').value.trim() + " " + document.getElementById('citta').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        telefono: document.getElementById('telefono').value.trim(),
+        corso_scelto: document.getElementById('corso').value,
+        consenso_gdpr: document.getElementById('consensoGDPR').checked,
+        consenso_immagini_video: consensoFotoVal
+      };
+
+      const { data, error } = await supabaseClient.from('soci').insert([payload]);
+
+      if (error) {
+        msg.className = "p-4 mb-4 rounded-lg text-sm font-semibold bg-red-100 text-red-700 border border-red-300";
+        msg.innerText = "Errore durante l'iscrizione: " + error.message;
+        msg.classList.remove('hidden');
+        btn.disabled = false;
+        btn.innerText = "INVIA DOMANDA DI ADESIONE";
+      } else {
+        msg.className = "p-4 mb-4 rounded-lg text-sm font-semibold bg-green-100 text-green-700 border border-green-300";
+        msg.innerText = "Domanda di adesione inviata con successo! Verrai contattato dalla segreteria.";
+        msg.classList.remove('hidden');
+        document.getElementById('formIscrizione').reset();
+        document.getElementById('boxQuota').classList.add('hidden');
+        btn.innerText = "COMPLETATO";
+      }
+    });
+  </script>
+</body>
+</html>
