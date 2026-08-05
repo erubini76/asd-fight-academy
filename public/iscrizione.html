@@ -37,7 +37,7 @@
             <input type="date" id="dataNascita" required class="p-2 border rounded">
           </div>
           <input type="text" id="codiceFiscale" placeholder="Codice Fiscale *" required class="w-full p-2 border rounded uppercase">
-          <input type="text" id="indirizzo" placeholder="Indirizzo e N° Civico *" required class="w-full p-2 border rounded">
+          <input type="text" id="indirizzo" placeholder="Via / Corso / Piazza e N° Civico *" required class="w-full p-2 border rounded">
           <div class="grid grid-cols-3 gap-2">
             <input type="text" id="citta" placeholder="Città *" required class="p-2 border rounded col-span-2">
             <input type="text" id="cap" placeholder="CAP *" required class="p-2 border rounded">
@@ -54,11 +54,11 @@
         <h3 class="font-semibold text-slate-700 border-b pb-1 mb-3">Disciplina Scelta (A.A. 2026/2027)</h3>
         <select id="corso" required class="w-full p-2 border rounded bg-slate-50 focus:ring-2 focus:ring-red-500" onchange="calcolaQuota()">
           <option value="">-- Seleziona il Corso --</option>
-          <option value="Ninjutsu Adulti">Ninjutsu Adulti/Ragazzi (Mar-Gio 19:30-21:00)</option>
+          <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti/Ragazzi (Mar-Gio 19:30-21:00)</option>
           <option value="Ninjutsu Bambini">Ninjutsu Bambini (Mar-Gio 18:30-19:30)</option>
-          <option value="Vietvodao Adulti">Vietvodao Adulti/Ragazzi (Lun-Mer 19:30-21:00)</option>
+          <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi (Lun-Mer 19:30-21:00)</option>
           <option value="Vietvodao Bambini">Vietvodao Bambini (Lun-Mer 18:30-19:30)</option>
-          <option value="Shodo">Shodo Calligrafia (2 Venerdì/mese 20:00-21:30)</option>
+          <option value="Shodo Calligrafia">Shodo Calligrafia (2 Venerdì/mese 20:00-21:30)</option>
         </select>
       </div>
 
@@ -106,7 +106,6 @@
   </div>
 
   <script>
-    // CONFIGURAZIONE SUPABASE
     const SUPABASE_URL = "https://twiizsottstaacnvrxkg.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI";
 
@@ -131,7 +130,7 @@
       } else if (corso.includes('Bambini')) {
         dettaglio.innerText = "Quota corso: 40 €/mese oppure 35 €/mese in tranche solari (140€ Set-Dic | 175€ Gen-Mag). Presenza min. 70% per esami.";
         pagamento.innerText = "Pagamento consentito: TASSATIVAMENTE solo via Bonifico Bancario.";
-      } else if (corso === 'Shodo') {
+      } else if (corso.includes('Shodo')) {
         dettaglio.innerText = "Quota corso: 30 €/mese.";
         pagamento.innerText = "Pagamento consentito: Contanti o Bonifico Bancario.";
       }
@@ -149,30 +148,44 @@
 
       const consensoFotoVal = document.querySelector('input[name="consensoFoto"]:checked')?.value === "true";
 
-      // MAPPA CAMPI ALLINEATA CON TABELLA SUPABASE
+      // PAYLOAD RIGOROSAMENTE MAPPATO SULLO SCHEMA SUPABASE
       const payload = {
         nome: document.getElementById('nome').value.trim(),
         cognome: document.getElementById('cognome').value.trim(),
         luogo_nascita: document.getElementById('luogoNascita').value.trim(),
         data_nascita: document.getElementById('dataNascita').value,
         codice_fiscale: document.getElementById('codiceFiscale').value.trim().toUpperCase(),
-        residenza_indirizzo: document.getElementById('indirizzo').value.trim() + ", " + document.getElementById('cap').value.trim() + " " + document.getElementById('citta').value.trim(),
+        residenza_indirizzo: document.getElementById('indirizzo').value.trim(),
+        residenza_citta: document.getElementById('citta').value.trim(),
+        residenza_cap: document.getElementById('cap').value.trim(),
         email: document.getElementById('email').value.trim(),
         telefono: document.getElementById('telefono').value.trim(),
         corso_scelto: document.getElementById('corso').value,
-        consenso_gdpr: document.getElementById('consensoGDPR').checked, // Campo corretto
-        consenso_immagini_video: consensoFotoVal                        // Campo corretto
+        consenso_gdpr: document.getElementById('consensoGDPR').checked,
+        consenso_immagini_video: consensoFotoVal
       };
 
+      // 1. Inserimento Record su Supabase Database
       const { data, error } = await supabaseClient.from('soci').insert([payload]);
 
       if (error) {
         msg.className = "p-4 mb-4 rounded-lg text-sm font-semibold bg-red-100 text-red-700 border border-red-300";
-        msg.innerText = "Errore durante l'iscrizione: " + error.message;
+        msg.innerText = "Errore durante il salvataggio dei dati: " + error.message;
         msg.classList.remove('hidden');
         btn.disabled = false;
         btn.innerText = "INVIA DOMANDA DI ADESIONE";
       } else {
+        // 2. Invio Email Notifica tramite Serverless Function Vercel
+        try {
+          await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+        } catch (emailErr) {
+          console.warn("Registrazione salvata su DB, invio e-mail in background fallito:", emailErr);
+        }
+
         msg.className = "p-4 mb-4 rounded-lg text-sm font-semibold bg-green-100 text-green-700 border border-green-300";
         msg.innerText = "Domanda di adesione inviata con successo! Verrai contattato dalla segreteria.";
         msg.classList.remove('hidden');
