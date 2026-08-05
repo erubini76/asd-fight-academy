@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Iscrizione - A.S.D. Fight Academy</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- SUPABASE SDK (CDN) -->
+  <!-- SUPABASE SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 p-4 min-h-screen">
@@ -109,6 +109,7 @@
     // ⚙️ CONFIGURAZIONE SUPABASE
     const SUPABASE_URL = "https://twiizsottstaacnvrxkg.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI";
+
     
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -155,10 +156,7 @@
         luogo_nascita: document.getElementById('luogoNascita').value.trim(),
         data_nascita: document.getElementById('dataNascita').value,
         codice_fiscale: document.getElementById('codiceFiscale').value.trim().toUpperCase(),
-        indirizzo: document.getElementById('indirizzo').value.trim(),
-        citta: document.getElementById('citta').value.trim(),
-        cap: document.getElementById('cap').value.trim(),
-        provincia: 'PD',
+        residenza_indirizzo: document.getElementById('indirizzo').value.trim() + ", " + document.getElementById('cap').value.trim() + " " + document.getElementById('citta').value.trim(),
         email: document.getElementById('email').value.trim(),
         telefono: document.getElementById('telefono').value.trim(),
         corso_scelto: document.getElementById('corso').value,
@@ -182,101 +180,6 @@
         document.getElementById('boxQuota').classList.add('hidden');
         btn.innerText = "COMPLETATO";
       }
-    });
-  </script>
-</body>
-</html>
-
-      <!-- SELEZIONE CORSO -->
-      <div class="pt-2">
-        <h3 class="font-semibold text-slate-700 border-b pb-1 mb-3">Disciplina Scelta (A.A. 2026/2027)</h3>
-        <select id="corso" required class="w-full p-2 border rounded bg-slate-50 focus:ring-2 focus:ring-red-500" onchange="calcolaQuota()">
-          <option value="">-- Seleziona il Corso --</option>
-          <option value="ninjutsu_adulti">Ninjutsu Adulti/Ragazzi (Mar-Gio 19:30-21:00)</option>
-          <option value="ninjutsu_bambini">Ninjutsu Bambini (Mar-Gio 18:30-19:30)</option>
-          <option value="vietvodao_adulti">Vietvodao Adulti/Ragazzi (Lun-Mer 19:30-21:00)</option>
-          <option value="vietvodao_bambini">Vietvodao Bambini (Lun-Mer 18:30-19:30)</option>
-<!--
-          <option value="shodo">Shodo Calligrafia (2 Venerdì/mese 20:00-21:30)</option>
--->        
-        </select>
-      </div>
-
-      <!-- BOX QUOTE INFORMATIVE -->
-      <div id="boxQuota" class="hidden p-3 bg-red-50 border border-red-200 rounded text-sm space-y-1">
-        <p class="font-bold text-red-800">Tesseramento/Assicurazione ASI: 15,00 €/anno</p>
-        <p id="dettaglioQuota" class="text-slate-700"></p>
-        <p id="modalitaPagamento" class="text-xs font-semibold text-slate-500 mt-1"></p>
-      </div>
-
-      <!-- CONSENSI E PRIVACY -->
-      <div class="pt-2 space-y-3">
-        <h3 class="font-semibold text-slate-700 border-b pb-1 mb-2">Consensi e Privacy</h3>
-        
-        <!-- Privacy GDPR -->
-        <div class="p-3 bg-slate-50 border rounded text-xs space-y-2">
-          <p class="font-bold">Informativa Trattamento Dati (D.Lgs 196/2003 e Reg. UE 2016/679)</p>
-          <p>I dati forniti saranno trattati da A.S.D. Fight Academy esclusivamente per le finalità gestionali e associative istituzionali.</p>
-          <label class="flex items-center space-x-2 font-semibold">
-            <input type="checkbox" id="consensoGDPR" required class="w-4 h-4 text-red-600">
-            <span>Accetto il trattamento dei dati personali *</span>
-          </label>
-        </div>
-
-        <!-- Liberatoria Immagini -->
-        <div class="p-3 bg-slate-50 border rounded text-xs space-y-2">
-          <p class="font-bold">Liberatoria Immagini e Video</p>
-          <p>Cedo a titolo gratuito il diritto di utilizzare foto/video dell'iscritto nell'ambito delle attività promozionali ed istituzionali dell'Associazione.</p>
-          <div class="flex space-x-4 font-semibold">
-            <label class="flex items-center space-x-1">
-              <input type="radio" name="consensoFoto" value="accetto" required>
-              <span>Accetto</span>
-            </label>
-            <label class="flex items-center space-x-1">
-              <input type="radio" name="consensoFoto" value="non_accetto">
-              <span>Non Accetto</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <!-- SUBMIT -->
-      <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition shadow">
-        INVIA DOMANDA DI ADESIONE
-      </button>
-
-    </form>
-  </div>
-
-  <script>
-    function calcolaQuota() {
-      const corso = document.getElementById('corso').value;
-      const box = document.getElementById('boxQuota');
-      const dettaglio = document.getElementById('dettaglioQuota');
-      const pagamento = document.getElementById('modalitaPagamento');
-
-      if (!corso) {
-        box.classList.add('hidden');
-        return;
-      }
-
-      box.classList.remove('hidden');
-
-      if (corso.includes('adulti')) {
-        dettaglio.innerText = "Quota corso: 50 €/mese oppure 45 €/mese in tranche solari (180€ Set-Dic | 135€ Gen-Mar | 135€ Apr-Giug).";
-        pagamento.innerText = "Pagamento consentito: Contanti o Bonifico Bancario.";
-      } else if (corso.includes('bambini')) {
-        dettaglio.innerText = "Quota corso: 40 €/mese oppure 35 €/mese in tranche solari (140€ Set-Dic | 175€ Gen-Mag). Presenza min. 70% per esami.";
-        pagamento.innerText = "Pagamento consentito: TASSATIVAMENTE solo via Bonifico Bancario.";
-      } else if (corso === 'shodo') {
-        dettaglio.innerText = "Quota corso: 30 €/mese.";
-        pagamento.innerText = "Pagamento consentito: Contanti o Bonifico Bancario.";
-      }
-    }
-
-    document.getElementById('formIscrizione').addEventListener('submit', function(e) {
-      e.preventDefault();
-      alert('Domanda d\'iscrizione inviata con successo! Verrai contattato dalla segreteria.');
     });
   </script>
 </body>
