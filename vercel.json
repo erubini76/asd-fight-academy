@@ -1,7 +1,9 @@
 {
+  "version": 2,
+  "cleanUrls": true,
   "crons": [
     {
-      "path": "/api/send-alerts",
+      "path": "/api",
       "schedule": "0 8 * * *"
     }
   ]
