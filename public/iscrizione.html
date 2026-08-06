@@ -142,7 +142,7 @@
         </div>
       </div>
 
-      <!-- Messaggio di Errore (Se applicabile) -->
+      <!-- Messaggio di Errore (Nascosto di default) -->
       <div id="statoErrore" class="hidden p-4 rounded-xl text-sm font-semibold text-center bg-red-950 text-red-300 border border-red-800"></div>
 
       <!-- Pulsante Invio -->
@@ -154,10 +154,10 @@
   </div>
 
   <script>
-    // Configurazione Supabase Client
-    const SUPABASE_URL = "https://TUO_PROGETTO.supabase.co"; 
-    const SUPABASE_ANON_KEY = "TUA_KEY_ANONIMA"; 
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Credenziali ufficiali Supabase A.S.D. Fight Academy
+    const SUPABASE_URL = "https://twiizsottstaacnvrxkg.supabase.co"; 
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI"; 
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const form = document.getElementById('formIscrizione');
     const schermataConferma = document.getElementById('schermataConferma');
@@ -182,7 +182,7 @@
       const consensoFoto = document.querySelector('input[name="consenso_foto"]:checked').value === "true";
 
       try {
-        // 1. Verifica se il socio esiste già tramite Codice Fiscale (UPSERT Logic)
+        // 1. Ricerca socio esistente per Codice Fiscale
         let { data: socioEsistente, error: searchError } = await supabase
           .from('soci')
           .select('id')
@@ -194,7 +194,7 @@
         let socioId;
 
         if (socioEsistente) {
-          // Socio già registrato: recuperiamo l'ID e aggiorniamo i dati anagrafici
+          // Aggiornamento dati anagrafici socio registrato
           socioId = socioEsistente.id;
           const { error: updateError } = await supabase
             .from('soci')
@@ -203,7 +203,7 @@
 
           if (updateError) throw updateError;
         } else {
-          // Nuovo Socio: Inserimento anagrafica + quota ASI
+          // Inserimento nuovo socio
           const { data: nuovoSocio, error: insertError } = await supabase
             .from('soci')
             .insert([{
@@ -234,14 +234,31 @@
 
         if (corsoError) throw corsoError;
 
-        // 3. Iscrizione alla tabella soci_corsi (Relazione N:N senza duplicati)
+        // 3. Iscrizione relazione N:N nella tabella soci_corsi
         const { error: sociCorsiError } = await supabase
           .from('soci_corsi')
           .upsert([{ socio_id: socioId, corso_id: corsoData.id }], { onConflict: 'socio_id, corso_id' });
 
         if (sociCorsiError) throw sociCorsiError;
 
-        // 4. Mostra Schermata di Conferma Esito Positivo
+        // 4. Invio automatico mail tramite Serverless Function Resend su Vercel
+        try {
+          await fetch('/api', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nome: nome,
+              cognome: cognome,
+              email: email,
+              telefono: telefono,
+              corso_scelto: nomeCorso
+            })
+          });
+        } catch (emailErr) {
+          console.warn("Dati salvati in Supabase, ma invio mail non riuscito:", emailErr);
+        }
+
+        // 5. Transizione alla schermata di successo
         document.getElementById('confNomeAtleta').innerText = `${nome} ${cognome}`;
         document.getElementById('confCorso').innerText = nomeCorso;
         
