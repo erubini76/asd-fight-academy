@@ -14,7 +14,7 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
       <div>
         <h1 class="text-2xl font-extrabold text-red-700 tracking-tight">A.S.D. FIGHT ACADEMY</h1>
-        <p class="text-xs text-gray-500 font-medium">Pannello di Controllo Presidente & Istruttori</p>
+        <p class="text-xs text-gray-500 font-medium">Pannello Sicuro Presidente & Istruttori</p>
       </div>
       <div id="userInfo" class="hidden text-right">
         <span id="welcomeUser" class="text-xs font-bold text-gray-800 block"></span>
@@ -22,22 +22,62 @@
       </div>
     </div>
 
-    <!-- LOGIN AREA -->
+    <!-- LOGIN AREA CON PASSWORD -->
     <div id="loginSection" class="max-w-md mx-auto bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
-      <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wide">Accesso Area Riservata</h2>
+      <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wide">Accesso Protetto Area Riservata</h2>
       <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1">Email Istruttore / Presidente</label>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Email</label>
         <input type="email" id="adminEmail" placeholder="es. kawasemidojo@gmail.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-600 focus:outline-none">
       </div>
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Password / PIN</label>
+        <input type="password" id="adminPassword" placeholder="••••••••" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-600 focus:outline-none">
+      </div>
       <button onclick="autenticaAdmin()" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2.5 rounded-lg text-xs transition shadow-sm">
-        Accedi al Pannello
+        Accedi in Sicurezza
       </button>
     </div>
 
-    <!-- DASHBOARD OPERATIVA (Nascosta finché non autenticati) -->
+    <!-- DASHBOARD OPERATIVA -->
     <div id="dashboardSection" class="hidden space-y-6">
       
-      <!-- STATistiche E RESOCONTO MENSILE PER CORSO -->
+      <!-- SEZIONE RISERVATA AL PRESIDENTE: GESTIONE ISTRUTTORI DA LISTA SOCI -->
+      <div id="sezionePresidenteGestione" class="hidden bg-white rounded-2xl shadow-sm border border-red-200 p-6 space-y-4">
+        <h2 class="text-base font-bold text-red-700 flex items-center gap-2">
+          <span>⚙️</span> Assegnazione Istruttori e Corsi (Esclusivo Presidente)
+        </h2>
+        <p class="text-xs text-gray-500">Seleziona un socio dall'anagrafica, assegnali i corsi di competenza (relazione 1 a N) e definisci una password d'accesso.</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-700 mb-1">Seleziona Socio</label>
+            <select id="selectSocioIstruttore" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-xs bg-white">
+              <!-- Popolato dinamicamente -->
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-700 mb-1">Corsi di Competenza (Tenere premuto Ctrl/Cmd)</label>
+            <select id="selectCorsiCompetenza" multiple class="w-full border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white h-20">
+              <option value="Ninjutsu Adulti/ragazzi">Ninjutsu Adulti/ragazzi</option>
+              <option value="Ninjutsu bambini">Ninjutsu bambini</option>
+              <option value="Vietvodao Adulti/ragazzi">Vietvodao Adulti/ragazzi</option>
+              <option value="Vietvodao bambini">Vietvodao bambini</option>
+              <option value="Shodo (via della calligrafia Giapponese)">Shodo (Calligrafia)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-gray-700 mb-1">Password d'Accesso</label>
+            <input type="text" id="nuovaPasswordIstruttore" placeholder="es. pass123" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-xs">
+          </div>
+          <div class="flex items-end">
+            <button onclick="registraIstruttore()" class="w-full bg-gray-900 hover:bg-black text-white font-bold py-2 rounded-lg text-xs transition">
+              Salva / Promuovi Istruttore
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESOCONTO FINANZIARIO PER CORSO -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
         <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
           <span>📊</span> Resoconto Finanziario e Versamenti per Corso
@@ -52,24 +92,20 @@
                 <th class="p-3">Stato Verifica</th>
               </tr>
             </thead>
-            <tbody id="resocontiTableBody" class="divide-y divide-gray-100">
-              <!-- Popolato via JS -->
-            </tbody>
+            <tbody id="resocontiTableBody" class="divide-y divide-gray-100"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- GESTIONE PAGAMENTI DA VERIFICARE -->
+      <!-- RICEVUTE E PAGAMENTI DA VERIFICARE -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
         <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
           <span>💶</span> Ricevute e Pagamenti da Verificare
         </h2>
-        <div id="pagamentiContainer" class="space-y-3">
-          <!-- Popolato via JS -->
-        </div>
+        <div id="pagamentiContainer" class="space-y-3"></div>
       </div>
 
-      <!-- LISTA SOCI E CONTROLLO MOROSITÀ / CERTIFICATI -->
+      <!-- ELENCO SOCI E CERTIFICATI -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
         <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
           <span>👥</span> Elenco Soci, Certificati e Controllo Scadenze (Entro il 3 del mese)
@@ -82,12 +118,10 @@
                 <th class="p-3">Corso</th>
                 <th class="p-3">Certificato Medico</th>
                 <th class="p-3">Scadenza</th>
-                <th class="p-3">Stato Pagamento (Regolare entro il 3?)</th>
+                <th class="p-3">Stato Pagamento</th>
               </tr>
             </thead>
-            <tbody id="sociTableBody" class="divide-y divide-gray-100">
-              <!-- Popolato via JS -->
-            </tbody>
+            <tbody id="sociTableBody" class="divide-y divide-gray-100"></tbody>
           </table>
         </div>
       </div>
@@ -107,8 +141,10 @@
 
     async function autenticaAdmin() {
       const email = document.getElementById('adminEmail').value.trim().toLowerCase();
-      if (!email) {
-        alert("Inserisci un'email valida.");
+      const password = document.getElementById('adminPassword').value.trim();
+
+      if (!email || !password) {
+        alert("Inserisci email e password.");
         return;
       }
 
@@ -119,8 +155,8 @@
           .eq('email', email)
           .single();
 
-        if (error || !data) {
-          alert("Accesso negato: email non autorizzata come istruttore o presidente.");
+        if (error || !data || data.password_accesso !== password) {
+          alert("Credenziali non valide o accesso non autorizzato.");
           return;
         }
 
@@ -128,20 +164,76 @@
         document.getElementById('loginSection').classList.add('hidden');
         document.getElementById('dashboardSection').classList.remove('hidden');
         document.getElementById('userInfo').classList.remove('hidden');
-        document.getElementById('welcomeUser').innerText = `${currentUser.nome} (${currentUser.corso_competenza})`;
+        document.getElementById('welcomeUser').innerText = `${currentUser.nome} (${(currentUser.corsi_competenze || []).join(', ')})`;
         
         const badge = document.getElementById('userRoleBadge');
         if (currentUser.ruolo === 'presidente') {
           badge.className = "text-[10px] px-2 py-0.5 rounded-full font-semibold bg-red-100 text-red-800";
           badge.innerText = "PRESIDENTE (ACCESSO GLOBALE)";
+          document.getElementById('sezionePresidenteGestione').classList.remove('hidden');
+          caricaSelectSoci();
         } else {
           badge.className = "text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-800";
-          badge.innerText = `ISTRUTTORE (${currentUser.corso_competenza})`;
+          badge.innerText = `ISTRUTTORE`;
         }
 
         caricaDatiDashboard();
       } catch (err) {
         alert("Errore di autenticazione: " + err.message);
+      }
+    }
+
+    async function caricaSelectSoci() {
+      try {
+        const { data, error } = await supabaseClient.from('soci').select('id, nome, cognome, email').order('cognome');
+        if (error) throw error;
+        const select = document.getElementById('selectSocioIstruttore');
+        select.innerHTML = '<option value="">-- Seleziona Socio --</option>';
+        data.forEach(s => {
+          select.innerHTML += `<option value="${s.id}" data-email="${s.email}">${s.cognome} ${s.nome} (${s.email})</option>`;
+        });
+      } catch (err) {
+        console.error("Errore caricamento soci select:", err);
+      }
+    }
+
+    async function registraIstruttore() {
+      const select = document.getElementById('selectSocioIstruttore');
+      const socioId = select.value;
+      if (!socioId) {
+        alert("Seleziona un socio.");
+        return;
+      }
+      const option = select.options[select.selectedIndex];
+      const email = option.getAttribute('data-email');
+      const nomeSocio = option.text.split('(')[0].trim();
+      const pass = document.getElementById('nuovaPasswordIstruttore').value.trim() || 'fight2026';
+
+      const corsiSelect = document.getElementById('selectCorsiCompetenza');
+      const corsiScelti = Array.from(corsiSelect.selectedOptions).map(opt => opt.value);
+
+      if (corsiScelti.length === 0) {
+        alert("Seleziona almeno un corso di competenza.");
+        return;
+      }
+
+      try {
+        const { error } = await supabaseClient
+          .from('istruttori_corsi')
+          .upsert([{
+            socio_id: socioId,
+            email: email,
+            nome: nomeSocio,
+            corsi_competenze: corsiScelti,
+            ruolo: 'istruttore',
+            password_accesso: pass
+          }], { onConflict: 'email' });
+
+        if (error) throw error;
+        alert("Istruttore registrato/aggiornato con successo!");
+        location.reload();
+      } catch (err) {
+        alert("Errore salvataggio istruttore: " + err.message);
       }
     }
 
@@ -155,7 +247,8 @@
       try {
         let query = supabaseClient.from('soci').select('*');
         if (currentUser.ruolo !== 'presidente') {
-          query = query.eq('corso_scelto', currentUser.corso_competenza);
+          const comp = currentUser.corsi_competenze || [];
+          query = query.in('corso_scelto', comp);
         }
 
         const { data: soci, error } = await query;
@@ -206,10 +299,10 @@
         }
 
         data.forEach(pag => {
-          // Se non è presidente, filtra solo i pagamenti relativi ai soci del suo corso
           if (currentUser.ruolo !== 'presidente') {
+            const comp = currentUser.corsi_competenze || [];
             const rel = pag.pagamento_soci || [];
-            const appartieneAlCorso = rel.some(r => r.soci && r.soci.corso_scelto === currentUser.corso_competenza);
+            const appartieneAlCorso = rel.some(r => r.soci && comp.includes(r.soci.corso_scelto));
             if (!appartieneAlCorso) return;
           }
 
@@ -267,14 +360,16 @@
 
         if (error) throw error;
 
-        // Raggruppa per corso e periodo
         const resocontiMap = {};
         data.forEach(item => {
           const corso = item.corso_riferimento || 'Generale';
           const periodo = item.pagamenti ? item.pagamenti.periodo_riferimento : 'N/D';
           const key = `${corso}_${periodo}`;
 
-          if (currentUser.ruolo !== 'presidente' && corso !== currentUser.corso_competenza) return;
+          if (currentUser.ruolo !== 'presidente') {
+            const comp = currentUser.corsi_competenze || [];
+            if (!comp.includes(corso)) return;
+          }
 
           if (!resocontiMap[key]) {
             resocontiMap[key] = { corso, periodo, totale: 0, stato: item.pagamenti ? item.pagamenti.stato : 'N/D' };
