@@ -17,10 +17,41 @@
       <h1 class="text-2xl md:text-3xl font-extrabold text-red-600 tracking-wide">A.S.D. FIGHT ACADEMY</h1>
       <p class="text-xs text-slate-400 mt-1">Codice Fiscale: 91023520280 | Affiliazione ASI: VEN-PD0814</p>
       <p class="text-xs text-slate-500">Sede Legale: Via Monte Cero 57, 35042 Este (PD) | Impianto: Via B. Powell 2, Este</p>
-      <h2 class="text-lg font-bold text-white mt-4 uppercase tracking-wider">Domanda di Ammissione a Socio A.A. 2026-2027</h2>
+      <h2 class="text-lg font-bold text-white mt-4 uppercase tracking-wider">Domanda di Ammissione a Socio A.A. 2025-2026</h2>
     </header>
 
-    <!-- Form -->
+    <!-- SCHERMATA DI CONFERMA ESITO POSITIVO (Nascosta di default) -->
+    <div id="schermataConferma" class="hidden bg-emerald-950/90 border border-emerald-600 rounded-2xl p-6 md:p-8 text-center space-y-6 shadow-2xl">
+      <div class="w-16 h-16 bg-emerald-600/20 text-emerald-400 rounded-full flex items-center justify-center mx-auto border border-emerald-500">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+      </div>
+
+      <div class="space-y-2">
+        <h3 class="text-2xl font-bold text-white">Domanda Registrata con Successo!</h3>
+        <p class="text-emerald-200 text-base md:text-lg">
+          La compilazione è andata a buon fine. Verrai contattato a breve dall'Associazione per la conferma definitiva.
+        </p>
+      </div>
+
+      <div class="bg-slate-900/80 rounded-xl p-4 text-left border border-emerald-800 space-y-2 text-sm">
+        <p class="text-slate-300"><strong class="text-emerald-400">Atleta:</strong> <span id="confNomeAtleta"></span></p>
+        <p class="text-slate-300"><strong class="text-emerald-400">Corso Selezionato:</strong> <span id="confCorso"></span></p>
+        <p class="text-slate-300"><strong class="text-emerald-400">Tesseramento ASI:</strong> 15,00 € / Anno (Quota ASI 365 giorni)</p>
+      </div>
+
+      <div class="pt-4 flex flex-col sm:flex-row gap-4 justify-center">
+        <button onclick="nuovaIscrizione()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-xl transition duration-200 shadow-md">
+          Iscrivi a un altro Corso
+        </button>
+        <a href="index.html" class="inline-block bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-3 px-6 rounded-xl transition duration-200 text-center">
+          Torna alla Pagina Principale
+        </a>
+      </div>
+    </div>
+
+    <!-- FORM DI ISCRIZIONE -->
     <form id="formIscrizione" class="space-y-6">
       
       <!-- Sezione Dati Anagrafici -->
@@ -69,9 +100,7 @@
             <option value="Ninjutsu Bambini">Ninjutsu Bambini (40€/mese - Solo Bonifico)</option>
             <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi (50€/mese)</option>
             <option value="Vietvodao Bambini">Vietvodao Bambini (40€/mese - Solo Bonifico)</option>
- <!--
             <option value="Shodo (Calligrafia Giapponese)">Shodo - Calligrafia Giapponese (30€/mese)</option>
- -->          
           </select>
         </div>
       </div>
@@ -96,7 +125,7 @@
         <div class="bg-slate-900 p-4 rounded-xl border border-slate-700 text-xs space-y-2">
           <p class="font-semibold text-slate-300">Liberatoria Utilizzo Immagini e Filmati</p>
           <p class="text-slate-400 leading-relaxed">
-            Cedo a titolo gratuito ad A.S.D. Fight Academy il diritto di utilizzare foto e filmati realizzati durante le attività istituzionali per scopi informativi, promozionali o culturali.
+            Cedo a titolo gratuito ad A.S.D. Fight Academy il diritto di utilizzare immagini filmate o fotografiche dell'iscritto anche se minorenne nell'ambito di filmati o di stampati aventi scopo informativo, pubblicitario o di intrattenimento relative alle attività istituzionali.
           </p>
           <div class="flex items-center space-x-4 pt-2">
             <label class="flex items-center space-x-2 text-slate-200">
@@ -111,8 +140,8 @@
         </div>
       </div>
 
-      <!-- Messaggio di Esito -->
-      <div id="statoInvio" class="hidden p-4 rounded-xl text-sm font-semibold text-center"></div>
+      <!-- Messaggio di Errore (Se applicabile) -->
+      <div id="statoErrore" class="hidden p-4 rounded-xl text-sm font-semibold text-center bg-red-950 text-red-300 border border-red-800"></div>
 
       <!-- Pulsante Invio -->
       <button type="submit" id="btnSubmit" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 px-6 rounded-xl transition duration-200 shadow-lg">
@@ -124,19 +153,20 @@
 
   <script>
     // Configurazione Supabase Client
-    const SUPABASE_URL = "https://twiizsottstaacnvrxkg.supabase.co"; // Sostituire con l'URL Supabase
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI"; // Sostituire con la Anon Key Supabase
+    const SUPABASE_URL = "https://TUO_PROGETTO.supabase.co"; 
+    const SUPABASE_ANON_KEY = "TUA_KEY_ANONIMA"; 
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const form = document.getElementById('formIscrizione');
-    const statoInvio = document.getElementById('statoInvio');
+    const schermataConferma = document.getElementById('schermataConferma');
+    const statoErrore = document.getElementById('statoErrore');
     const btnSubmit = document.getElementById('btnSubmit');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       btnSubmit.disabled = true;
       btnSubmit.innerText = "Elaborazione in corso...";
-      statoInvio.className = "hidden";
+      statoErrore.classList.add('hidden');
 
       const cf = document.getElementById('codice_fiscale').value.trim().toUpperCase();
       const nome = document.getElementById('nome').value.trim();
@@ -162,7 +192,7 @@
         let socioId;
 
         if (socioEsistente) {
-          // Socio già registrato: recuperiamo l'ID e aggiorniamo anagrafica
+          // Socio già registrato: recuperiamo l'ID e aggiorniamo i dati anagrafici
           socioId = socioEsistente.id;
           const { error: updateError } = await supabase
             .from('soci')
@@ -171,7 +201,7 @@
 
           if (updateError) throw updateError;
         } else {
-          // Nuovo Socio: Inserimento anagrafica + tesseramento ASI (15€)
+          // Nuovo Socio: Inserimento anagrafica + quota ASI
           const { data: nuovoSocio, error: insertError } = await supabase
             .from('soci')
             .insert([{
@@ -202,28 +232,37 @@
 
         if (corsoError) throw corsoError;
 
-        // 3. Iscrizione alla tabella soci_corsi (evita duplicati grazie a UNIQUE(socio_id, corso_id))
+        // 3. Iscrizione alla tabella soci_corsi (Relazione N:N senza duplicati)
         const { error: sociCorsiError } = await supabase
           .from('soci_corsi')
           .upsert([{ socio_id: socioId, corso_id: corsoData.id }], { onConflict: 'socio_id, corso_id' });
 
         if (sociCorsiError) throw sociCorsiError;
 
-        // Esito Positivo
-        statoInvio.className = "p-4 rounded-xl text-sm font-semibold text-center bg-emerald-950 text-emerald-300 border border-emerald-800";
-        statoInvio.innerText = "Domanda registrata con successo! Sei iscritto al corso: " + nomeCorso;
-        form.reset();
+        // 4. Mostra Schermata di Conferma Esito Positivo
+        document.getElementById('confNomeAtleta').innerText = `${nome} ${cognome}`;
+        document.getElementById('confCorso').innerText = nomeCorso;
+        
+        form.classList.add('hidden');
+        schermataConferma.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
 
       } catch (err) {
         console.error(err);
-        statoInvio.className = "p-4 rounded-xl text-sm font-semibold text-center bg-red-950 text-red-300 border border-red-800";
-        statoInvio.innerText = "Errore durante il salvataggio: " + (err.message || "Verificare i dati e riprovare.");
+        statoErrore.innerText = "Errore durante il salvataggio: " + (err.message || "Verificare i dati e riprovare.");
+        statoErrore.classList.remove('hidden');
       } finally {
-        statoInvio.classList.remove('hidden');
         btnSubmit.disabled = false;
         btnSubmit.innerText = "Invia Domanda di Iscrizione";
       }
     });
+
+    function nuovaIscrizione() {
+      form.reset();
+      schermataConferma.classList.add('hidden');
+      form.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   </script>
 </body>
 </html>
