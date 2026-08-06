@@ -3,313 +3,308 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A.S.D. Fight Academy - Pannello Controllo e Approvazioni</title>
-  <!-- Tailwind CSS CDN -->
+  <title>A.S.D. Fight Academy - Gestione Amministrativa & Istruttori</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Supabase JS Client CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen p-4 md:p-8">
+<body class="bg-gray-100 text-gray-800 font-sans antialiased min-h-screen p-4 md:p-6">
 
-  <div class="max-w-7xl mx-auto">
-    <!-- HEADER PANNELLO -->
-    <header class="flex flex-col md:flex-row md:items-center md:justify-between pb-6 mb-6 border-b border-gray-200 gap-4">
+  <div class="max-w-6xl mx-auto space-y-6">
+    <!-- HEADER -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
       <div>
-        <h1 class="text-3xl font-extrabold text-red-700 tracking-tight">A.S.D. FIGHT ACADEMY</h1>
-        <p class="text-sm text-gray-500 font-medium">Pannello Presidente: Verifica Certificati e Approvazione Pagamenti</p>
+        <h1 class="text-2xl font-extrabold text-red-700 tracking-tight">A.S.D. FIGHT ACADEMY</h1>
+        <p class="text-xs text-gray-500 font-medium">Pannello di Controllo Presidente & Istruttori</p>
+      </div>
+      <div id="userInfo" class="hidden text-right">
+        <span id="welcomeUser" class="text-xs font-bold text-gray-800 block"></span>
+        <span id="userRoleBadge" class="text-[10px] px-2 py-0.5 rounded-full font-semibold"></span>
+      </div>
+    </div>
+
+    <!-- LOGIN AREA -->
+    <div id="loginSection" class="max-w-md mx-auto bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
+      <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wide">Accesso Area Riservata</h2>
+      <div>
+        <label class="block text-xs font-semibold text-gray-700 mb-1">Email Istruttore / Presidente</label>
+        <input type="email" id="adminEmail" placeholder="es. kawasemidojo@gmail.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-600 focus:outline-none">
+      </div>
+      <button onclick="autenticaAdmin()" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2.5 rounded-lg text-xs transition shadow-sm">
+        Accedi al Pannello
+      </button>
+    </div>
+
+    <!-- DASHBOARD OPERATIVA (Nascosta finché non autenticati) -->
+    <div id="dashboardSection" class="hidden space-y-6">
+      
+      <!-- STATistiche E RESOCONTO MENSILE PER CORSO -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
+        <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
+          <span>📊</span> Resoconto Finanziario e Versamenti per Corso
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50 text-gray-700 uppercase font-semibold border-b border-gray-200">
+              <tr>
+                <th class="p-3">Corso</th>
+                <th class="p-3">Periodo / Mese</th>
+                <th class="p-3">Totale Versato (€)</th>
+                <th class="p-3">Stato Verifica</th>
+              </tr>
+            </thead>
+            <tbody id="resocontiTableBody" class="divide-y divide-gray-100">
+              <!-- Popolato via JS -->
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
-        <!-- FILTRO CORSI -->
-        <select id="filterCorso" onchange="filterSoci()" class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-red-600">
-          <option value="ALL">Tutti i Corsi</option>
-          <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti/Ragazzi</option>
-          <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
-          <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi</option>
-          <option value="Vietvodao Bambini">Vietvodao Bambini</option>
-          <option value="Shodo (Calligrafia Giapponese)">Shodo (Calligrafia Giapponese)</option>
-        </select>
-
-        <!-- PULSANTE ESPORTA CSV -->
-        <button onclick="exportCSV()" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 py-2 rounded-lg shadow transition duration-150">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-          </svg>
-          Esporta CSV Soci
-        </button>
+      <!-- GESTIONE PAGAMENTI DA VERIFICARE -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
+        <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
+          <span>💶</span> Ricevute e Pagamenti da Verificare
+        </h2>
+        <div id="pagamentiContainer" class="space-y-3">
+          <!-- Popolato via JS -->
+        </div>
       </div>
-    </header>
 
-    <!-- TABELLA SOCI -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
-              <th class="py-3 px-4">SOCIO / CORSO</th>
-              <th class="py-3 px-4">CERTIFICATO MEDICO (VERIFICA)</th>
-              <th class="py-3 px-4">PAGAMENTO & RICEVUTA (VERIFICA)</th>
-              <th class="py-3 px-4 text-center">PRESENZE / ESAMI</th>
-              <th class="py-3 px-4 text-center">AZIONI RAPIDE</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody" class="divide-y divide-gray-100 text-sm">
-            <tr>
-              <td colspan="5" class="py-8 text-center text-gray-400 font-medium">Caricamento dati soci in corso...</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- LISTA SOCI E CONTROLLO MOROSITÀ / CERTIFICATI -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
+        <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
+          <span>👥</span> Elenco Soci, Certificati e Controllo Scadenze (Entro il 3 del mese)
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50 text-gray-700 uppercase font-semibold border-b border-gray-200">
+              <tr>
+                <th class="p-3">Socio</th>
+                <th class="p-3">Corso</th>
+                <th class="p-3">Certificato Medico</th>
+                <th class="p-3">Scadenza</th>
+                <th class="p-3">Stato Pagamento (Regolare entro il 3?)</th>
+              </tr>
+            </thead>
+            <tbody id="sociTableBody" class="divide-y divide-gray-100">
+              <!-- Popolato via JS -->
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      <button onclick="location.reload()" class="text-xs text-gray-500 hover:text-red-700 font-semibold">
+        &larr; Esci / Cambia Account
+      </button>
     </div>
   </div>
 
   <script>
-    // Inizializzazione Supabase Client
     const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let allSoci = [];
+    let currentUser = null;
 
-    document.addEventListener('DOMContentLoaded', loadSoci);
+    async function autenticaAdmin() {
+      const email = document.getElementById('adminEmail').value.trim().toLowerCase();
+      if (!email) {
+        alert("Inserisci un'email valida.");
+        return;
+      }
 
-    async function loadSoci() {
       try {
         const { data, error } = await supabaseClient
-          .from('soci')
+          .from('istruttori_corsi')
           .select('*')
-          .order('cognome', { ascending: true });
+          .eq('email', email)
+          .single();
 
+        if (error || !data) {
+          alert("Accesso negato: email non autorizzata come istruttore o presidente.");
+          return;
+        }
+
+        currentUser = data;
+        document.getElementById('loginSection').classList.add('hidden');
+        document.getElementById('dashboardSection').classList.remove('hidden');
+        document.getElementById('userInfo').classList.remove('hidden');
+        document.getElementById('welcomeUser').innerText = `${currentUser.nome} (${currentUser.corso_competenza})`;
+        
+        const badge = document.getElementById('userRoleBadge');
+        if (currentUser.ruolo === 'presidente') {
+          badge.className = "text-[10px] px-2 py-0.5 rounded-full font-semibold bg-red-100 text-red-800";
+          badge.innerText = "PRESIDENTE (ACCESSO GLOBALE)";
+        } else {
+          badge.className = "text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-800";
+          badge.innerText = `ISTRUTTORE (${currentUser.corso_competenza})`;
+        }
+
+        caricaDatiDashboard();
+      } catch (err) {
+        alert("Errore di autenticazione: " + err.message);
+      }
+    }
+
+    async function caricaDatiDashboard() {
+      await caricaSociEVerifiche();
+      await caricaPagamenti();
+      await caricaResoconti();
+    }
+
+    async function caricaSociEVerifiche() {
+      try {
+        let query = supabaseClient.from('soci').select('*');
+        if (currentUser.ruolo !== 'presidente') {
+          query = query.eq('corso_scelto', currentUser.corso_competenza);
+        }
+
+        const { data: soci, error } = await query;
         if (error) throw error;
 
-        allSoci = data || [];
-        renderSoci(allSoci);
-      } catch (err) {
-        console.error('Errore nel caricamento:', err);
-        document.getElementById('tableBody').innerHTML = `
-          <tr>
-            <td colspan="5" class="py-8 text-center text-red-500 font-semibold">
-              Errore di connessione al database. Riprova più tardi.
+        const tbody = document.getElementById('sociTableBody');
+        tbody.innerHTML = '';
+
+        soci.forEach(socio => {
+          const tr = document.createElement('tr');
+          const isScaduto = socio.scadenza_certificato && new Date(socio.scadenza_certificato) < new Date();
+          
+          tr.innerHTML = `
+            <td class="p-3 font-medium text-gray-900">${socio.nome} ${socio.cognome}<br><span class="text-[10px] text-gray-400">CF: ${socio.codice_fiscale || 'N/D'}</span></td>
+            <td class="p-3">${socio.corso_scelto || 'N/D'}</td>
+            <td class="p-3">
+              ${socio.certificato_url ? `<a href="${socio.certificato_url}" target="_blank" class="text-blue-600 underline font-semibold">Visualizza File</a>` : '<span class="text-gray-400">Non caricato</span>'}
             </td>
-          </tr>`;
+            <td class="p-3">
+              <span class="${isScaduto ? 'text-red-600 font-bold' : 'text-gray-700'}">${socio.scadenza_certificato || 'Da impostare'}</span>
+            </td>
+            <td class="p-3">
+              <span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-[10px]">Verifica entro il 3 del mese</span>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error("Errore caricamento soci:", err.message);
       }
     }
 
-    function renderSoci(soci) {
-      const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '';
+    async function caricaPagamenti() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('pagamenti')
+          .select('*, pagamento_soci(*, soci(nome, cognome, corso_scelto))')
+          .order('data_inserimento', { ascending: false });
 
-      if (soci.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="5" class="py-8 text-center text-gray-400 font-medium">Nessun socio trovato.</td>
-          </tr>`;
-        return;
-      }
+        if (error) throw error;
 
-      const LEZIONI_TOTALI_STIMATE = 60;
+        const container = document.getElementById('pagamentiContainer');
+        container.innerHTML = '';
 
-      soci.forEach(socio => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-gray-50 transition duration-100 align-top";
-
-        // Sezione Certificato Medico e Approvazione Presidente
-        let certHtml = `<div class="flex flex-col gap-1">`;
-        if (socio.certificato_url) {
-          certHtml += `<a href="${socio.certificato_url}" target="_blank" class="text-xs text-blue-600 underline font-medium">📄 Vedi Certificato Caricato</a>`;
-        } else {
-          certHtml += `<span class="text-xs text-gray-400">Nessun file caricato dal socio</span>`;
-        }
-        
-        certHtml += `<span class="text-xs font-semibold text-gray-700 mt-1">Scadenza: ${socio.scadenza_certificato || 'Non indicata'}</span>`;
-        
-        let statoCert = socio.certificato_stato || 'Da inserire';
-        let bgCert = statoCert === 'Approvato' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800';
-        certHtml += `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full w-fit ${bgCert}">Stato: ${statoCert}</span>`;
-        
-        certHtml += `<div class="flex gap-1 mt-1">
-          <button onclick="approvaCertificato('${socio.id}')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded font-medium hover:bg-emerald-700">Approva</button>
-          <button onclick="modificaCertificato('${socio.id}', '${socio.scadenza_certificato || ''}')" class="text-[10px] bg-gray-200 text-gray-700 px-2 py-0.5 rounded font-medium hover:bg-gray-300">Modifica Scadenza</button>
-        </div></div>`;
-
-        // Sezione Pagamento, Ricevuta e Correzione Importo €
-        let pagHtml = `<div class="flex flex-col gap-1">`;
-        if (socio.ricevuta_url) {
-          pagHtml += `<a href="${socio.ricevuta_url}" target="_blank" class="text-xs text-blue-600 underline font-medium">💶 Vedi Ricevuta/Bonifico</a>`;
-        } else {
-          pagHtml += `<span class="text-xs text-gray-400">Nessuna ricevuta caricata</span>`;
+        if (!data || data.length === 0) {
+          container.innerHTML = '<p class="text-xs text-gray-400">Nessun pagamento registrato.</p>';
+          return;
         }
 
-        pagHtml += `<div class="flex items-center gap-1 mt-1">
-          <span class="text-xs font-bold text-gray-700">Importo: € ${Number(socio.importo_pagamento || 0).toFixed(2)}</span>
-          <button onclick="correggiImporto('${socio.id}', ${socio.importo_pagamento || 0})" class="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold hover:bg-amber-200" title="Correggi importo in Euro">✏️ Correggi</button>
-        </div>`;
-
-        let statoPag = socio.pagamento_stato || 'Da verificare';
-        let bgPag = statoPag === 'Confermato' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
-        pagHtml += `<span class="px-2 py-0.5 text-[10px] font-bold rounded-full w-fit ${bgPag}">Stato: ${statoPag}</span>`;
-
-        pagHtml += `<button onclick="confermaPagamento('${socio.id}')" class="text-[10px] bg-emerald-600 text-white px-2 py-0.5 rounded font-medium hover:bg-emerald-700 mt-1 w-fit">Conferma Pagamento</button>
-        </div>`;
-
-        // Calcolo esame bambini
-        let esameStatusHtml = '';
-        if (socio.corso_scelto && socio.corso_scelto.includes('Bambini')) {
-          const presenze = socio.presenze_totali || 0;
-          const percentuale = Math.round((presenze / LEZIONI_TOTALI_STIMATE) * 100);
-          if (percentuale >= 70) {
-            esameStatusHtml = `<div class="mt-1 text-[10px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200">🟢 Idoneo Esame (${percentuale}%)[cite: 2]</div>`;
-          } else {
-            esameStatusHtml = `<div class="mt-1 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">⚠️ Valutazione Istruttore (${percentuale}%)[cite: 2]</div>`;
+        data.forEach(pag => {
+          // Se non è presidente, filtra solo i pagamenti relativi ai soci del suo corso
+          if (currentUser.ruolo !== 'presidente') {
+            const rel = pag.pagamento_soci || [];
+            const appartieneAlCorso = rel.some(r => r.soci && r.soci.corso_scelto === currentUser.corso_competenza);
+            if (!appartieneAlCorso) return;
           }
+
+          let dettagliHtml = '';
+          (pag.pagamento_soci || []).forEach(ps => {
+            dettagliHtml += `<li class="text-[11px] text-gray-600">- ${ps.soci ? ps.soci.nome + ' ' + ps.soci.cognome : 'Socio'} (${ps.corso_riferimento || 'Corso'}): €${ps.importo}</li>`;
+          });
+
+          const div = document.createElement('div');
+          div.className = "border border-gray-200 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50";
+          div.innerHTML = `
+            <div class="space-y-1">
+              <div class="flex items-center gap-2">
+                <span class="font-bold text-sm text-gray-900">Totale: €${pag.importo_totale}</span>
+                <span class="text-[10px] px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full font-semibold">${pag.stato}</span>
+                <span class="text-[10px] text-gray-500">(${pag.tipo_pagamento} - ${pag.periodo_riferimento})</span>
+              </div>
+              <ul class="pl-2 space-y-0.5">${dettagliHtml}</ul>
+              <a href="${pag.ricevuta_url}" target="_blank" class="text-xs text-blue-600 underline font-semibold inline-block pt-1">Visualizza Contabile / Ricevuta</a>
+            </div>
+            ${currentUser.ruolo === 'presidente' ? `
+              <div class="flex gap-2">
+                <button onclick="aggiornaStatoPagamento(${pag.id}, 'Confermato')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">Conferma</button>
+                <button onclick="aggiornaStatoPagamento(${pag.id}, 'Da correggere')" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">Segnala Errore</button>
+              </div>
+            ` : '<span class="text-[10px] text-gray-400 font-medium">Solo visualizzazione istruttore</span>'}
+          `;
+          container.appendChild(div);
+        });
+      } catch (err) {
+        console.error("Errore caricamento pagamenti:", err.message);
+      }
+    }
+
+    async function aggiornaStatoPagamento(pagId, nuovoStato) {
+      try {
+        const { error } = await supabaseClient
+          .from('pagamenti')
+          .update({ stato: nuovoStato })
+          .eq('id', pagId);
+
+        if (error) throw error;
+        alert(`Stato pagamento aggiornato a: ${nuovoStato}`);
+        caricaPagamenti();
+      } catch (err) {
+        alert("Errore aggiornamento: " + err.message);
+      }
+    }
+
+    async function caricaResoconti() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('pagamento_soci')
+          .select('*, pagamenti(periodo_riferimento, stato)');
+
+        if (error) throw error;
+
+        // Raggruppa per corso e periodo
+        const resocontiMap = {};
+        data.forEach(item => {
+          const corso = item.corso_riferimento || 'Generale';
+          const periodo = item.pagamenti ? item.pagamenti.periodo_riferimento : 'N/D';
+          const key = `${corso}_${periodo}`;
+
+          if (currentUser.ruolo !== 'presidente' && corso !== currentUser.corso_competenza) return;
+
+          if (!resocontiMap[key]) {
+            resocontiMap[key] = { corso, periodo, totale: 0, stato: item.pagamenti ? item.pagamenti.stato : 'N/D' };
+          }
+          resocontiMap[key].totale += parseFloat(item.importo || 0);
+        });
+
+        const tbody = document.getElementById('resocontiTableBody');
+        tbody.innerHTML = '';
+
+        const keys = Object.keys(resocontiMap);
+        if (keys.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-gray-400">Nessun versamento registrato per i filtri attivi.</td></tr>';
+          return;
         }
 
-        tr.innerHTML = `
-          <td class="py-3 px-4 font-semibold text-gray-900">
-            <div>${socio.nome || ''} ${socio.cognome || ''}</div>
-            <div class="text-xs text-gray-500 font-normal">${socio.email || 'Nessuna email'} • ${socio.telefono || 'Nessun telefono'}</div>
-            <div class="mt-1"><span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-blue-100 text-blue-800">${socio.corso_scelto || 'Non indicato'}</span></div>
-          </td>
-          <td class="py-3 px-4">${certHtml}</td>
-          <td class="py-3 px-4">${pagHtml}</td>
-          <td class="py-3 px-4 text-center">
-            <span class="px-2 py-1 bg-gray-100 rounded border border-gray-200 text-xs font-bold text-gray-700">${socio.presenze_totali || 0} lez.</span>
-            ${esameStatusHtml}
-          </td>
-          <td class="py-3 px-4 text-center">
-            <button onclick="registraPresenza('${socio.id}', ${socio.presenze_totali || 0})" class="bg-red-700 hover:bg-red-800 text-white text-xs font-bold px-3 py-1.5 rounded transition shadow-sm w-full mb-1">
-              + Presenza
-            </button>
-            <span class="text-[10px] text-gray-400 block">Tessera ASI: ${socio.tessera_asi || 'Da emettere'}</span>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function filterSoci() {
-      const selected = document.getElementById('filterCorso').value;
-      if (selected === 'ALL') {
-        renderSoci(allSoci);
-      } else {
-        const filtered = allSoci.filter(s => s.corso_scelto === selected);
-        renderSoci(filtered);
-      }
-    }
-
-    // Funzioni di Approvazione e Correzione Presidente
-    async function approvaCertificato(socioId) {
-      try {
-        const { error } = await supabaseClient
-          .from('soci')
-          .update({ certificato_stato: 'Approvato' })
-          .eq('id', socioId);
-        if (error) throw error;
-        await loadSoci();
+        keys.forEach(k => {
+          const r = resocontiMap[k];
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="p-3 font-bold text-gray-900">${r.corso}</td>
+            <td class="p-3">${r.periodo}</td>
+            <td class="p-3 font-semibold text-emerald-700">€${r.totale.toFixed(2)}</td>
+            <td class="p-3"><span class="px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full text-[10px]">${r.stato}</span></td>
+          `;
+          tbody.appendChild(tr);
+        });
       } catch (err) {
-        alert("Errore approvazione certificato: " + err.message);
+        console.error("Errore caricamento resoconti:", err.message);
       }
-    }
-
-    async function modificaCertificato(socioId, dataAttuale) {
-      const nuovaData = prompt("Inserisci la data di scadenza corretta (YYYY-MM-DD):", dataAttuale || "2027-06-30");
-      if (!nuovaData) return;
-      try {
-        const { error } = await supabaseClient
-          .from('soci')
-          .update({ scadenza_certificato: nuovaData, certificato_stato: 'Approvato' })
-          .eq('id', socioId);
-        if (error) throw error;
-        await loadSoci();
-      } catch (err) {
-        alert("Errore aggiornamento scadenza: " + err.message);
-      }
-    }
-
-    async function correggiImporto(socioId, importoAttuale) {
-      const nuovoImporto = prompt("Correggi l'importo in Euro inserito dal socio (es. 50.00):", importoAttuale);
-      if (nuovoImporto === null) return;
-      const parsed = parseFloat(nuovoImporto.replace(',', '.'));
-      if (isNaN(parsed)) {
-        alert("Importo non valido.");
-        return;
-      }
-      try {
-        const { error } = await supabaseClient
-          .from('soci')
-          .update({ importo_pagamento: parsed, pagamento_stato: 'Confermato' })
-          .eq('id', socioId);
-        if (error) throw error;
-        await loadSoci();
-      } catch (err) {
-        alert("Errore correzione importo: " + err.message);
-      }
-    }
-
-    async function confermaPagamento(socioId) {
-      try {
-        const { error } = await supabaseClient
-          .from('soci')
-          .update({ pagamento_stato: 'Confermato' })
-          .eq('id', socioId);
-        if (error) throw error;
-        await loadSoci();
-      } catch (err) {
-        alert("Errore conferma pagamento: " + err.message);
-      }
-    }
-
-    async function registraPresenza(socioId, presenzeAttuali) {
-      const nuovePresenze = presenzeAttuali + 1;
-      try {
-        const { error } = await supabaseClient
-          .from('soci')
-          .update({ presenze_totali: nuovePresenze })
-          .eq('id', socioId);
-        if (error) throw error;
-
-        await supabaseClient.from('presenze').insert([
-          { socio_id: socioId, data_presenza: new Date().toISOString().split('T')[0] }
-        ]);
-
-        await loadSoci();
-      } catch (err) {
-        alert("Errore registrazione presenza: " + err.message);
-      }
-    }
-
-    function exportCSV() {
-      if (allSoci.length === 0) {
-        alert("Nessun dato da esportare.");
-        return;
-      }
-      const headers = ["Nome", "Cognome", "Email", "Telefono", "Corso", "Scadenza Certificato", "Stato Certificato", "Importo Pagato (€)", "Stato Pagamento", "Presenze"];
-      const rows = [headers.join(",")];
-      allSoci.forEach(s => {
-        const row = [
-          `"${(s.nome || '').replace(/"/g, '""')}"`,
-          `"${(s.cognome || '').replace(/"/g, '""')}"`,
-          `"${(s.email || '').replace(/"/g, '""')}"`,
-          `"${(s.telefono || '').replace(/"/g, '""')}"`,
-          `"${(s.corso_scelto || '').replace(/"/g, '""')}"`,
-          `"${(s.scadenza_certificato || '')}"`,
-          `"${(s.certificato_stato || '')}"`,
-          `"${s.importo_pagamento || 0}"`,
-          `"${(s.pagamento_stato || '')}"`,
-          `"${s.presenze_totali || 0}"`
-        ];
-        rows.push(row.join(","));
-      });
-      const csvContent = "\uFEFF" + rows.join("\n");
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", `Verifiche_Presidenziali_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
     }
   </script>
 </body>
