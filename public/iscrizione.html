@@ -129,20 +129,18 @@
 
         if (socioError) throw new Error("Errore salvataggio socio: " + socioError.message);
 
-        // 2. Recupero ID Corso con ricerca flessibile
+        // 2. Recupero ID Corso con ricerca flessibile sulla colonna corretta 'nome_corso'
         if (nomeCorsoSelezionato && socio) {
-          // Estraiamo la prima parola chiave (es. "Ninjutsu" o "Vietvodao") per garantire il match
           const keyword = nomeCorsoSelezionato.split(' ')[0];
           
           const { data: corsiData, error: corsoFindError } = await db
             .from('corsi')
-            .select('id, nome')
-            .ilike('nome', `%${keyword}%`);
+            .select('id, nome_corso')
+            .ilike('nome_corso', `%${keyword}%`);
 
           let corsoId = null;
           if (corsiData && corsiData.length > 0) {
-            // Se trova più corsi con la parola chiave, prova a cercare l'abbinamento esatto o prende il primo
-            const matchEsatto = corsiData.find(c => c.nome.toLowerCase().includes(nomeCorsoSelezionato.toLowerCase()));
+            const matchEsatto = corsiData.find(c => c.nome_corso.toLowerCase().includes(nomeCorsoSelezionato.toLowerCase()));
             corsoId = matchEsatto ? matchEsatto.id : corsiData[0].id;
           }
 
@@ -164,7 +162,7 @@
 
         // 3. Invio email tramite Serverless Function /api/send-email
         try {
-          await fetch('/api/send-email', {
+          const emailRes = await fetch('/api/send-email', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -176,6 +174,9 @@
               corso: nomeCorsoSelezionato
             })
           });
+          if (!emailRes.ok) {
+            console.warn("Risposta API email non OK:", await emailRes.text());
+          }
         } catch (emailErr) {
           console.warn("Avviso invio email API:", emailErr);
         }
