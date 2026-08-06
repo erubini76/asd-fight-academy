@@ -1,101 +1,153 @@
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-  // Configurazione Supabase Client
-  const SUPABASE_URL = "https://twiizsottstaacnvrxkg.supabase.co";
-  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI";
-  const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iscrizione - A.S.D. Fight Academy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen p-4">
+  <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-md">
+    <h1 class="text-2xl font-bold mb-4 text-red-700">A.S.D. FIGHT ACADEMY</h1>
+    <h2 class="text-lg font-semibold mb-6">Domanda di Ammissione a Socio</h2>
+    
+    <!-- Form di iscrizione -->
+    <form id="form-iscrizione" class="space-y-4">
+      <div>
+        <label class="block font-medium">Nome</label>
+        <input type="text" name="nome" required class="w-full border p-2 rounded">
+      </div>
+      <div>
+        <label class="block font-medium">Cognome</label>
+        <input type="text" name="cognome" required class="w-full border p-2 rounded">
+      </div>
+      <div>
+        <label class="block font-medium">Codice Fiscale</label>
+        <input type="text" name="codice_fiscale" maxlength="16" required class="w-full border p-2 rounded uppercase">
+      </div>
+      <div>
+        <label class="block font-medium">Email</label>
+        <input type="email" name="email" required class="w-full border p-2 rounded">
+      </div>
+      <div>
+        <label class="block font-medium">Telefono / Cellulare</label>
+        <input type="tel" name="telefono" required class="w-full border p-2 rounded">
+      </div>
+      <div>
+        <label class="block font-medium">Attività Scelta</label>
+        <select name="corso" required class="w-full border p-2 rounded">
+          <option value="">-- Seleziona Corso --</option>
+          <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti/Ragazzi</option>
+          <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
+          <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi</option>
+          <option value="Vietvodao Bambini">Vietvodao Bambini</option>
+          <option value="Shodo">Shodo (Calligrafia Giapponese)</option>
+        </select>
+      </div>
 
-  const form = document.getElementById('form-iscrizione');
-  const btnSubmit = document.getElementById('btn-submit');
-  const successBox = document.getElementById('success-message');
-  const errorBox = document.getElementById('error-message');
+      <div class="space-y-2 pt-2">
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" name="accetto_privacy" required>
+          <span class="text-sm">Accetto l'informativa sul trattamento dei dati personali (D.Lgs 196/2003 e Reg. UE 2016/679).</span>
+        </label>
+        <label class="flex items-center space-x-2">
+          <input type="checkbox" name="accetto_media">
+          <span class="text-sm">Cedo a titolo gratuito il diritto di utilizzare immagini/video per scopi istituzionali.</span>
+        </label>
+      </div>
 
-  form.addEventListener('submit', async function(e) {
-    // 1. BLOCCO FONDAMENTALE: Impedisce il ricaricamento della pagina
-    e.preventDefault();
+      <button type="submit" id="btn-submit" class="w-full bg-red-700 text-white py-3 rounded font-bold hover:bg-red-800 transition">
+        Invia Domanda di Iscrizione
+      </button>
+    </form>
 
-    btnSubmit.disabled = true;
-    btnSubmit.innerText = "Registrazione in corso...";
-    if (errorBox) errorBox.classList.add('hidden');
+    <!-- Messaggio di Successo -->
+    <div id="success-message" class="hidden text-center py-8">
+      <h3 class="text-xl font-bold text-green-600 mb-2">Domanda Registrata con Successo!</h3>
+      <p class="text-gray-700">La tua richiesta di ammissione a socio è stata inviata alla segreteria dell'A.S.D. Fight Academy. Sarai contattato a breve.</p>
+    </div>
 
-    try {
-      // 2. Raccolta Dati dal Form
-      const formData = new FormData(form);
-      const socioData = {
-        nome: formData.get('nome'),
-        cognome: formData.get('cognome'),
-        codice_fiscale: formData.get('codice_fiscale')?.toUpperCase(),
-        data_nascita: formData.get('data_nascita') || null,
-        luogo_nascita: formData.get('luogo_nascita') || null,
-        residenza_indirizzo: formData.get('residenza_indirizzo') || null,
-        residenza_civico: formData.get('residenza_civico') || null,
-        residenza_cap: formData.get('residenza_cap') || null,
-        residenza_citta: formData.get('residenza_citta') || null,
-        residenza_provincia: formData.get('residenza_provincia') || null,
-        email: formData.get('email'),
-        telefono: formData.get('telefono') || null,
-        accetto_privacy: formData.get('accetto_privacy') === 'on',
-        accetto_media: formData.get('accetto_media') === 'on'
-      };
+    <!-- Messaggio di Errore -->
+    <div id="error-message" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm"></div>
+  </div>
 
-      const corsoSelezionato = formData.get('corso');
+  <script>
+    const SUPABASE_URL = "https://twiizsottstaacnvrxkg.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-      // 3. Inserimento Socio in Supabase
-      const { data: socioInserito, error: errSocio } = await supabase
-        .from('soci')
-        .insert([socioData])
-        .select()
-        .single();
+    const form = document.getElementById('form-iscrizione');
+    const btnSubmit = document.getElementById('btn-submit');
+    const successBox = document.getElementById('success-message');
+    const errorBox = document.getElementById('error-message');
 
-      if (errSocio) throw new Error("Errore salvataggio socio: " + errSocio.message);
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      btnSubmit.disabled = true;
+      btnSubmit.innerText = "Registrazione in corso...";
+      if (errorBox) errorBox.classList.add('hidden');
 
-      // 4. Inserimento Corso in soci_corsi (se selezionato)
-      if (corsoSelezionato && socioInserito) {
-        const { error: errCorso } = await supabase
-          .from('soci_corsi')
-          .insert([{
-            socio_id: socioInserito.id,
-            corso_nome: corsoSelezionato,
-            data_iscrizione: new Date().toISOString()
-          }]);
-        
-        if (errCorso) console.warn("Avviso salvataggio corso:", errCorso.message);
-      }
-
-      // 5. Chiamata API per invio Notifica Email (Serverless Function Vercel)
       try {
-        await fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            nome: socioData.nome,
-            cognome: socioData.cognome,
-            email: socioData.email,
-            corso: corsoSelezionato
-          })
-        });
-      } catch (errEmail) {
-        console.warn("L'iscrizione è stata salvata sul DB, ma l'invio della mail ha generato un avviso:", errEmail);
-      }
+        const formData = new FormData(form);
+        const socioData = {
+          nome: formData.get('nome'),
+          cognome: formData.get('cognome'),
+          codice_fiscale: formData.get('codice_fiscale')?.toUpperCase(),
+          email: formData.get('email'),
+          telefono: formData.get('telefono'),
+          accetto_privacy: formData.get('accetto_privacy') === 'on',
+          accetto_media: formData.get('accetto_media') === 'on'
+        };
 
-      // 6. Mostra Messaggio di Conferma a Schermo
-      form.classList.add('hidden');
-      if (successBox) {
+        const corsoSelezionato = formData.get('corso');
+
+        const { data: socioInserito, error: errSocio } = await supabase
+          .from('soci')
+          .insert([socioData])
+          .select()
+          .single();
+
+        if (errSocio) throw new Error("Errore salvataggio socio: " + errSocio.message);
+
+        if (corsoSelezionato && socioInserito) {
+          await supabase
+            .from('soci_corsi')
+            .insert([{
+              socio_id: socioInserito.id,
+              corso_nome: corsoSelezionato,
+              data_iscrizione: new Date().toISOString()
+            }]);
+        }
+
+        try {
+          await fetch('/api/send-email', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              nome: socioData.nome,
+              cognome: socioData.cognome,
+              email: socioData.email,
+              corso: corsoSelezionato
+            })
+          });
+        } catch (e) {
+          console.warn("Avviso invio mail:", e);
+        }
+
+        form.classList.add('hidden');
         successBox.classList.remove('hidden');
-      } else {
-        alert("Domanda Registrata con Successo! Sarai contattato a breve dalla segreteria dell'ASD Fight Academy.");
-      }
 
-    } catch (err) {
-      console.error(err);
-      if (errorBox) {
-        errorBox.innerText = err.message;
-        errorBox.classList.remove('hidden');
-      } else {
-        alert("Si è verificato un errore durante l'invio: " + err.message);
+      } catch (err) {
+        console.error(err);
+        if (errorBox) {
+          errorBox.innerText = err.message;
+          errorBox.classList.remove('hidden');
+        }
+        btnSubmit.disabled = false;
+        btnSubmit.innerText = "Invia Domanda di Iscrizione";
       }
-      btnSubmit.disabled = false;
-      btnSubmit.innerText = "Invia Domanda di Iscrizione";
-    }
-  });
-</script>
+    });
+  </script>
+</body>
+</html>
