@@ -3,240 +3,231 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A.S.D. Fight Academy - Dashboard Gestionale</title>
+  <title>A.S.D. Fight Academy - Pannello Controllo Soci</title>
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Supabase JS Client CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <!-- PWA Manifest e Meta Tags -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#b91c1c">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3048/3048381.png">
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-4 md:p-8">
-  <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-md p-6">
-    
-    <!-- Header Dashboard -->
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 mb-6 gap-4">
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen p-4 md:p-8">
+
+  <div class="max-w-7xl mx-auto">
+    <!-- HEADER PANNELLO -->
+    <header class="flex flex-col md:flex-row md:items-center md:justify-between pb-6 mb-6 border-b border-gray-200 gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-red-700">A.S.D. FIGHT ACADEMY</h1>
-        <p class="text-sm text-slate-500">Pannello Controllo Soci & Registro Presenze</p>
+        <h1 class="text-3xl font-extrabold text-red-700 tracking-tight">A.S.D. FIGHT ACADEMY</h1>
+        <p class="text-sm text-gray-500 font-medium">Pannello Controllo Soci & Registro Presenze</p>
       </div>
-      <div class="flex gap-2">
-        <select id="filterCorso" onchange="caricaSoci()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
-          <option value="tutti">Tutti i Corsi</option>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- FILTRO CORSI -->
+        <select id="filterCorso" onchange="filterSoci()" class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm font-semibold shadow-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+          <option value="ALL">Tutti i Corsi</option>
           <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti/Ragazzi</option>
           <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
           <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi</option>
           <option value="Vietvodao Bambini">Vietvodao Bambini</option>
-          <option value="Shodo">Shodo (Calligrafia)</option>
+          <option value="Shodo (Calligrafia Giapponese)">Shodo (Calligrafia Giapponese)</option>
         </select>
-      </div>
-      <!-- Pulsante Esporta CSV Soci -->
-            <button onclick="exportSociCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg flex items-center gap-2 shadow-sm transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            Esporta CSV Soci
-            </button>
-    </div>
 
-    <!-- Tabella Elenco Soci -->
-    <div class="overflow-x-auto">
-      <table class="w-full text-left text-sm border-collapse">
-        <thead>
-          <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs">
-            <th class="p-3">Socio</th>
-            <th class="p-3">Corso Assegnato</th>
-            <th class="p-3">Certificato Medico</th>
-            <th class="p-3">Tessera ASI</th>
-            <th class="p-3 text-center">Presenze Totali</th>
-            <th class="p-3 text-center">Azioni</th>
-          </tr>
-        </thead>
-        <tbody id="listaSoci" class="divide-y divide-slate-100">
-          <tr>
-            <td colspan="6" class="p-4 text-center text-slate-400">Caricamento in corso...</td>
-          </tr>
-        </tbody>
-      </table>
+        <!-- PULSANTE ESPORTA CSV -->
+        <button onclick="exportCSV()" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-4 py-2 rounded-lg shadow transition duration-150">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Esporta CSV Soci
+        </button>
+      </div>
+    </header>
+
+    <!-- TABELLA SOCI -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-gray-100 text-xs font-bold text-gray-500 uppercase tracking-wider border-b border-gray-200">
+              <th class="py-3 px-4">SOCIO</th>
+              <th class="py-3 px-4">CORSO ASSEGNATO</th>
+              <th class="py-3 px-4">CERTIFICATO MEDICO</th>
+              <th class="py-3 px-4">TESSERA ASI</th>
+              <th class="py-3 px-4 text-center">PRESENZE TOTALI</th>
+              <th class="py-3 px-4 text-center">AZIONI</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-gray-100 text-sm">
+            <tr>
+              <td colspan="6" class="py-8 text-center text-gray-400 font-medium">Caricamento soci in corso...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 
   <script>
-    // Configurazione Supabase Client A.S.D. Fight Academy
-    const SUPABASE_URL = "https://twiizsottstaacnvrxkg.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI";
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Inizializzazione Supabase Client
+    const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function caricaSoci() {
-      const tbody = document.getElementById('listaSoci');
-      const filtro = document.getElementById('filterCorso').value;
-      tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Aggiornamento dati dal database...</td></tr>';
+    let allSoci = []; // Variabile globale allineata
 
+    // Caricamento Dati all'avvio
+    document.addEventListener('DOMContentLoaded', loadSoci);
+
+    async function loadSoci() {
       try {
-        // 1. Recupero soci
-        let query = _supabase.from('soci').select('*');
-        if (filtro !== 'tutti') {
-          query = query.eq('corso', filtro);
-        }
-        
-        const { data: soci, error } = await query;
+        const { data, error } = await supabaseClient
+          .from('soci')
+          .select('*')
+          .order('cognome', { ascending: true });
+
         if (error) throw error;
 
-        if (!soci || soci.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-slate-400">Nessun socio iscritto trovato per questo corso.</td></tr>';
-          return;
-        }
-
-        // 2. Recupero totale presenze accumulate
-        const { data: presenze, error: errPresenze } = await _supabase.from('presenze').select('socio_id');
-        if (errPresenze) console.error("Errore recupero presenze:", errPresenze);
-
-        const conteggioPresenze = {};
-        if (presenze) {
-          presenze.forEach(p => {
-            conteggioPresenze[p.socio_id] = (conteggioPresenze[p.socio_id] || 0) + 1;
-          });
-        }
-
-        tbody.innerHTML = soci.map(socio => {
-          const numPresenze = conteggioPresenze[socio.id] || 0;
-          return `
-            <tr class="hover:bg-slate-50 transition">
-              <td class="p-3 font-medium text-slate-900">
-                <div>${socio.nome} ${socio.cognome}</div>
-                <div class="text-xs text-slate-400">${socio.email || ''} ${socio.telefono ? '• ' + socio.telefono : ''}</div>
-              </td>
-              <td class="p-3">
-                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                ${socio.corso_scelto || 'Non indicato'}
-                </span>
-              </td>
-              <td class="p-3">
-                <span class="text-xs px-2 py-1 rounded-md ${socio.scadenza_certificato ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
-                  ${socio.scadenza_certificato || 'Da verificare'}
-                </span>
-              </td>
-              <td class="p-3">
-                <span class="text-xs px-2 py-1 rounded-md ${socio.scadenza_asi ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-slate-100 text-slate-600'}">
-                  ${socio.scadenza_asi || 'Da registrare'}
-                </span>
-              </td>
-              <td class="p-3 text-center">
-                <span class="font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md text-xs border border-slate-200">
-                  ${numPresenze} lezioni
-                </span>
-              </td>
-              <td class="p-3 text-center">
-                <button onclick="registraPresenza('${socio.id}', '${socio.corso}')" class="bg-red-700 hover:bg-red-800 text-white text-xs px-3 py-1.5 rounded-lg transition shadow-sm font-medium">
-                  + Registra Presenza
-                </button>
-              </td>
-            </tr>
-          `;
-        }).join('');
+        allSoci = data || [];
+        renderSoci(allSoci);
       } catch (err) {
-        console.error(err);
-        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Errore di caricamento: ${err.message}</td></tr>`;
+        console.error('Errore nel caricamento dei soci:', err);
+        document.getElementById('tableBody').innerHTML = `
+          <tr>
+            <td colspan="6" class="py-8 text-center text-red-500 font-semibold">
+              Errore di connessione al database. Riprova più tardi.
+            </td>
+          </tr>`;
       }
     }
 
-    async function registraPresenza(idSocio, corsoSocio) {
-      try {
-        const { error } = await _supabase.from('presenze').insert([
-          { 
-            socio_id: idSocio, 
-            corso: corsoSocio,
-            data_presenza: new Date().toISOString().split('T')[0]
+    // Render della Tabella Soci
+    function renderSoci(soci) {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      if (soci.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" class="py-8 text-center text-gray-400 font-medium">Nessun socio trovato per il filtro selezionato.</td>
+          </tr>`;
+        return;
+      }
+
+      soci.forEach(socio => {
+        const tr = document.createElement('tr');
+        tr.className = "hover:bg-gray-50 transition duration-100";
+
+        // Badge Certificato Medico
+        let certBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">Da verificare</span>`;
+        if (socio.scadenza_certificato) {
+          const scadenza = new Date(socio.scadenza_certificato);
+          const oggi = new Date();
+          const diffDays = Math.ceil((scadenza - oggi) / (1000 * 60 * 60 * 24));
+          
+          if (diffDays < 0) {
+            certBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Scaduto (${socio.scadenza_certificato})</span>`;
+          } else if (diffDays <= 30) {
+            certBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">In Scadenza (${socio.scadenza_certificato})</span>`;
+          } else {
+            certBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Valido (${socio.scadenza_certificato})</span>`;
           }
-        ]);
+        }
+
+        // Badge Tessera ASI
+        let asiBadge = socio.tessera_asi 
+          ? `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">${socio.tessera_asi}</span>`
+          : `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Da registrare</span>`;
+
+        tr.innerHTML = `
+          <td class="py-3 px-4 font-semibold text-gray-900">
+            <div>${socio.nome || ''} ${socio.cognome || ''}</div>
+            <div class="text-xs text-gray-400 font-normal">${socio.email || 'Nessuna email'} • ${socio.telefono || 'Nessun telefono'}</div>
+          </td>
+          <td class="py-3 px-4">
+            <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+              ${socio.corso_scelto || 'Non indicato'}
+            </span>
+          </td>
+          <td class="py-3 px-4">${certBadge}</td>
+          <td class="py-3 px-4">${asiBadge}</td>
+          <td class="py-3 px-4 text-center font-bold text-gray-700">
+            <span class="px-3 py-1 bg-gray-100 rounded-md border border-gray-200">${socio.presenze_totali || 0} lezioni</span>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button onclick="registraPresenza('${socio.id}', ${socio.presenze_totali || 0})" class="bg-red-700 hover:bg-red-800 text-white text-xs font-bold px-3 py-1.5 rounded-md transition shadow-sm">
+              + Registra Presenza
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Filtro per Corso
+    function filterSoci() {
+      const selected = document.getElementById('filterCorso').value;
+      if (selected === 'ALL') {
+        renderSoci(allSoci);
+      } else {
+        const filtered = allSoci.filter(s => s.corso_scelto === selected);
+        renderSoci(filtered);
+      }
+    }
+
+    // Registrazione Presenza
+    async function registraPresenza(socioId, presenzeAttuali) {
+      const nuovePresenze = presenzeAttuali + 1;
+      try {
+        const { error } = await supabaseClient
+          .from('soci')
+          .update({ presenze_totali: nuovePresenze })
+          .eq('id', socioId);
 
         if (error) throw error;
 
-        alert("Presenza registrata con successo!");
-        caricaSoci(); // Ricarica la tabella con il totale aggiornato
+        await supabaseClient.from('presenze').insert([
+          { socio_id: socioId, data_presenza: new Date().toISOString().split('T')[0] }
+        ]);
+
+        await loadSoci();
       } catch (err) {
         alert("Errore durante la registrazione della presenza: " + err.message);
       }
     }
 
-    // Caricamento automatico all'avvio
-    caricaSoci();
+    // Esportazione CSV
+    function exportCSV() {
+      if (allSoci.length === 0) {
+        alert("Nessun dato da esportare.");
+        return;
+      }
 
-    // Esportazione CSV Definitiva (con supporto Blob e caratteri speciali/accenti per Excel)
-        function exportCSV() {
-        if (currentSociData.length === 0) {
-            alert("Nessun dato da esportare.");
-            return;
-        }
+      const headers = ["Nome", "Cognome", "Email", "Telefono", "Corso Scelto", "Certificato Scadenza", "Tessera ASI", "Presenze Totali"];
+      const rows = [headers.join(",")];
 
-        const headers = ["Nome", "Cognome", "Email", "Telefono", "Corso Scelto", "Certificato Scadenza", "Tessera ASI", "Presenze Totali"];
-        const rows = [headers.join(",")];
+      allSoci.forEach(s => {
+        const row = [
+          `"${(s.nome || '').replace(/"/g, '""')}"`,
+          `"${(s.cognome || '').replace(/"/g, '""')}"`,
+          `"${(s.email || '').replace(/"/g, '""')}"`,
+          `"${(s.telefono || '').replace(/"/g, '""')}"`,
+          `"${(s.corso_scelto || 'Non indicato').replace(/"/g, '""')}"`,
+          `"${(s.scadenza_certificato || '').replace(/"/g, '""')}"`,
+          `"${(s.tessera_asi || '').replace(/"/g, '""')}"`,
+          `"${s.presenze_totali || 0}"`
+        ];
+        rows.push(row.join(","));
+      });
 
-        currentSociData.forEach(s => {
-            const row = [
-            `"${(s.nome || '').replace(/"/g, '""')}"`,
-            `"${(s.cognome || '').replace(/"/g, '""')}"`,
-            `"${(s.email || '').replace(/"/g, '""')}"`,
-            `"${(s.telefono || '').replace(/"/g, '""')}"`,
-            `"${(s.corso_scelto || 'Non indicato').replace(/"/g, '""')}"`,
-            `"${(s.scadenza_certificato || '').replace(/"/g, '""')}"`,
-            `"${(s.tessera_asi || '').replace(/"/g, '""')}"`,
-            `"${s.presenze_totali || 0}"`
-            ];
-            rows.push(row.join(","));
-        });
+      const csvContent = "\uFEFF" + rows.join("\n");
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
 
-        // \uFEFF garantisce che Excel apra il file con la codifica accenti UTF-8 corretta
-        const csvContent = "\uFEFF" + rows.join("\n");
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-
-        const link = document.createElement("a");
-        link.setAttribute("href", url);
-        link.setAttribute("download", `Soci_Fight_Academy_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        }
-
-    // Intestazioni delle colonne del file Excel/CSV
-    const headers = [
-        "ID", "Nome", "Cognome", "Codice Fiscale", 
-        "Email", "Telefono", "Corso", 
-        "Scadenza Certificato", "Stato Tesseramento"
-    ];
-
-    // Mappatura delle righe dati dai soci caricati da Supabase
-    const rows = allSoci.map(socio => [
-        `"${socio.id || ''}"`,
-        `"${socio.nome || ''}"`,
-        `"${socio.cognome || ''}"`,
-        `"${socio.codice_fiscale || ''}"`,
-        `"${socio.email || ''}"`,
-        `"${socio.telefono || ''}"`,
-        `"${socio.corso || ''}"`,
-        `"${socio.scadenza_certificato || ''}"`,
-        `"${socio.stato || 'Attivo'}"`
-    ]);
-
-    // Generazione del contenuto CSV con prefisso BOM UTF-8 (\uFEFF) per corretta apertura accentata su Excel
-    const csvContent = "\uFEFF" + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-    
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    
-    const dataOggi = new Date().toISOString().split('T')[0];
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Soci_Fight_Academy_${dataOggi}.csv`);
-    document.body.appendChild(link);
-    
-    link.click();
-    document.body.removeChild(link);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `Soci_Fight_Academy_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
   </script>
 </body>
 </html>
