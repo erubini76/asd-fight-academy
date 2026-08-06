@@ -50,7 +50,7 @@
               <th class="py-3 px-4">CORSO ASSEGNATO</th>
               <th class="py-3 px-4">CERTIFICATO MEDICO</th>
               <th class="py-3 px-4">TESSERA ASI</th>
-              <th class="py-3 px-4 text-center">PRESENZE TOTALI / ESAMI</th>
+              <th class="py-3 px-4 text-center">PRESENZE / ESAMI</th>
               <th class="py-3 px-4 text-center">AZIONI</th>
             </tr>
           </thead>
@@ -66,8 +66,8 @@
 
   <script>
     // Inizializzazione Supabase Client
-    const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
+    const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';[cite: 5]
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';[cite: 6]
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let allSoci = [];
@@ -116,28 +116,37 @@
         const tr = document.createElement('tr');
         tr.className = "hover:bg-gray-50 transition duration-100";
 
-        // Badge Certificato Medico
-        let certBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">Da verificare</span>`;
+        // Badge Certificato Medico con pulsante di modifica rapida
+        let certBadge = `<div class="flex flex-col gap-1 items-start">`;
         if (socio.scadenza_certificato) {
           const scadenza = new Date(socio.scadenza_certificato);
           const oggi = new Date();
           const diffDays = Math.ceil((scadenza - oggi) / (1000 * 60 * 60 * 24));
           
           if (diffDays < 0) {
-            certBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Scaduto (${socio.scadenza_certificato})</span>`;
+            certBadge += `<span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-red-100 text-red-800">Scaduto (${socio.scadenza_certificato})</span>`;
           } else if (diffDays <= 30) {
-            certBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-amber-100 text-amber-800">In Scadenza (${socio.scadenza_certificato})</span>`;
+            certBadge += `<span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-amber-100 text-amber-800">In Scadenza (${socio.scadenza_certificato})</span>`;
           } else {
-            certBadge = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Valido (${socio.scadenza_certificato})</span>`;
+            certBadge += `<span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-green-100 text-green-800">Valido (${socio.scadenza_certificato})</span>`;
           }
+        } else {
+          certBadge += `<span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-gray-100 text-gray-600">Da inserire</span>`;
         }
+        certBadge += `<button onclick="modificaCertificato('${socio.id}', '${socio.scadenza_certificato || ''}')" class="text-[10px] bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-0.5 rounded font-medium mt-1">Modifica Cert.</button>`;
+        certBadge += `</div>`;
 
-        // Badge Tessera ASI
-        let asiBadge = socio.tessera_asi 
-          ? `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">${socio.tessera_asi}</span>`
-          : `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Da registrare</span>`;
+        // Badge Tessera ASI con pulsante di modifica rapida
+        let asiBadge = `<div class="flex flex-col gap-1 items-start">`;
+        if (socio.tessera_asi) {
+          asiBadge += `<span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-100 text-emerald-800">N° ${socio.tessera_asi}</span>`;
+        } else {
+          asiBadge += `<span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-gray-100 text-gray-600">Da registrare</span>`;
+        }
+        asiBadge += `<button onclick="modificaAsi('${socio.id}', '${socio.tessera_asi || ''}')" class="text-[10px] bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-0.5 rounded font-medium mt-1">Modifica ASI</button>`;
+        asiBadge += `</div>`;
 
-        // Calcolo Idoneità Esame per Corsi Bambini (>70% frequenza)
+        // Calcolo Idoneità Esame per Corsi Bambini (>70% frequenza)[cite: 2]
         let esameStatusHtml = '';
         if (socio.corso_scelto && socio.corso_scelto.includes('Bambini')) {
           const presenze = socio.presenze_totali || 0;
@@ -205,6 +214,42 @@
         await loadSoci();
       } catch (err) {
         alert("Errore durante la registrazione della presenza: " + err.message);
+      }
+    }
+
+    // Modifica rapida Certificato Medico
+    async function modificaCertificato(socioId, dataAttuale) {
+      const nuovaData = prompt("Inserisci la nuova data di scadenza del certificato medico (Formato: YYYY-MM-DD):", dataAttuale && dataAttuale !== 'null' ? dataAttuale : "2027-06-30");
+      if (nuovaData === null) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('soci')
+          .update({ scadenza_certificato: nuovaData })
+          .eq('id', socioId);
+
+        if (error) throw error;
+        await loadSoci();
+      } catch (err) {
+        alert("Errore aggiornamento certificato: " + err.message);
+      }
+    }
+
+    // Modifica rapida Tessera ASI
+    async function modificaAsi(socioId, tesseraAttuale) {
+      const nuovaTessera = prompt("Inserisci il numero di tessera ASI:", tesseraAttuale && tesseraAttuale !== 'null' ? tesseraAttuale : "ASI-2026-");
+      if (nuovaTessera === null) return;
+
+      try {
+        const { error } = await supabaseClient
+          .from('soci')
+          .update({ tessera_asi: nuovaTessera })
+          .eq('id', socioId);
+
+        if (error) throw error;
+        await loadSoci();
+      } catch (err) {
+        alert("Errore aggiornamento tessera ASI: " + err.message);
       }
     }
 
