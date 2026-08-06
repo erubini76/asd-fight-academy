@@ -3,151 +3,162 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Iscrizione - A.S.D. Fight Academy</title>
+  <title>Domanda di Ammissione a Socio - A.S.D. Fight Academy</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-100 text-gray-900 min-h-screen p-4">
-  <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-md">
-    <h1 class="text-2xl font-bold mb-4 text-red-700">A.S.D. FIGHT ACADEMY</h1>
-    <h2 class="text-lg font-semibold mb-6">Domanda di Ammissione a Socio</h2>
+<body class="bg-gray-100 min-h-screen py-8 px-4 flex justify-center items-center">
+  <div class="max-w-2xl w-full bg-white rounded-lg shadow-md p-6 md:p-8">
     
-    <!-- Form di iscrizione -->
-    <form id="form-iscrizione" class="space-y-4">
+    <!-- Intestazione -->
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">A.S.D. FIGHT ACADEMY</h1>
+      <p class="text-xs text-gray-600">C.F. 91023520280 - Affiliata ASI (VEN-PD0814) - Via Monte Cero 57, Este (PD)</p>
+      <h2 class="text-xl font-semibold mt-4 text-blue-900">DOMANDA DI AMMISSIONE A SOCIO</h2>
+    </div>
+
+    <!-- Box Messaggio Successo -->
+    <div id="success-box" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+      <p class="font-bold">Domanda Registrata con Successo!</p>
+      <p class="text-sm">La tua richiesta di ammissione a socio è stata inviata correttamente alla segreteria dell'Associazione.</p>
+    </div>
+
+    <!-- Box Messaggio Errore -->
+    <div id="error-box" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+      <p class="font-bold">Errore durante l'invio!</p>
+      <p id="error-message" class="text-sm"></p>
+    </div>
+
+    <!-- Modulo Iscrizione -->
+    <form id="registration-form" class="space-y-4">
       <div>
-        <label class="block font-medium">Nome</label>
-        <input type="text" name="nome" required class="w-full border p-2 rounded">
+        <label class="block text-sm font-medium text-gray-700">Nome e Cognome *</label>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="text" id="nome" name="nome" required placeholder="Nome" class="w-full p-2 border rounded">
+          <input type="text" id="cognome" name="cognome" required placeholder="Cognome" class="w-full p-2 border rounded">
+        </div>
       </div>
+
       <div>
-        <label class="block font-medium">Cognome</label>
-        <input type="text" name="cognome" required class="w-full border p-2 rounded">
+        <label class="block text-sm font-medium text-gray-700">Codice Fiscale *</label>
+        <input type="text" id="codice_fiscale" name="codice_fiscale" maxlength="16" required placeholder="RSSMRA80A01D442X" class="w-full p-2 border rounded uppercase">
       </div>
-      <div>
-        <label class="block font-medium">Codice Fiscale</label>
-        <input type="text" name="codice_fiscale" maxlength="16" required class="w-full border p-2 rounded uppercase">
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Email *</label>
+          <input type="email" id="email" name="email" required placeholder="mario@example.com" class="w-full p-2 border rounded">
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Telefono / Cellulare *</label>
+          <input type="tel" id="telefono" name="telefono" required placeholder="3926641714" class="w-full p-2 border rounded">
+        </div>
       </div>
+
       <div>
-        <label class="block font-medium">Email</label>
-        <input type="email" name="email" required class="w-full border p-2 rounded">
-      </div>
-      <div>
-        <label class="block font-medium">Telefono / Cellulare</label>
-        <input type="tel" name="telefono" required class="w-full border p-2 rounded">
-      </div>
-      <div>
-        <label class="block font-medium">Attività Scelta</label>
-        <select name="corso" required class="w-full border p-2 rounded">
-          <option value="">-- Seleziona Corso --</option>
-          <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti/Ragazzi</option>
-          <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
-          <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi</option>
-          <option value="Vietvodao Bambini">Vietvodao Bambini</option>
-          <!--
-          <option value="Shodo">Shodo (Calligrafia Giapponese)</option>
-          -->
+        <label class="block text-sm font-medium text-gray-700">Attività Scelta *</label>
+        <select id="corso" name="corso" required class="w-full p-2 border rounded">
+          <option value="">-- Seleziona il Corso --</option>
+          <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti/Ragazzi (Mar/Gio 19:30-21:00)</option>
+          <option value="Ninjutsu Bambini">Ninjutsu Bambini (Mar/Gio 18:30-19:30)</option>
+          <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi (Lun/Mer 19:30-21:00)</option>
+          <option value="Vietvodao Bambini">Vietvodao Bambini (Lun/Mer 18:30-19:30)</option>
+          <option value="Shodo">Shodo Calligrafia Giapponese (2 Ven/mese 20:00-21:30)</option>
         </select>
       </div>
 
-      <div class="space-y-2 pt-2">
-        <label class="flex items-center space-x-2">
-          <input type="checkbox" name="accetto_privacy" required>
-          <span class="text-sm">Accetto l'informativa sul trattamento dei dati personali (D.Lgs 196/2003 e Reg. UE 2016/679).</span>
-        </label>
-        <label class="flex items-center space-x-2">
-          <input type="checkbox" name="accetto_media">
-          <span class="text-sm">Cedo a titolo gratuito il diritto di utilizzare immagini/video per scopi istituzionali.</span>
-        </label>
+      <div class="space-y-2 pt-2 text-xs text-gray-600">
+        <div class="flex items-start">
+          <input type="checkbox" id="accetto_privacy" required class="mt-1 mr-2">
+          <label for="accetto_privacy">Accetto l'Informativa sul Trattamento dei Dati Personali (Art. 13 D.Lgs. 196/2003 e Reg. UE 2016/679). *</label>
+        </div>
+        <div class="flex items-start">
+          <input type="checkbox" id="accetto_media" required class="mt-1 mr-2">
+          <label for="accetto_media">Cedo a titolo gratuito alla Associazione FIGHT ACADEMY il diritto di utilizzare immagini filmate o fotografiche relative alle attività istituzionali. *</label>
+        </div>
       </div>
 
-      <button type="submit" id="btn-submit" class="w-full bg-red-700 text-white py-3 rounded font-bold hover:bg-red-800 transition">
+      <button type="submit" id="submit-btn" class="w-full bg-blue-900 text-white font-bold py-2 px-4 rounded hover:bg-blue-800 transition duration-200">
         Invia Domanda di Iscrizione
       </button>
     </form>
-
-    <!-- Messaggio di Successo -->
-    <div id="success-message" class="hidden text-center py-8">
-      <h3 class="text-xl font-bold text-green-600 mb-2">Domanda Registrata con Successo!</h3>
-      <p class="text-gray-700">La tua richiesta di ammissione a socio è stata inviata alla segreteria dell'A.S.D. Fight Academy. Sarai contattato a breve.</p>
-    </div>
-
-    <!-- Messaggio di Errore -->
-    <div id="error-message" class="hidden mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded text-sm"></div>
   </div>
 
   <script>
     const SUPABASE_URL = "https://twiizsottstaacnvrxkg.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI";
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Inizializzazione protetta del client Supabase per evitare errori di dichiarazione multipla
+    if (!window.dbClient) {
+      window.dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    }
+    const db = window.dbClient;
 
-    const form = document.getElementById('form-iscrizione');
-    const btnSubmit = document.getElementById('btn-submit');
-    const successBox = document.getElementById('success-message');
-    const errorBox = document.getElementById('error-message');
+    const form = document.getElementById('registration-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const successBox = document.getElementById('success-box');
+    const errorBox = document.getElementById('error-box');
+    const errorMessage = document.getElementById('error-message');
 
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
-      btnSubmit.disabled = true;
-      btnSubmit.innerText = "Registrazione in corso...";
-      if (errorBox) errorBox.classList.add('hidden');
+      
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Invio in corso...";
+      errorBox.classList.add('hidden');
+
+      const nome = document.getElementById('nome').value.trim();
+      const cognome = document.getElementById('cognome').value.trim();
+      const codice_fiscale = document.getElementById('codice_fiscale').value.trim().toUpperCase();
+      const email = document.getElementById('email').value.trim();
+      const telefono = document.getElementById('telefono').value.trim();
+      const corsoSelezionato = document.getElementById('corso').value;
 
       try {
-        const formData = new FormData(form);
-        const socioData = {
-          nome: formData.get('nome'),
-          cognome: formData.get('cognome'),
-          codice_fiscale: formData.get('codice_fiscale')?.toUpperCase(),
-          email: formData.get('email'),
-          telefono: formData.get('telefono'),
-          accetto_privacy: formData.get('accetto_privacy') === 'on',
-          accetto_media: formData.get('accetto_media') === 'on'
-        };
-
-        const corsoSelezionato = formData.get('corso');
-
-        const { data: socioInserito, error: errSocio } = await supabase
+        // 1. Salvataggio Socio su Supabase
+        const { data: socio, error: socioError } = await db
           .from('soci')
-          .insert([socioData])
+          .insert([{
+            nome: nome,
+            cognome: cognome,
+            codice_fiscale: codice_fiscale,
+            email: email,
+            telefono: telefono,
+            stato: 'richiesta'
+          }])
           .select()
           .single();
 
-        if (errSocio) throw new Error("Errore salvataggio socio: " + errSocio.message);
+        if (socioError) throw socioError;
 
-        if (corsoSelezionato && socioInserito) {
-          await supabase
-            .from('soci_corsi')
-            .insert([{
-              socio_id: socioInserito.id,
-              corso_nome: corsoSelezionato,
-              data_iscrizione: new Date().toISOString()
-            }]);
+        // 2. Collegamento Corso su soci_corsi
+        if (corsoSelezionato && socio) {
+          const { data: corsiData } = await db
+            .from('corsi')
+            .select('id')
+            .eq('nome', corsoSelezionato)
+            .single();
+
+          if (corsiData) {
+            await db
+              .from('soci_corsi')
+              .insert([{
+                socio_id: socio.id,
+                corso_id: corsiData.id
+              }]);
+          }
         }
 
-        try {
-          await fetch('/api/send-email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              nome: socioData.nome,
-              cognome: socioData.cognome,
-              email: socioData.email,
-              corso: corsoSelezionato
-            })
-          });
-        } catch (e) {
-          console.warn("Avviso invio mail:", e);
-        }
-
+        // Mostra messaggio di successo
         form.classList.add('hidden');
         successBox.classList.remove('hidden');
 
       } catch (err) {
-        console.error(err);
-        if (errorBox) {
-          errorBox.innerText = err.message;
-          errorBox.classList.remove('hidden');
-        }
-        btnSubmit.disabled = false;
-        btnSubmit.innerText = "Invia Domanda di Iscrizione";
+        console.error('Errore durante l\'iscrizione:', err);
+        errorMessage.innerText = err.message || "Errore durante la registrazione nel database.";
+        errorBox.classList.remove('hidden');
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Invia Domanda di Iscrizione";
       }
     });
   </script>
