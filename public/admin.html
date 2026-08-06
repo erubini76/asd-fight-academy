@@ -16,7 +16,7 @@
     <header class="flex flex-col md:flex-row md:items-center md:justify-between pb-6 mb-6 border-b border-gray-200 gap-4">
       <div>
         <h1 class="text-3xl font-extrabold text-red-700 tracking-tight">A.S.D. FIGHT ACADEMY</h1>
-        <p class="text-sm text-gray-500 font-medium">Pannello Controllo Soci & Registro Presenze</p>
+        <p class="text-sm text-gray-500 font-medium">Pannello Controllo Soci & Registro Presenze (C.F. 91023520280)</p>
       </div>
 
       <div class="flex flex-wrap items-center gap-3">
@@ -50,7 +50,7 @@
               <th class="py-3 px-4">CORSO ASSEGNATO</th>
               <th class="py-3 px-4">CERTIFICATO MEDICO</th>
               <th class="py-3 px-4">TESSERA ASI</th>
-              <th class="py-3 px-4 text-center">PRESENZE TOTALI</th>
+              <th class="py-3 px-4 text-center">PRESENZE TOTALI / ESAMI</th>
               <th class="py-3 px-4 text-center">AZIONI</th>
             </tr>
           </thead>
@@ -70,7 +70,7 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let allSoci = []; // Variabile globale allineata
+    let allSoci = [];
 
     // Caricamento Dati all'avvio
     document.addEventListener('DOMContentLoaded', loadSoci);
@@ -110,6 +110,8 @@
         return;
       }
 
+      const LEZIONI_TOTALI_STIMATE = 60; // 2 lezioni/settimana per l'anno accademico
+
       soci.forEach(socio => {
         const tr = document.createElement('tr');
         tr.className = "hover:bg-gray-50 transition duration-100";
@@ -135,6 +137,19 @@
           ? `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800">${socio.tessera_asi}</span>`
           : `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Da registrare</span>`;
 
+        // Calcolo Idoneità Esame per Corsi Bambini (>70% frequenza)
+        let esameStatusHtml = '';
+        if (socio.corso_scelto && socio.corso_scelto.includes('Bambini')) {
+          const presenze = socio.presenze_totali || 0;
+          const percentuale = Math.round((presenze / LEZIONI_TOTALI_STIMATE) * 100);
+          
+          if (percentuale >= 70) {
+            esameStatusHtml = `<div class="mt-1 text-[11px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200">🟢 Idoneo Esame (${percentuale}%)</div>`;
+          } else {
+            esameStatusHtml = `<div class="mt-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">⚠️ Valutazione Istruttore (${percentuale}%)</div>`;
+          }
+        }
+
         tr.innerHTML = `
           <td class="py-3 px-4 font-semibold text-gray-900">
             <div>${socio.nome || ''} ${socio.cognome || ''}</div>
@@ -147,8 +162,9 @@
           </td>
           <td class="py-3 px-4">${certBadge}</td>
           <td class="py-3 px-4">${asiBadge}</td>
-          <td class="py-3 px-4 text-center font-bold text-gray-700">
-            <span class="px-3 py-1 bg-gray-100 rounded-md border border-gray-200">${socio.presenze_totali || 0} lezioni</span>
+          <td class="py-3 px-4 text-center">
+            <span class="px-3 py-1 bg-gray-100 rounded-md border border-gray-200 text-xs font-bold text-gray-700">${socio.presenze_totali || 0} lezioni</span>
+            ${esameStatusHtml}
           </td>
           <td class="py-3 px-4 text-center">
             <button onclick="registraPresenza('${socio.id}', ${socio.presenze_totali || 0})" class="bg-red-700 hover:bg-red-800 text-white text-xs font-bold px-3 py-1.5 rounded-md transition shadow-sm">
@@ -192,17 +208,24 @@
       }
     }
 
-    // Esportazione CSV
+    // Esportazione CSV UTF-8 tramite Blob
     function exportCSV() {
       if (allSoci.length === 0) {
         alert("Nessun dato da esportare.");
         return;
       }
 
-      const headers = ["Nome", "Cognome", "Email", "Telefono", "Corso Scelto", "Certificato Scadenza", "Tessera ASI", "Presenze Totali"];
+      const headers = ["Nome", "Cognome", "Email", "Telefono", "Corso Scelto", "Certificato Scadenza", "Tessera ASI", "Presenze Totali", "Stato Esame Bambini"];
       const rows = [headers.join(",")];
+      const LEZIONI_TOTALI_STIMATE = 60;
 
       allSoci.forEach(s => {
+        let statoEsame = "N/A";
+        if (s.corso_scelto && s.corso_scelto.includes('Bambini')) {
+          const perc = Math.round(((s.presenze_totali || 0) / LEZIONI_TOTALI_STIMATE) * 100);
+          statoEsame = perc >= 70 ? `Idoneo (${perc}%)` : `Valutazione Istruttore (${perc}%)`;
+        }
+
         const row = [
           `"${(s.nome || '').replace(/"/g, '""')}"`,
           `"${(s.cognome || '').replace(/"/g, '""')}"`,
@@ -211,7 +234,8 @@
           `"${(s.corso_scelto || 'Non indicato').replace(/"/g, '""')}"`,
           `"${(s.scadenza_certificato || '').replace(/"/g, '""')}"`,
           `"${(s.tessera_asi || '').replace(/"/g, '""')}"`,
-          `"${s.presenze_totali || 0}"`
+          `"${s.presenze_totali || 0}"`,
+          `"${statoEsame}"`
         ];
         rows.push(row.join(","));
       });
