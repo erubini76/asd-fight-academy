@@ -63,9 +63,6 @@
           <option value="Ninjutsu Bambini">Ninjutsu Bambini (Mar/Gio 18:30-19:30)</option>
           <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi (Lun/Mer 19:30-21:00)</option>
           <option value="Vietvodao Bambini">Vietvodao Bambini (Lun/Mer 18:30-19:30)</option>
-          <!--
-          <option value="Shodo">Shodo Calligrafia Giapponese (2 Ven/mese 20:00-21:30)</option>
-        -->
         </select>
       </div>
 
@@ -132,16 +129,24 @@
 
         if (socioError) throw new Error("Errore salvataggio socio: " + socioError.message);
 
-        // 2. Recupero ID Corso e Salvataggio nella tabella 'soci_corsi'
+        // 2. Recupero ID Corso con ricerca flessibile
         if (nomeCorsoSelezionato && socio) {
+          // Estraiamo la prima parola chiave (es. "Ninjutsu" o "Vietvodao") per garantire il match
+          const keyword = nomeCorsoSelezionato.split(' ')[0];
+          
           const { data: corsiData, error: corsoFindError } = await db
             .from('corsi')
-            .select('id')
-            .ilike('nome', `%${nomeCorsoSelezionato}%`)
-            .limit(1);
+            .select('id, nome')
+            .ilike('nome', `%${keyword}%`);
 
+          let corsoId = null;
           if (corsiData && corsiData.length > 0) {
-            const corsoId = corsiData[0].id;
+            // Se trova più corsi con la parola chiave, prova a cercare l'abbinamento esatto o prende il primo
+            const matchEsatto = corsiData.find(c => c.nome.toLowerCase().includes(nomeCorsoSelezionato.toLowerCase()));
+            corsoId = matchEsatto ? matchEsatto.id : corsiData[0].id;
+          }
+
+          if (corsoId) {
             const { error: errSociCorsi } = await db
               .from('soci_corsi')
               .insert([{
@@ -150,12 +155,14 @@
               }]);
 
             if (errSociCorsi) {
-              console.warn("Avviso registrazione corso:", errSociCorsi.message);
+              console.error("Errore salvataggio soci_corsi:", errSociCorsi.message);
             }
+          } else {
+            console.warn("Nessun corso corrispondente trovato per la parola chiave:", keyword);
           }
         }
 
-        // 3. Chiamata alla Serverless API su Vercel per Invio Notifica Email (Resend)
+        // 3. Invio email tramite Serverless Function /api/send-email
         try {
           await fetch('/api/send-email', {
             method: 'POST',
