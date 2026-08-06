@@ -12,60 +12,61 @@
   <div class="max-w-xl w-full bg-white rounded-2xl shadow-md border border-gray-200 p-6 md:p-8">
     <div class="text-center mb-6">
       <h1 class="text-2xl font-extrabold text-red-700 tracking-tight">A.S.D. FIGHT ACADEMY</h1>
-      <p class="text-sm text-gray-500 font-medium">Area Caricamento Documenti e Pagamenti</p>
+      <p class="text-sm text-gray-500 font-medium">Area Riservata e Gestione Pagamenti Cumulativi</p>
     </div>
 
-    <!-- STEP 1: IDENTIFICAZIONE SOCIO VIA EMAIL -->
+    <!-- LOGIN SICURO (EMAIL + CODICE FISCALE) -->
     <div id="searchSection" class="space-y-4">
       <div>
-        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Inserisci la tua Email registrata</label>
-        <input type="email5" id="userEmail" placeholder="es. m.rossi@email.it" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-red-600 focus:outline-none">
+        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Email Registrata</label>
+        <input type="email" id="userEmail" placeholder="es. m.rossi@email.it" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-red-600 focus:outline-none">
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Codice Fiscale (Controllo Sicurezza)</label>
+        <input type="text" id="userCf" placeholder="es. RSSMRA80A01Z100A" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm uppercase focus:ring-2 focus:ring-red-600 focus:outline-none">
       </div>
       <button onclick="cercaSocio()" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-sm">
-        Accedi alla mia Area
+        Accedi in Sicurezza
       </button>
     </div>
 
-    <!-- STEP 2: DASHBOARD PERSONALE (Nascosta finché non riconosciuto) -->
+    <!-- PORTALE FAMIGLIA / UTENTE (Nascosto finché non autenticato) -->
     <div id="portalSection" class="hidden space-y-6">
       <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-        <h2 id="welcomeText" class="font-bold text-gray-900 text-base">Benvenuto</h2>
-        <p id="corsoText" class="text-xs text-gray-500 mt-0.5"></p>
+        <h2 class="font-bold text-gray-900 text-base">Profili Associati / Famiglia</h2>
+        <p class="text-xs text-gray-500 mt-0.5">Gestisci certificati medici e invia pagamenti cumulativi per i corsi selezionati.</p>
       </div>
 
-      <!-- CARICAMENTO CERTIFICATO MEDICO -->
-      <div class="border border-gray-200 rounded-xl p-4 space-y-3">
-        <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
-          <span>📄</span> Certificato Medico di Idoneità
-        </h3>
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">Data di Scadenza del Certificato</label>
-          <input type="date" id="scadenzaCertInput" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
-        </div>
-        <div>
-          <label class="block text-xs text-gray-600 mb-1">File Certificato (Immagine o PDF)</label>
-          <input type="file" id="fileCertInput" accept="image/*,.pdf" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
-        </div>
-        <button onclick="uploadCertificato()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 rounded-lg text-xs transition">
-          Carica Certificato per Verifica Presidente
-        </button>
+      <!-- LISTA DEI PROFILI ASSOCIATI -->
+      <div id="profiliContainer" class="space-y-4">
+        <!-- Generato dinamicamente via JS -->
       </div>
 
-      <!-- CARICAMENTO RICEVUTA PAGAMENTO -->
-      <div class="border border-gray-200 rounded-xl p-4 space-y-3">
-        <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
-          <span>💶</span> Ricevuta Bonifico o Pagamento
+      <!-- SEZIONE PAGAMENTO CUMULATIVO -->
+      <div class="border border-emerald-200 bg-emerald-50/30 rounded-xl p-4 space-y-4">
+        <h3 class="text-sm font-bold text-emerald-900 flex items-center gap-2">
+          <span>💶</span> Invia Bonifico Cumulativo (Più Corsi / Famigliari)
         </h3>
+        
         <div>
-          <label class="block text-xs text-gray-600 mb-1">Importo Pagato in Euro (€)</label>
-          <input type="number" step="0.01" id="importoInput" placeholder="es. 50.00" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+          <label class="block text-xs font-semibold text-gray-700 mb-2">Seleziona a quali corsi/atleti si riferisce questo pagamento:</label>
+          <div id="checkboxCorsiContainer" class="space-y-2 bg-white p-3 rounded-lg border border-gray-200">
+            <!-- Checkbox generate dinamicamente -->
+          </div>
         </div>
+
         <div>
-          <label class="block text-xs text-gray-600 mb-1">File Ricevuta / Contabile (Immagine o PDF)</label>
-          <input type="file" id="filePagInput" accept="image/*,.pdf" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+          <label class="block text-xs font-semibold text-gray-700 mb-1">Importo Totale Bonifico in Euro (€)</label>
+          <input type="number" step="0.01" id="importoTotaleInput" placeholder="es. 125.00" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600">
         </div>
-        <button onclick="uploadPagamento()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded-lg text-xs transition">
-          Invia Ricevuta per Conferma
+
+        <div>
+          <label class="block text-xs font-semibold text-gray-700 mb-1">File Contabile / Ricevuta (Immagine o PDF)</label>
+          <input type="file" id="filePagCumulativoInput" accept="image/*,.pdf" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-100 file:text-emerald-800 hover:file:bg-emerald-200">
+        </div>
+
+        <button onclick="inviaPagamentoCumulativo()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-lg text-xs transition shadow-sm">
+          Invia Ricevuta Cumulativa per Verifica Presidente
         </button>
       </div>
 
@@ -80,12 +81,14 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let currentSocio = null;
+    let foundSociList = [];
 
     async function cercaSocio() {
-      const email = document.getElementById('userEmail').value.trim();
-      if (!email) {
-        alert("Inserisci un'email valida.");
+      const email = document.getElementById('userEmail').value.trim().toLowerCase();
+      const cf = document.getElementById('userCf').value.trim().toUpperCase();
+
+      if (!email || !cf) {
+        alert("Inserisci sia l'email che il Codice Fiscale per motivi di sicurezza.");
         return;
       }
 
@@ -93,39 +96,94 @@
         const { data, error } = await supabaseClient
           .from('soci')
           .select('*')
-          .eq('email', email)
-          .single();
+          .eq('email', email);
 
-        if (error || !data) {
-          alert("Nessun socio trovato con questa email. Contatta la segreteria dell'associazione.");
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          alert("Nessun socio trovato con questa email. Contatta la segreteria.");
           return;
         }
 
-        currentSocio = data;
-        document.getElementById('welcomeText').innerText = `Atleta: ${data.nome} ${data.cognome}`;
-        document.getElementById('corsoText').innerText = `Corso: ${data.corso_scelto || 'Non assegnato'}`;
-        
-        document.getElementById('searchSection').classList.add('hidden');
-        document.getElementById('portalSection').classList.remove('hidden');
+        // Controllo anti-spoofing: il CF inserito deve corrispondere ad almeno un record associato all'email
+        const match = data.some(s => (s.codice_fiscale || '').toUpperCase() === cf);
+        if (!match) {
+          alert("Il Codice Fiscale inserito non corrisponde ai dati registrati per questa email. Accesso negato.");
+          return;
+        }
+
+        foundSociList = data;
+        renderPortal();
       } catch (err) {
-        alert("Errore durante la ricerca: " + err.message);
+        alert("Errore durante l'accesso: " + err.message);
       }
     }
 
-    async function uploadCertificato() {
-      const fileInput = document.getElementById('fileCertInput');
-      const dataScadenza = document.getElementById('scadenzaCertInput').value;
+    function renderPortal() {
+      document.getElementById('searchSection').classList.add('hidden');
+      document.getElementById('portalSection').classList.remove('hidden');
+
+      // Renderizza i profili per il caricamento dei certificati
+      const container = document.getElementById('profiliContainer');
+      container.innerHTML = '';
+
+      const checkboxContainer = document.getElementById('checkboxCorsiContainer');
+      checkboxContainer.innerHTML = '';
+
+      foundSociList.forEach((socio, idx) => {
+        // Box profilo socio (Certificato)
+        const div = document.createElement('div');
+        div.className = "border border-gray-200 rounded-xl p-4 space-y-3 bg-white";
+        div.innerHTML = `
+          <div class="flex justify-between items-center">
+            <div>
+              <h4 class="font-bold text-gray-900 text-sm">${socio.nome} ${socio.cognome}</h4>
+              <span class="text-xs px-2 py-0.5 bg-blue-100 text-blue-800 rounded-full font-semibold">${socio.corso_scelto || 'Corso non specificato'}</span>
+            </div>
+            <span class="text-xs text-gray-400">CF: ${socio.codice_fiscale || 'Non inserito'}</span>
+          </div>
+          <div class="border-t border-gray-100 pt-3 space-y-2">
+            <p class="text-xs font-bold text-gray-700">Certificato Medico:</p>
+            <div>
+              <label class="block text-[11px] text-gray-500 mb-1">Data Scadenza Certificato</label>
+              <input type="date" id="scadenza_${socio.id}" value="${socio.scadenza_certificato || ''}" class="w-full border border-gray-300 rounded-lg px-3 py-1.5 text-xs">
+            </div>
+            <div>
+              <label class="block text-[11px] text-gray-500 mb-1">Carica File Certificato (PDF / Immagine)</label>
+              <input type="file" id="fileCert_${socio.id}" accept="image/*,.pdf" class="w-full text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700">
+            </div>
+            <button onclick="uploadCertificato(${socio.id})" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 rounded-lg text-xs transition">
+              Carica Certificato per ${socio.nome}
+            </button>
+          </div>
+        `;
+        container.appendChild(div);
+
+        // Checkbox per pagamenti cumulativi
+        const checkLabel = document.createElement('label');
+        checkLabel.className = "flex items-center gap-2 text-xs text-gray-700 font-medium cursor-pointer";
+        checkLabel.innerHTML = `
+          <input type="checkbox" name="socio_pagamento" value="${socio.id}" class="w-4 h-4 text-emerald-600 rounded border-gray-300 focus:ring-emerald-500" checked>
+          <span>${socio.nome} ${socio.cognome} (${socio.corso_scelto || 'Corso'})</span>
+        `;
+        checkboxContainer.appendChild(checkLabel);
+      });
+    }
+
+    async function uploadCertificato(socioId) {
+      const fileInput = document.getElementById(`fileCert_${socioId}`);
+      const dataScadenza = document.getElementById(`scadenza_${socioId}`).value;
 
       if (!fileInput.files.length || !dataScadenza) {
-        alert("Seleziona il file del certificato e inserisci la data di scadenza.");
+        alert("Seleziona il file e inserisci la data di scadenza.");
         return;
       }
 
       const file = fileInput.files[0];
-      const fileName = `cert_${currentSocio.id}_${Date.now()}_${file.name}`;
+      const fileName = `cert_${socioId}_${Date.now()}_${file.name}`;
 
       try {
-        const { data: storageData, error: storageError } = await supabaseClient.storage
+        const { error: storageError } = await supabaseClient.storage
           .from('certificati_medici')
           .upload(fileName, file);
 
@@ -135,40 +193,44 @@
           .from('certificati_medici')
           .getPublicUrl(fileName);
 
-        const fileUrl = publicUrlData.publicUrl;
-
         const { error: updateError } = await supabaseClient
           .from('soci')
           .update({
-            certificato_url: fileUrl,
+            certificato_url: publicUrlData.publicUrl,
             scadenza_certificato: dataScadenza,
             certificato_stato: 'In attesa di verifica'
           })
-          .eq('id', currentSocio.id);
+          .eq('id', socioId);
 
         if (updateError) throw updateError;
 
-        alert("Certificato caricato con successo! Il Presidente procederà alla verifica.");
+        alert("Certificato caricato con successo! In attesa di approvazione del Presidente.");
         location.reload();
       } catch (err) {
         alert("Errore caricamento certificato: " + err.message);
       }
     }
 
-    async function uploadPagamento() {
-      const fileInput = document.getElementById('filePagInput');
-      const importo = document.getElementById('importoInput').value;
+    async function inviaPagamentoCumulativo() {
+      const checkboxes = document.querySelectorAll('input[name="socio_pagamento"]:checked');
+      const importo = document.getElementById('importoTotaleInput').value;
+      const fileInput = document.getElementById('filePagCumulativoInput');
 
-      if (!fileInput.files.length || !importo) {
-        alert("Inserisci l'importo in Euro e seleziona la ricevuta di pagamento.");
+      if (checkboxes.length === 0) {
+        alert("Seleziona almeno un corso/atleta a cui fa riferimento il pagamento.");
+        return;
+      }
+      if (!importo || !fileInput.files.length) {
+        alert("Inserisci l'importo totale in Euro e seleziona il file della ricevuta/contabile.");
         return;
       }
 
       const file = fileInput.files[0];
-      const fileName = `pag_${currentSocio.id}_${Date.now()}_${file.name}`;
+      const fileName = `pag_cumulativo_${Date.now()}_${file.name}`;
 
       try {
-        const { data: storageData, error: storageError } = await supabaseClient.storage
+        // 1. Upload file su bucket ricevute_pagamenti
+        const { error: storageError } = await supabaseClient.storage
           .from('ricevute_pagamenti')
           .upload(fileName, file);
 
@@ -178,23 +240,40 @@
           .from('ricevute_pagamenti')
           .getPublicUrl(fileName);
 
-        const fileUrl = publicUrlData.publicUrl;
+        // 2. Inserisci record nella tabella pagamenti
+        const { data: pagData, error: pagError } = await supabaseClient
+          .from('pagamenti')
+          .insert([{
+            importo_totale: parseFloat(importo),
+            ricevuta_url: publicUrlData.publicUrl,
+            stato: 'Da verificare'
+          }])
+          .select()
+          .single();
 
-        const { error: updateError } = await supabaseClient
-          .from('soci')
-          .update({
-            ricevuta_url: fileUrl,
-            importo_pagamento: parseFloat(importo),
-            pagamento_stato: 'Da verificare'
-          })
-          .eq('id', currentSocio.id);
+        if (pagError) throw pagError;
 
-        if (updateError) throw updateError;
+        const pagamentoId = pagData.id;
 
-        alert("Ricevuta inviata con successo! Il Presidente verificherà l'importo e confermerà il pagamento.");
+        // 3. Associa il pagamento ai soci selezionati tramite la tabella di giunzione pagamento_soci
+        const associazioni = [];
+        checkboxes.forEach(cb => {
+          associazioni.push({
+            pagamento_id: pagamentoId,
+            socio_id: parseInt(cb.value)
+          });
+        });
+
+        const { error: assocError } = await supabaseClient
+          .from('pagamento_soci')
+          .insert(associazioni);
+
+        if (assocError) throw assocError;
+
+        alert("Ricevuta di pagamento cumulativa inviata con successo! Il Presidente provvederà alla verifica e conferma.");
         location.reload();
       } catch (err) {
-        alert("Errore caricamento ricevuta: " + err.message);
+        alert("Errore invio pagamento: " + err.message);
       }
     }
   </script>
