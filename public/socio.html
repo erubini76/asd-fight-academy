@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A.S.D. Fight Academy - Area Riservata Socio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased min-h-screen p-4 md:p-8 flex items-center justify-center">
+
+  <div class="max-w-xl w-full bg-white rounded-2xl shadow-md border border-gray-200 p-6 md:p-8">
+    <div class="text-center mb-6">
+      <h1 class="text-2xl font-extrabold text-red-700 tracking-tight">A.S.D. FIGHT ACADEMY</h1>
+      <p class="text-sm text-gray-500 font-medium">Area Caricamento Documenti e Pagamenti</p>
+    </div>
+
+    <!-- STEP 1: IDENTIFICAZIONE SOCIO VIA EMAIL -->
+    <div id="searchSection" class="space-y-4">
+      <div>
+        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Inserisci la tua Email registrata</label>
+        <input type="email5" id="userEmail" placeholder="es. m.rossi@email.it" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:ring-2 focus:ring-red-600 focus:outline-none">
+      </div>
+      <button onclick="cercaSocio()" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2.5 rounded-lg text-sm transition shadow-sm">
+        Accedi alla mia Area
+      </button>
+    </div>
+
+    <!-- STEP 2: DASHBOARD PERSONALE (Nascosta finché non riconosciuto) -->
+    <div id="portalSection" class="hidden space-y-6">
+      <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+        <h2 id="welcomeText" class="font-bold text-gray-900 text-base">Benvenuto</h2>
+        <p id="corsoText" class="text-xs text-gray-500 mt-0.5"></p>
+      </div>
+
+      <!-- CARICAMENTO CERTIFICATO MEDICO -->
+      <div class="border border-gray-200 rounded-xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+          <span>📄</span> Certificato Medico di Idoneità
+        </h3>
+        <div>
+          <label class="block text-xs text-gray-600 mb-1">Data di Scadenza del Certificato</label>
+          <input type="date" id="scadenzaCertInput" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-600 mb-1">File Certificato (Immagine o PDF)</label>
+          <input type="file" id="fileCertInput" accept="image/*,.pdf" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
+        </div>
+        <button onclick="uploadCertificato()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-semibold py-2 rounded-lg text-xs transition">
+          Carica Certificato per Verifica Presidente
+        </button>
+      </div>
+
+      <!-- CARICAMENTO RICEVUTA PAGAMENTO -->
+      <div class="border border-gray-200 rounded-xl p-4 space-y-3">
+        <h3 class="text-sm font-bold text-gray-800 flex items-center gap-2">
+          <span>💶</span> Ricevuta Bonifico o Pagamento
+        </h3>
+        <div>
+          <label class="block text-xs text-gray-600 mb-1">Importo Pagato in Euro (€)</label>
+          <input type="number" step="0.01" id="importoInput" placeholder="es. 50.00" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-600">
+        </div>
+        <div>
+          <label class="block text-xs text-gray-600 mb-1">File Ricevuta / Contabile (Immagine o PDF)</label>
+          <input type="file" id="filePagInput" accept="image/*,.pdf" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+        </div>
+        <button onclick="uploadPagamento()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 rounded-lg text-xs transition">
+          Invia Ricevuta per Conferma
+        </button>
+      </div>
+
+      <button onclick="location.reload()" class="w-full text-center text-xs text-gray-400 hover:text-gray-600 mt-2">
+        Esci / Cambia Profilo
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentSocio = null;
+
+    async function cercaSocio() {
+      const email = document.getElementById('userEmail').value.trim();
+      if (!email) {
+        alert("Inserisci un'email valida.");
+        return;
+      }
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('soci')
+          .select('*')
+          .eq('email', email)
+          .single();
+
+        if (error || !data) {
+          alert("Nessun socio trovato con questa email. Contatta la segreteria dell'associazione.");
+          return;
+        }
+
+        currentSocio = data;
+        document.getElementById('welcomeText').innerText = `Atleta: ${data.nome} ${data.cognome}`;
+        document.getElementById('corsoText').innerText = `Corso: ${data.corso_scelto || 'Non assegnato'}`;
+        
+        document.getElementById('searchSection').classList.add('hidden');
+        document.getElementById('portalSection').classList.remove('hidden');
+      } catch (err) {
+        alert("Errore durante la ricerca: " + err.message);
+      }
+    }
+
+    async function uploadCertificato() {
+      const fileInput = document.getElementById('fileCertInput');
+      const dataScadenza = document.getElementById('scadenzaCertInput').value;
+
+      if (!fileInput.files.length || !dataScadenza) {
+        alert("Seleziona il file del certificato e inserisci la data di scadenza.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const fileName = `cert_${currentSocio.id}_${Date.now()}_${file.name}`;
+
+      try {
+        const { data: storageData, error: storageError } = await supabaseClient.storage
+          .from('certificati_medici')
+          .upload(fileName, file);
+
+        if (storageError) throw storageError;
+
+        const { data: publicUrlData } = supabaseClient.storage
+          .from('certificati_medici')
+          .getPublicUrl(fileName);
+
+        const fileUrl = publicUrlData.publicUrl;
+
+        const { error: updateError } = await supabaseClient
+          .from('soci')
+          .update({
+            certificato_url: fileUrl,
+            scadenza_certificato: dataScadenza,
+            certificato_stato: 'In attesa di verifica'
+          })
+          .eq('id', currentSocio.id);
+
+        if (updateError) throw updateError;
+
+        alert("Certificato caricato con successo! Il Presidente procederà alla verifica.");
+        location.reload();
+      } catch (err) {
+        alert("Errore caricamento certificato: " + err.message);
+      }
+    }
+
+    async function uploadPagamento() {
+      const fileInput = document.getElementById('filePagInput');
+      const importo = document.getElementById('importoInput').value;
+
+      if (!fileInput.files.length || !importo) {
+        alert("Inserisci l'importo in Euro e seleziona la ricevuta di pagamento.");
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const fileName = `pag_${currentSocio.id}_${Date.now()}_${file.name}`;
+
+      try {
+        const { data: storageData, error: storageError } = await supabaseClient.storage
+          .from('ricevute_pagamenti')
+          .upload(fileName, file);
+
+        if (storageError) throw storageError;
+
+        const { data: publicUrlData } = supabaseClient.storage
+          .from('ricevute_pagamenti')
+          .getPublicUrl(fileName);
+
+        const fileUrl = publicUrlData.publicUrl;
+
+        const { error: updateError } = await supabaseClient
+          .from('soci')
+          .update({
+            ricevuta_url: fileUrl,
+            importo_pagamento: parseFloat(importo),
+            pagamento_stato: 'Da verificare'
+          })
+          .eq('id', currentSocio.id);
+
+        if (updateError) throw updateError;
+
+        alert("Ricevuta inviata con successo! Il Presidente verificherà l'importo e confermerà il pagamento.");
+        location.reload();
+      } catch (err) {
+        alert("Errore caricamento ricevuta: " + err.message);
+      }
+    }
+  </script>
+</body>
+</html>
