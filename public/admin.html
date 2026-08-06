@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A.S.D. Fight Academy - Dashboard Gestionale</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-4 md:p-8">
+  <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-md p-6">
+    
+    <!-- Header Dashboard -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b pb-4 mb-6 gap-4">
+      <div>
+        <h1 class="text-2xl font-bold text-red-700">A.S.D. FIGHT ACADEMY</h1>
+        <p class="text-sm text-slate-500">Pannello Controllo Soci & Presenze</p>
+      </div>
+      <div class="flex gap-2">
+        <select id="filterCorso" onchange="caricaSoci()" class="border border-slate-300 rounded-lg px-3 py-2 text-sm bg-white">
+          <option value="tutti">Tutti i Corsi</option>
+          <option value="Ninjutsu Adulti">Ninjutsu Adulti</option>
+          <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
+          <option value="Vietvodao Adulti">Vietvodao Adulti</option>
+          <option value="Vietvodao Bambini">Vietvodao Bambini</option>
+          <option value="Shodo">Shodo</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Tabella Elenco Soci -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-sm border-collapse">
+        <thead>
+          <tr class="bg-slate-50 border-b border-slate-200 text-slate-600 uppercase text-xs">
+            <th class="p-3">Socio</th>
+            <th class="p-3">Contatti</th>
+            <th class="p-3">Corso</th>
+            <th class="p-3">Certificato Medico</th>
+            <th class="p-3 text-center">Azioni</th>
+          </tr>
+        </thead>
+        <tbody id="listaSoci" class="divide-y divide-slate-100">
+          <tr>
+            <td colspan="5" class="p-4 text-center text-slate-400">Caricamento in corso...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Configurazione Supabase Client
+    const SUPABASE_URL = "https://twiizsottstaacnvrxkg.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI";
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function caricaSoci() {
+      const tbody = document.getElementById('listaSoci');
+      const filtro = document.getElementById('filterCorso').value;
+      tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">Aggiornamento dati...</td></tr>';
+
+      try {
+        let query = _supabase.from('soci').select('*');
+        if (filtro !== 'tutti') {
+          query = query.eq('corso', filtro);
+        }
+        
+        const { data: soci, error } = await query;
+        if (error) throw error;
+
+        if (!soci || soci.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400">Nessun socio trovato per questo filtro.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = soci.map(socio => `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="p-3 font-medium text-slate-900">${socio.nome} ${socio.cognome}</td>
+            <td class="p-3 text-slate-600">
+              <div>${socio.email || '-'}</div>
+              <div class="text-xs text-slate-400">${socio.telefono || '-'}</div>
+            </td>
+            <td class="p-3"><span class="bg-red-50 text-red-700 text-xs px-2 py-1 rounded-md border border-red-100">${socio.corso || 'Non indicato'}</span></td>
+            <td class="p-3">
+              <span class="text-xs px-2 py-1 rounded-md ${socio.scadenza_certificato ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">
+                ${socio.scadenza_certificato || 'Da verificare'}
+              </span>
+            </td>
+            <td class="p-3 text-center">
+              <button onclick="registraPresenza('${socio.id}')" class="bg-slate-800 hover:bg-slate-900 text-white text-xs px-3 py-1.5 rounded-lg transition">
+                + Presenza
+              </button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Errore caricamento: ${err.message}</td></tr>`;
+      }
+    }
+
+    function registraPresenza(idSocio) {
+      alert("Funzione registro presenze in fase di attivazione per socio ID: " + idSocio);
+    }
+
+    // Caricamento iniziale
+    caricaSoci();
+  </script>
+</body>
+</html>
