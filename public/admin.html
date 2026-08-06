@@ -165,12 +165,43 @@
     // Caricamento automatico all'avvio
     caricaSoci();
 
-    // Funzione per generare e scaricare il file CSV dei soci
-    function exportSociCSV() {
-    if (!allSoci || allSoci.length === 0) {
-        alert("Nessun dato soci disponibile per l'esportazione.");
-        return;
-    }
+    // Esportazione CSV Definitiva (con supporto Blob e caratteri speciali/accenti per Excel)
+        function exportCSV() {
+        if (currentSociData.length === 0) {
+            alert("Nessun dato da esportare.");
+            return;
+        }
+
+        const headers = ["Nome", "Cognome", "Email", "Telefono", "Corso Scelto", "Certificato Scadenza", "Tessera ASI", "Presenze Totali"];
+        const rows = [headers.join(",")];
+
+        currentSociData.forEach(s => {
+            const row = [
+            `"${(s.nome || '').replace(/"/g, '""')}"`,
+            `"${(s.cognome || '').replace(/"/g, '""')}"`,
+            `"${(s.email || '').replace(/"/g, '""')}"`,
+            `"${(s.telefono || '').replace(/"/g, '""')}"`,
+            `"${(s.corso_scelto || 'Non indicato').replace(/"/g, '""')}"`,
+            `"${(s.scadenza_certificato || '').replace(/"/g, '""')}"`,
+            `"${(s.tessera_asi || '').replace(/"/g, '""')}"`,
+            `"${s.presenze_totali || 0}"`
+            ];
+            rows.push(row.join(","));
+        });
+
+        // \uFEFF garantisce che Excel apra il file con la codifica accenti UTF-8 corretta
+        const csvContent = "\uFEFF" + rows.join("\n");
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Soci_Fight_Academy_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        }
 
     // Intestazioni delle colonne del file Excel/CSV
     const headers = [
