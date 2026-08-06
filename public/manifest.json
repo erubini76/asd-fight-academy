@@ -1,0 +1,21 @@
+{
+  "short_name": "FightAcademy",
+  "name": "A.S.D. Fight Academy - Gestione Soci",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3048/3048381.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3048/3048381.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/admin.html",
+  "background_color": "#ffffff",
+  "theme_color": "#b91c1c",
+  "display": "standalone",
+  "orientation": "portrait"
+}
