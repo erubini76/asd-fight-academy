@@ -10,42 +10,45 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Interroghiamo la vista SQL per le scadenze dei soci
     const { data: sociScadenze, error } = await supabase
       .from('v_scadenze_soci')
       .select('*');
 
-    if (error) throw error;
+    if (error) {
+      return res.status(200).json({ success: false, message: "Vista SQL non pronta o vuota: " + error.message });
+    }
+
+    if (!sociScadenze || sociScadenze.length === 0) {
+      return res.status(200).json({ success: true, processed: 0, logs: ["Nessun socio trovato nella vista di controllo."] });
+    }
 
     let emailLogs = [];
 
     for (const socio of sociScadenze) {
       const { email, nome, cognome, giorni_alla_scadenza_medica, giorni_alla_scadenza_asi } = socio;
 
-      // 1. Controllo Scadenza Certificato Medico (-45, -30, -15 giorni)
-      if ([45, 30, 15].includes(giorni_alla_scadenza_medica)) {
-        let recipients = [email];
-        // Copia al presidente per -30 e -15 giorni
+      if (giorni_alla_scadenza_medica !== null && [45, 30, 15].includes(giorni_alla_scadenza_medica)) {
+        let recipients = email ? [email] : [];
         if (giorni_alla_scadenza_medica <= 30) {
           recipients.push('kawasemidojo@gmail.com');
         }
-
-        await resend.emails.send({
-          from: 'A.S.D. Fight Academy <onboarding@resend.dev>',
-          to: recipients,
-          subject: `AVVISO: Scadenza Certificato Medico tra ${giorni_alla_scadenza_medica} giorni`,
-          html: `<p>Ciao <strong>${nome} ${cognome}</strong>,</p><p>ti ricordiamo che il tuo certificato medico scadrà tra <strong>${giorni_alla_scadenza_medica} giorni</strong>. Ti invitiamo a caricarne uno nuovo al più presto.</p>`
-        });
-        emailLogs.push(`Certificato medico inviato a ${email} (${giorni_alla_scadenza_medica}gg)`);
+        if (recipients.length > 0) {
+          await resend.emails.send({
+            from: 'A.S.D. Fight Academy <onboarding@resend.dev>',
+            to: recipients,
+            subject: `AVVISO: Scadenza Certificato Medico tra ${giorni_alla_scadenza_medica} giorni`,
+            html: `<p>Ciao <strong>${nome || ''} ${cognome || ''}</strong>,</p><p>ti ricordiamo che il tuo certificato medico scadrà tra <strong>${giorni_alla_scadenza_medica} giorni</strong>.</p>`
+          });
+          emailLogs.push(`Certificato medico inviato a ${email} (${giorni_alla_scadenza_medica}gg)`);
+        }
       }
 
-      // 2. Controllo Scadenza Tessera ASI (-15 giorni -> invio al Presidente)
       if (giorni_alla_scadenza_asi === 15) {
         await resend.emails.send({
           from: 'A.S.D. Fight Academy <onboarding@resend.dev>',
           to: ['kawasemidojo@gmail.com'],
-          subject: `ALERT ASI: Scadenza Tessera per ${nome} ${cognome}`,
-          html: `<p>Il Presidente viene informato che la tessera ASI del socio <strong>${nome} ${cognome}</strong> scadrà tra <strong>15 giorni</strong>.</p>`
+          subject: `ALERT ASI: Tessera per ${nome || ''} ${cognome || ''}`,
+          html: `<p>La tessera ASI di <strong>${nome || ''} ${cognome || ''}</strong> scadrà tra 15 giorni.</p>`
         });
         emailLogs.push(`Alert ASI inviato per ${nome} ${cognome}`);
       }
