@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A.S.D. Fight Academy - Controllo Scadenze</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Supabase JS Client CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-8 flex justify-between items-center bg-white p-6 rounded-lg shadow-md">
+            <div>
+                <h1 class="text-2xl font-bold text-red-700">A.S.D. FIGHT ACADEMY</h1>
+                <p class="text-sm text-gray-600">Monitoraggio Scadenze Certificati Medici e Tessere ASI</p>
+            </div>
+            <a href="index.html" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm">Torna alla Home</a>
+        </header>
+
+        <main class="bg-white rounded-lg shadow-md overflow-hidden p-6">
+            <h2 class="text-lg font-semibold mb-4 text-gray-800">Soci in Prossima Scadenza</h2>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Socio</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Corso</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contatti</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scadenza Medico</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scadenza ASI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scadenze-tbody" class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Caricamento dati in corso...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Inserisci qui le tue credenziali pubbliche di Supabase
+        const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function caricaScadenze() {
+            const tbody = document.getElementById('scadenze-tbody');
+            const { data, error } = await supabaseClient
+                .from('v_scadenze_soci')
+                .select('*');
+
+            if (error) {
+                console.error("Errore nel recupero scadenze:", error);
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-sm text-red-500">Errore di caricamento dati: ${error.message}</td></tr>`;
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Nessuna scadenza imminente rilevata.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            data.forEach(socio => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${socio.nome} ${socio.cognome}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${socio.corso || 'N/D'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${socio.email}<br>${socio.telefono || ''}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${socio.scadenza_certificato_medico ? `${socio.scadenza_certificato_medico} <br><span class="text-xs text-red-600 font-semibold">(${socio.giorni_alla_scadenza_medica} gg)</span>` : 'N/D'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${socio.scadenza_tessera_asi ? `${socio.scadenza_tessera_asi} <br><span class="text-xs text-orange-600 font-semibold">(${socio.giorni_alla_scadenza_asi} gg)</span>` : 'N/D'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        caricaScadenze();
+    </script>
+</body>
+</html>
