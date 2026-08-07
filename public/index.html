@@ -1,60 +1,216 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A.S.D. Fight Academy - Gestione Corsi e Iscrizioni</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A.S.D. Fight Academy - Hub Centrale</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 min-h-screen">
-  <!-- Header Istituzionale -->
-  <header class="bg-slate-900 text-white py-6 shadow-md">
-    <div class="max-w-4xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center">
-      <div>
-        <h1 class="text-2xl font-bold tracking-wide">A.S.D. FIGHT ACADEMY</h1>
-        <p class="text-xs text-gray-400 mt-1">Affiliazione ASI VEN-PD0814 | CF: 91023520280</p>
-      </div>
-      
-      <!-- Pulsante Area Socio inserito nel menu principale -->
-      <div class="mt-4 md:mt-0">
-        <a href="socio.html" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-semibold text-sm shadow transition-all inline-block">
-          Area Socio (Certificati e Pagamenti)
-        </a>
-      </div>
-    </div>
-  </header>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between font-sans">
 
-  <!-- Contenuto Principale -->
-  <main class="max-w-4xl mx-auto px-4 py-8">
-    <div class="bg-white rounded-lg shadow-md p-6 md:p-8 mb-6">
-      <h2 class="text-xl font-bold text-gray-800 mb-4">Benvenuto nel Portale dell'Associazione</h2>
-      <p class="text-gray-600 mb-6">
-        Da questa piattaforma puoi effettuare la domanda di ammissione a socio, consultare i corsi attivi per l'anno sportivo e gestire autonomamente la posizione associativa e le scadenze dei certificati medici.
-      </p>
-      
-      <div class="flex flex-wrap gap-4">
-        <a href="iscrizione.html" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-6 rounded-lg shadow transition-all text-center flex-1">
-          Compila Modulo di Iscrizione
-        </a>
-        <a href="admin.html" class="bg-slate-700 hover:bg-slate-800 text-white font-bold py-3 px-6 rounded-lg shadow transition-all text-center">
-          Area Presidente / Istruttori
-        </a>
-      </div>
-    </div>
+    <!-- Header / Navbar Superiore -->
+    <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50 shadow-md">
+        <div class="container mx-auto flex justify-between items-center max-w-4xl">
+            <div class="flex items-center space-x-3">
+                <div class="bg-red-600 p-2 rounded-xl text-white font-bold text-lg">
+                    <i class="fa-solid fa-fencing"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold text-white tracking-wide">A.S.D. FIGHT ACADEMY</h1>
+                    <p class="text-[10px] text-slate-400">ASI VEN-PD0814 | Este (PD)</p>
+                </div>
+            </div>
+            <button onclick="mostraSezione('home')" class="text-slate-400 hover:text-white text-sm transition">
+                <i class="fa-solid fa-house mr-1"></i> Home
+            </button>
+        </div>
+    </header>
 
-    <!-- Sezione Pulsante Rapido Richiesto -->
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center shadow-sm">
-      <h3 class="text-lg font-semibold text-blue-900 mb-2">Sei già un tesserato?</h3>
-      <p class="text-sm text-blue-700 mb-4">Accedi subito alla tua area riservata per verificare o aggiornare la data del tuo certificato medico sportivo.</p>
-      <div class="text-center my-4">
-        Sei già socio? <a href="socio.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 font-semibold inline-block transition-all">Accedi alla tua Area Socio</a>[cite: 5]
-      </div>
-    </div>
-  </main>
+    <!-- Contenitore Principale (Viste Dinamiche) -->
+    <main class="container mx-auto px-4 py-6 max-w-4xl flex-grow">
+        
+        <!-- VISTA HOME / MENU PRINCIPALE -->
+        <div id="vista-home" class="space-y-6">
+            <div class="bg-gradient-to-r from-slate-800 to-slate-800/80 p-6 rounded-2xl border border-slate-700 shadow-xl text-center">
+                <h2 class="text-xl font-extrabold text-white mb-2">Benvenuti nell'App Ufficiale</h2>
+                <p class="text-xs text-slate-300 max-w-lg mx-auto">Seleziona un'area sottostante per procedere con l'iscrizione, consultare gli orari dei corsi o accedere alla gestione amministrativa riservata.</p>
+            </div>
 
-  <!-- Footer -->
-  <footer class="text-center py-6 text-xs text-gray-500">
-    A.S.D. Fight Academy - Sede Legale: Via Monte Cero 57, Este (PD) | Impianto: Via B. Powell 2, Este
-  </footer>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Card Atleti: Iscrizione -->
+                <div onclick="location.href='iscrizione.html'" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-red-500 p-6 rounded-2xl shadow-lg cursor-pointer transition transform hover:-translate-y-1">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-red-600/20 text-red-500 p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-user-plus"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Domanda di Ammissione</h3>
+                            <p class="text-xs text-slate-400 mt-1">Compila il modulo online per iscriverti ai corsi di Ninjutsu, Vietvodao o Shodo.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Orari e Corsi -->
+                <div onclick="mostraSezione('orari')" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-red-500 p-6 rounded-2xl shadow-lg cursor-pointer transition transform hover:-translate-y-1">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-blue-600/20 text-blue-500 p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-calendar-days"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Corsi, Orari e Quote</h3>
+                            <p class="text-xs text-slate-400 mt-1">Consulta il prospetto completo delle attività, tariffe e istruttori per l'anno in corso.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Info Associazione -->
+                <div onclick="mostraSezione('info')" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-red-500 p-6 rounded-2xl shadow-lg cursor-pointer transition transform hover:-translate-y-1">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-amber-600/20 text-amber-500 p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Info & Sede Legale</h3>
+                            <p class="text-xs text-slate-400 mt-1">Dati societari, affiliazione ASI e impianti sportivi (Via Monte Cero 57 / Via B. Powell 2).</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Admin / Istruttori -->
+                <div onclick="location.href='admin-scadenze.html'" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-red-500 p-6 rounded-2xl shadow-lg cursor-pointer transition transform hover:-translate-y-1">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-emerald-600/20 text-emerald-500 p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Area Istruttori / Admin</h3>
+                            <p class="text-xs text-slate-400 mt-1">Dashboard interna per monitorare scadenze tessere ASI, certificati medici e quote.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Registro Presenze (Istruttori) -->
+                <div onclick="mostraSezione('presenze')" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-red-500 p-6 rounded-2xl shadow-lg cursor-pointer transition transform hover:-translate-y-1">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-purple-600/20 text-purple-500 p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-clipboard-user"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Registro Presenze</h3>
+                            <p class="text-xs text-slate-400 mt-1">Sezione riservata agli istruttori per tracciare le presenze alle lezioni dei corsi.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- VISTA ORARI E CORSI -->
+        <div id="vista-orari" class="hidden space-y-4">
+            <div class="flex items-center justify-between bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-calendar-days text-red-500 mr-2"></i> Orari e Quote Ufficiali</h3>
+                <button onclick="mostraSezione('home')" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg transition">Indietro</button>
+            </div>
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-4 text-xs text-slate-300">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-700 text-slate-400">
+                                <th class="p-2">Corso</th>
+                                <th class="p-2">Giorni</th>
+                                <th class="p-2">Orario</th>
+                                <th class="p-2">Istruttore</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700/50">
+                            <tr><td class="p-2 font-medium text-white">Ninjutsu Adulti/Ragazzi</td><td class="p-2">Martedì - Giovedì</td><td class="p-2">19:30 - 21:00</td><td class="p-2">Enrico Rubini</td></tr>
+                            <tr><td class="p-2 font-medium text-white">Ninjutsu Bambini</td><td class="p-2">Martedì - Giovedì</td><td class="p-2">18:30 - 19:30</td><td class="p-2">Saverio Zanco</td></tr>
+                            <tr><td class="p-2 font-medium text-white">Vietvodao Adulti/Ragazzi</td><td class="p-2">Lunedì - Mercoledì</td><td class="p-2">19:30 - 21:00</td><td class="p-2">Pierpaolo Fusaro</td></tr>
+                            <tr><td class="p-2 font-medium text-white">Vietvodao Bambini</td><td class="p-2">Lunedì - Mercoledì</td><td class="p-2">18:30 - 19:30</td><td class="p-2">Pierpaolo Fusaro</td></tr>
+                            <tr><td class="p-2 font-medium text-white">Shodo (Calligrafia)</td><td class="p-2">2 Venerdì / mese</td><td class="p-2">20:00 - 21:30</td><td class="p-2">Yuka</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- VISTA INFO ASSOCIAZIONE -->
+        <div id="vista-info" class="hidden space-y-4">
+            <div class="flex items-center justify-between bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-circle-info text-amber-500 mr-2"></i> Informazioni e Sede</h3>
+                <button onclick="mostraSezione('home')" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg transition">Indietro</button>
+            </div>
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-3 text-xs text-slate-300 leading-relaxed">
+                <p><strong class="text-white">A.S.D. Fight Academy</strong> | Codice Fiscale: 91023520280</p>
+                <p><strong class="text-white">Affiliazione ASI:</strong> Codice VEN-PD0814 (Tesseramento annuale valido 365 giorni)</p>
+                <p><strong class="text-white">Sede Legale:</strong> Via Monte Cero 57, 35042 Este (PD)</p>
+                <p><strong class="text-white">Impianto Sportivo / Corsi:</strong> Sala Palestre, Via B. Powell 2, 35042 Este (PD)</p>
+                <p><strong class="text-white">Contatti:</strong> Email: kawasemidojo@gmail.com | Tel: 392 6641714</p>
+            </div>
+        </div>
+
+        <!-- VISTA REGISTRO PRESENZE -->
+        <div id="vista-presenze" class="hidden space-y-4">
+            <div class="flex items-center justify-between bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-clipboard-user text-purple-500 mr-2"></i> Registro Presenze Lezioni</h3>
+                <button onclick="mostraSezione('home')" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg transition">Indietro</button>
+            </div>
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-4 text-xs text-slate-300">
+                <p class="text-slate-400">Seleziona il corso e la data odierna per registrare le presenze in palestra (Via B. Powell 2)[cite: 1, 4].</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-slate-400 mb-1 font-medium">Corso di Riferimento</label>
+                        <select id="corso-presenza" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
+                            <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti/Ragazzi</option>
+                            <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
+                            <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi</option>
+                            <option value="Vietvodao Bambini">Vietvodao Bambini</option>
+                            <option value="Shodo">Shodo (Calligrafia)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1 font-medium">Data Lezione</label>
+                        <input type="date" id="data-presenza" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
+                    </div>
+                    <button onclick="alert('Modulo presenze collegato alla PWA. Pronto per l inserimento dati.')" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold p-2.5 rounded-lg transition">
+                        Registra Presenza
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer PWA -->
+    <footer class="bg-slate-800 border-t border-slate-700 py-3 text-center text-[10px] text-slate-500">
+        <p>A.S.D. FIGHT ACADEMY - PWA App Gestione Integrata</p>
+    </footer>
+
+    <!-- Script di Navigazione Interna -->
+    <script>
+        function mostraSezione(id) {
+            document.getElementById('vista-home').classList.add('hidden');
+            document.getElementById('vista-orari').classList.add('hidden');
+            document.getElementById('vista-info').classList.add('hidden');
+
+            document.getElementById('vista-' + id).classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function mostraSezione(id) {
+            document.getElementById('vista-home').classList.add('hidden');
+            document.getElementById('vista-orari').classList.add('hidden');
+            document.getElementById('vista-info').classList.add('hidden');
+            document.getElementById('vista-presenze').classList.add('hidden');
+
+            document.getElementById('vista-' + id).classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Imposta la data odierna di default nel campo data presenze
+        document.getElementById('data-presenza').value = new Date().toISOString().split('T')[0];
+
+    </script>
 </body>
 </html>
