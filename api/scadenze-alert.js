@@ -6,11 +6,11 @@ const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SER
 
 export default async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'GET') {
-    return res.status(405.json({ error: 'Method not allowed' }));
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    // Interroghiamo la vista SQL creata nello step precedente
+    // Interroghiamo la vista SQL per le scadenze dei soci
     const { data: sociScadenze, error } = await supabase
       .from('v_scadenze_soci')
       .select('*');
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
         }
 
         await resend.emails.send({
-          from: 'A.S.D. Fight Academy <onboarding@resend.dev>', // Sostituire con dominio verificato se disponibile
+          from: 'A.S.D. Fight Academy <onboarding@resend.dev>',
           to: recipients,
           subject: `AVVISO: Scadenza Certificato Medico tra ${giorni_alla_scadenza_medica} giorni`,
           html: `<p>Ciao <strong>${nome} ${cognome}</strong>,</p><p>ti ricordiamo che il tuo certificato medico scadrà tra <strong>${giorni_alla_scadenza_medica} giorni</strong>. Ti invitiamo a caricarne uno nuovo al più presto.</p>`
