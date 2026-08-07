@@ -11,12 +11,17 @@
 </head>
 <body class="bg-gray-100 font-sans">
     <div class="container mx-auto px-4 py-8">
-        <header class="mb-8 flex justify-between items-center bg-white p-6 rounded-lg shadow-md">
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-lg shadow-md gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-red-700">A.S.D. FIGHT ACADEMY</h1>
                 <p class="text-sm text-gray-600">Monitoraggio Scadenze Certificati Medici e Tessere ASI</p>
             </div>
-            <a href="index.html" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm">Torna alla Home</a>
+            <div class="flex items-center gap-3">
+                <button onclick="eseguiAlert(this)" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm font-semibold transition">
+                    Invia Alert Scadenze Ora
+                </button>
+                <a href="index.html" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm">Torna alla Home</a>
+            </div>
         </header>
 
         <main class="bg-white rounded-lg shadow-md overflow-hidden p-6">
@@ -43,7 +48,6 @@
     </div>
 
     <script>
-        // Inserisci qui le tue credenziali pubbliche di Supabase
         const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
         
@@ -82,6 +86,31 @@
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        async function eseguiAlert(btn) {
+            if (!confirm("Vuoi avviare la verifica e l'invio immediato delle email di sollecito scadenze?")) return;
+            
+            const originalText = btn.textContent;
+            btn.textContent = "Elaborazione in corso...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/api/scadenze-alert', { method: 'POST' });
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(`Controllo completato con successo!\nSoci processati: ${result.processed}\nLog:\n- ` + (result.logs.length > 0 ? result.logs.join('\n- ') : 'Nessun alert inviato in base alle finestre temporali odierne.'));
+                } else {
+                    alert("Errore durante l'invio degli alert: " + (result.error || 'Errore sconosciuto'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Errore di connessione con la Serverless Function: " + err.message);
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
         }
 
         caricaScadenze();
