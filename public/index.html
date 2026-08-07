@@ -89,6 +89,20 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Card Registro Presenze (Istruttori) -->
+                <div onclick="mostraSezione('presenze')" class="bg-slate-800 hover:bg-slate-750 border border-slate-700 hover:border-red-500 p-6 rounded-2xl shadow-lg cursor-pointer transition transform hover:-translate-y-1">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-purple-600/20 text-purple-500 p-4 rounded-xl text-2xl">
+                            <i class="fa-solid fa-clipboard-user"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-white">Registro Presenze</h3>
+                            <p class="text-xs text-slate-400 mt-1">Sezione riservata agli istruttori per tracciare le presenze alle lezioni dei corsi.</p>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
 
@@ -136,6 +150,36 @@
             </div>
         </div>
 
+        <!-- VISTA REGISTRO PRESENZE -->
+        <div id="vista-presenze" class="hidden space-y-4">
+            <div class="flex items-center justify-between bg-slate-800 p-4 rounded-xl border border-slate-700">
+                <h3 class="text-sm font-bold text-white"><i class="fa-solid fa-clipboard-user text-purple-500 mr-2"></i> Registro Presenze Lezioni</h3>
+                <button onclick="mostraSezione('home')" class="bg-slate-700 hover:bg-slate-600 text-xs px-3 py-1.5 rounded-lg transition">Indietro</button>
+            </div>
+            <div class="bg-slate-800 p-5 rounded-xl border border-slate-700 space-y-4 text-xs text-slate-300">
+                <p class="text-slate-400">Seleziona il corso e la data odierna per registrare le presenze in palestra (Via B. Powell 2)[cite: 1, 4].</p>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-slate-400 mb-1 font-medium">Corso di Riferimento</label>
+                        <select id="corso-presenza" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
+                            <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti/Ragazzi</option>
+                            <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
+                            <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi</option>
+                            <option value="Vietvodao Bambini">Vietvodao Bambini</option>
+                            <option value="Shodo">Shodo (Calligrafia)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-slate-400 mb-1 font-medium">Data Lezione</label>
+                        <input type="date" id="data-presenza" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2.5 text-white">
+                    </div>
+                    <button onclick="alert('Modulo presenze collegato alla PWA. Pronto per l inserimento dati.')" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold p-2.5 rounded-lg transition">
+                        Registra Presenza
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <!-- Footer PWA -->
@@ -153,6 +197,20 @@
             document.getElementById('vista-' + id).classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
+
+        function mostraSezione(id) {
+            document.getElementById('vista-home').classList.add('hidden');
+            document.getElementById('vista-orari').classList.add('hidden');
+            document.getElementById('vista-info').classList.add('hidden');
+            document.getElementById('vista-presenze').classList.add('hidden');
+
+            document.getElementById('vista-' + id).classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Imposta la data odierna di default nel campo data presenze
+        document.getElementById('data-presenza').value = new Date().toISOString().split('T')[0];
+
     </script>
 </body>
 </html>
