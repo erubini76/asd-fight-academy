@@ -54,7 +54,6 @@
     </div>
 
     <script>
-        const supabase = supabase.createClient('https://twiizsottstaacnvrxkg.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI');
         const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -69,11 +68,9 @@
             container.innerHTML = '<div class="p-4 text-center">Caricamento...</div>';
             document.getElementById('lista-allievi-container').classList.remove('hidden');
 
-            const { data, error } = await supabase
             const { data, error } = await supabaseClient
                 .from('soci')
                 .select('id, nome, cognome')
-                .or(`corso.eq.${corso},corso_scelto.eq.${corso}`);
                 .eq('corso_scelto', corso);
             
             if (error) { alert("Errore: " + error.message); return; }
@@ -103,7 +100,6 @@
                 corso: corso
             }));
 
-            const { error } = await supabase.from('presenze').insert(records);
             const { error } = await supabaseClient.from('presenze').insert(records);
             if (error) alert("Errore: " + error.message);
             else { alert("Presenze salvate!"); location.reload(); }
