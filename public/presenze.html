@@ -1,4 +1,76 @@
-<script>
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A.S.D. Fight Academy - Registro Presenze</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 font-sans">
+
+    <div class="container mx-auto max-w-2xl">
+        <header class="mb-6 flex justify-between items-center bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg">
+            <div>
+                <h1 class="text-xl font-bold text-purple-500">REGISTRO APPEL</h1>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Area Riservata Istruttori</p>
+            </div>
+            <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-xl text-xs transition shadow-sm">
+                <i class="fa-solid fa-house"></i>
+            </a>
+        </header>
+
+        <main class="space-y-6">
+            <!-- SELEZIONE CORSO E DATA -->
+            <section class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Seleziona Corso</label>
+                        <select id="corso-select" onchange="caricaIscritti()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none">
+                            <option value="">-- Scegli un corso --</option>
+                            <!-- I valori devono corrispondere agli ID (UUID) della tabella corsi su Supabase -->
+                            <!-- Esempio: inserisci gli UUID reali dei tuoi corsi oppure caricali dinamicamente -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Data Lezione</label>
+                        <input type="date" id="data-lezione" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                </div>
+                <button onclick="caricaIscritti()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 rounded-xl text-xs transition border border-slate-600">
+                    <i class="fa-solid fa-rotate mr-2"></i> Aggiorna Lista Iscritti
+                </button>
+            </section>
+
+            <!-- LISTA ALLIEVI -->
+            <section id="lista-allievi-container" class="hidden bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
+                <div class="p-4 bg-slate-700/30 border-b border-slate-700 flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-white uppercase">Appello Allievi</h3>
+                    <span id="counter-presenti" class="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">0 PRESENTI</span>
+                </div>
+
+                <div id="lista-iscritti" class="divide-y divide-slate-700 max-h-[400px] overflow-y-auto">
+                    <!-- Dinamico -->
+                </div>
+
+                <div class="p-4 bg-slate-900/50">
+                    <button id="salva-btn" onclick="salvaPresenze()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-200 transform active:scale-95 flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        SALVA PRESENZE DI OGGI
+                    </button>
+                </div>
+            </section>
+
+            <!-- PLACEHOLDER VUOTO -->
+            <div id="placeholder" class="text-center py-12 text-slate-500 italic text-sm">
+                <i class="fa-solid fa-clipboard-list text-4xl mb-3 opacity-20"></i>
+                <p>Seleziona un corso per visualizzare gli allievi</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
         const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -7,6 +79,23 @@
         document.getElementById('data-lezione').value = new Date().toISOString().split('T')[0];
 
         let allieviCaricati = [];
+
+        // Funzione opzionale per popolare i corsi dinamicamente dalla tabella 'corsi'
+        async function caricaCorsi() {
+            try {
+                const { data, error } = await supabaseClient.from('corsi').select('id, nome_corso').order('nome_corso');
+                if (error) throw error;
+                
+                const select = document.getElementById('corso-select');
+                select.innerHTML = '<option value="">-- Scegli un corso --</option>' + 
+                    (data || []).map(c => `<option value="${c.id}">${c.nome_corso}</option>`).join('');
+            } catch (err) {
+                console.error("Errore caricamento corsi:", err);
+            }
+        }
+
+        // Avvia il caricamento dei corsi all'avvio della pagina
+        caricaCorsi();
 
         async function caricaIscritti() {
             const corsoId = document.getElementById('corso-select').value;
@@ -21,7 +110,7 @@
             placeholder.classList.add('hidden');
 
             try {
-                // INTERROGAZIONE CORRETTA: Legge dalla tabella ponte iscrizioni_corsi unendo i dati del socio
+                // Interrogazione sulla tabella ponte iscrizioni_corsi unita alla tabella soci
                 const { data, error } = await supabaseClient
                     .from('iscrizioni_corsi')
                     .select(`
@@ -39,12 +128,11 @@
 
                 if (error) throw error;
 
-                // Mappiamo i dati per averli puliti nel frontend
                 allieviCaricati = (data || []).map(item => ({
                     iscrizione_id: item.id,
-                    nome: item.soci.nome,
-                    cognome: item.soci.cognome,
-                    email: item.soci.email
+                    nome: item.soci ? item.soci.nome : '',
+                    cognome: item.soci ? item.soci.cognome : '',
+                    email: item.soci ? item.soci.email : ''
                 }));
 
                 renderLista();
@@ -113,7 +201,6 @@
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> SALVATAGGIO...';
 
-            // Salvataggio basato sulla nuova tabella presenze (collegata a iscrizione_id)
             const records = Array.from(presentiIscrizioniIds).map(iscrizioneId => ({
                 iscrizione_id: iscrizioneId,
                 data_lezione: dataLezione,
@@ -138,3 +225,5 @@
             }
         }
     </script>
+</body>
+</html>
