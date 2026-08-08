@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A.S.D. Fight Academy - Registro Presenze</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 font-sans">
+
+    <div class="container mx-auto max-w-2xl">
+        <header class="mb-6 flex justify-between items-center bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg">
+            <div>
+                <h1 class="text-xl font-bold text-purple-500">REGISTRO APPEL</h1>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Area Riservata Istruttori</p>
+            </div>
+            <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-xl text-xs transition shadow-sm">
+                <i class="fa-solid fa-house"></i>
+            </a>
+        </header>
+
+        <main class="space-y-6">
+            <!-- SELEZIONE CORSO E DATA -->
+            <section class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Seleziona Corso</label>
+                        <select id="corso-select" onchange="caricaIscritti()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none">
+                            <option value="">-- Scegli un corso --</option>
+                            <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti / Ragazzi</option>
+                            <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
+                            <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti / Ragazzi</option>
+                            <option value="Vietvodao Bambini">Vietvodao Bambini</option>
+                            <option value="Shodo (Calligrafia)">Shodo (Calligrafia)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Data Lezione</label>
+                        <input type="date" id="data-lezione" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none">
+                    </div>
+                </div>
+                <button onclick="caricaIscritti()" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2.5 rounded-xl text-xs transition border border-slate-600">
+                    <i class="fa-solid fa-rotate mr-2"></i> Aggiorna Lista Iscritti
+                </button>
+            </section>
+
+            <!-- LISTA ALLIEVI -->
+            <section id="lista-allievi-container" class="hidden bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
+                <div class="p-4 bg-slate-700/30 border-b border-slate-700 flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-white uppercase">Appello Allievi</h3>
+                    <span id="counter-presenti" class="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">0 PRESENTI</span>
+                </div>
+
+                <div id="lista-iscritti" class="divide-y divide-slate-700 max-h-[400px] overflow-y-auto">
+                    <!-- Dinamico -->
+                </div>
+
+                <div class="p-4 bg-slate-900/50">
+                    <button id="salva-btn" onclick="salvaPresenze()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-200 transform active:scale-95 flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        SALVA PRESENZE DI OGGI
+                    </button>
+                </div>
+            </section>
+
+            <!-- PLACEHOLDER VUOTO -->
+            <div id="placeholder" class="text-center py-12 text-slate-500 italic text-sm">
+                <i class="fa-solid fa-clipboard-list text-4xl mb-3 opacity-20"></i>
+                <p>Seleziona un corso per visualizzare gli allievi</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Imposta data odierna
+        document.getElementById('data-lezione').value = new Date().toISOString().split('T')[0];
+
+        let allieviCaricati = [];
+
+        async function caricaIscritti() {
+            const corso = document.getElementById('corso-select').value;
+            if (!corso) return;
+
+            const listContainer = document.getElementById('lista-allievi-container');
+            const placeholder = document.getElementById('placeholder');
+            const listContent = document.getElementById('lista-iscritti');
+
+            listContent.innerHTML = '<div class="p-8 text-center"><i class="fa-solid fa-spinner fa-spin text-purple-500 text-2xl"></i></div>';
+            listContainer.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+
+            try {
+                // Cerchiamo i soci attivi iscritti al corso selezionato
+                const { data, error } = await supabaseClient
+                    .from('soci')
+                    .select('id, nome, cognome, codice_fiscale')
+                    .eq('corso', corso)
+                    .eq('stato', 'Attivo') // Assumiamo ci sia una colonna stato, altrimenti rimuovere
+                    .order('cognome', { ascending: true });
+
+                if (error) throw error;
+
+                allieviCaricati = data || [];
+                renderLista();
+            } catch (err) {
+                console.error(err);
+                alert("Errore nel caricamento allievi: " + err.message);
+            }
+        }
+
+        function renderLista() {
+            const listContent = document.getElementById('lista-iscritti');
+            if (allieviCaricati.length === 0) {
+                listContent.innerHTML = '<p class="p-8 text-center text-slate-500">Nessun allievo attivo trovato per questo corso.</p>';
+                return;
+            }
+
+            listContent.innerHTML = allieviCaricati.map(allievo => `
+                <div class="flex items-center justify-between p-4 hover:bg-slate-700/50 transition cursor-pointer" onclick="togglePresence('${allievo.id}')">
+                    <div class="flex items-center gap-3">
+                        <div id="check-${allievo.id}" class="w-6 h-6 border-2 border-slate-600 rounded-lg flex items-center justify-center transition-all">
+                            <i class="fa-solid fa-check text-white text-xs hidden"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-white">${allievo.cognome} ${allievo.nome}</p>
+                            <p class="text-[10px] text-slate-500 uppercase">${allievo.codice_fiscale || ''}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            aggiornaContatore();
+        }
+
+        const presentiIds = new Set();
+
+        function togglePresence(id) {
+            const checkbox = document.getElementById(`check-${id}`);
+            const icon = checkbox.querySelector('i');
+            
+            if (presentiIds.has(id)) {
+                presentiIds.delete(id);
+                checkbox.classList.remove('bg-purple-600', 'border-purple-600');
+                checkbox.classList.add('border-slate-600');
+                icon.classList.add('hidden');
+            } else {
+                presentiIds.add(id);
+                checkbox.classList.add('bg-purple-600', 'border-purple-600');
+                checkbox.classList.remove('border-slate-600');
+                icon.classList.remove('hidden');
+            }
+            aggiornaContatore();
+        }
+
+        function aggiornaContatore() {
+            document.getElementById('counter-presenti').textContent = `${presentiIds.size} PRESENTI`;
+        }
+
+        async function salvaPresenze() {
+            if (presentiIds.size === 0) {
+                if (!confirm("Non hai selezionato nessun presente. Salvare comunque l'appello vuoto?")) return;
+            }
+
+            const btn = document.getElementById('salva-btn');
+            const corso = document.getElementById('corso-select').value;
+            const dataPresenza = document.getElementById('data-lezione').value;
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> SALVATAGGIO...';
+
+            const records = Array.from(presentiIds).map(socioId => ({
+                socio_id: socioId,
+                data_presenza: dataPresenza,
+                corso: corso
+            }));
+
+            try {
+                // Nota: Inseriamo record solo per chi è presente. 
+                // Il sistema calcolerà le % basandosi sui giorni unici di lezione.
+                const { error } = await supabaseClient
+                    .from('presenze')
+                    .insert(records);
+
+                if (error) throw error;
+
+                alert("Appello salvato correttamente!");
+                location.reload(); // Resetta tutto per un nuovo appello
+            } catch (err) {
+                console.error(err);
+                alert("Errore durante il salvataggio: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> SALVA PRESENZE DI OGGI';
+            }
+        }
+    </script>
+</body>
+</html>
