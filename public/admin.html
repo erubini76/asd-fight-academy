@@ -6,148 +6,178 @@
   <title>A.S.D. Fight Academy - Gestione Amministrativa & Istruttori</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans antialiased min-h-screen p-4 md:p-6">
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-6 font-sans">
 
   <div class="max-w-6xl mx-auto space-y-6">
     <!-- HEADER -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
-      <div>
-        <h1 class="text-2xl font-extrabold text-red-700 tracking-tight">A.S.D. FIGHT ACADEMY</h1>
-        <p class="text-xs text-gray-500 font-medium">Pannello Sicuro Presidente & Istruttori</p>
-      </div>
-      <div id="userInfo" class="hidden text-right">
-        <span id="welcomeUser" class="text-xs font-bold text-gray-800 block"></span>
-        <span id="userRoleBadge" class="text-[10px] px-2 py-0.5 rounded-full font-semibold"></span>
-      </div>
-    </div>
-
-    <!-- LOGIN AREA CON PASSWORD E PULSANTE OCCHIO -->
-    <div id="loginSection" class="max-w-md mx-auto bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
-      <h2 class="text-sm font-bold text-gray-900 uppercase tracking-wide">Accesso Protetto Area Riservata</h2>
-      <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1">Email di Accesso</label>
-        <input type="email" id="adminEmail" placeholder="es. kawasemidojo@gmail.com" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-red-600 focus:outline-none">
-      </div>
-      <div>
-        <label class="block text-xs font-semibold text-gray-700 mb-1">Password / PIN</label>
-        <div class="relative">
-          <input type="password" id="adminPassword" placeholder="••••••••" class="w-full border border-gray-300 rounded-lg px-3 py-2 pr-10 text-sm focus:ring-2 focus:ring-red-600 focus:outline-none">
-          <button type="button" onclick="togglePassword('adminPassword', 'eyeIconLogin')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
-            <svg id="eyeIconLogin" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-            </svg>
-          </button>
+    <header class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="flex items-center space-x-4">
+        <div class="bg-red-600 p-3 rounded-2xl text-white shadow-lg">
+          <i class="fa-solid fa-user-shield text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-2xl font-extrabold text-white tracking-tight">AREA RISERVATA</h1>
+          <p class="text-xs text-slate-400 font-medium uppercase tracking-widest">Pannello Sicuro Presidente & Istruttori</p>
         </div>
       </div>
-      <button onclick="autenticaAdmin()" class="w-full bg-red-700 hover:bg-red-800 text-white font-bold py-2.5 rounded-lg text-xs transition shadow-sm">
-        Accedi in Sicurezza
-      </button>
-    </div>
+      <div class="flex items-center gap-4">
+        <div id="userInfo" class="hidden text-right">
+          <span id="welcomeUser" class="text-sm font-bold text-white block"></span>
+          <span id="userRoleBadge" class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter"></span>
+        </div>
+        <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl text-xs transition shadow-sm border border-slate-600">
+          <i class="fa-solid fa-house mr-2"></i>Home
+        </a>
+      </div>
+    </header>
 
-    <!-- DASHBOARD OPERATIVA -->
-    <div id="dashboardSection" class="hidden space-y-6">
-      
-      <!-- SEZIONE RISERVATA AL PRESIDENTE: GESTIONE ISTRUTTORI CON EMAIL E PASSWORD DEDICATE -->
-      <div id="sezionePresidenteGestione" class="hidden bg-white rounded-2xl shadow-sm border border-red-200 p-6 space-y-4">
-        <h2 class="text-base font-bold text-red-700 flex items-center gap-2">
-          <span>⚙️</span> Configurazione Credenziali Istruttori (Esclusivo Presidente)
-        </h2>
-        <p class="text-xs text-gray-500">Seleziona un socio, assegna un'email di login dedicata, una password specifica e i corsi gestiti (relazione 1 a N).</p>
-        
-        <div class="grid grid-cols-1 md:grid-cols-5 gap-3">
-          <div>
-            <label class="block text-[11px] font-semibold text-gray-700 mb-1">Socio di Riferimento</label>
-            <select id="selectSocioIstruttore" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-xs bg-white">
-              <!-- Popolato dinamicamente -->
-            </select>
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-gray-700 mb-1">Email Dedicata per Login</label>
-            <input type="email" id="nuovaEmailLogin" placeholder="es. istru@email.it" class="w-full border border-gray-300 rounded-lg px-2 py-2 text-xs">
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-gray-700 mb-1">Password d'Accesso</label>
-            <div class="relative">
-              <input type="password" id="nuovaPasswordIstruttore" placeholder="es. pass123" class="w-full border border-gray-300 rounded-lg px-2 py-2 pr-8 text-xs">
-              <button type="button" onclick="togglePassword('nuovaPasswordIstruttore', 'eyeIconIstruttore')" class="absolute inset-y-0 right-0 pr-2 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
-                <svg id="eyeIconIstruttore" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-gray-700 mb-1">Corsi di Competenza (Ctrl+Click)</label>
-            <select id="selectCorsiCompetenza" multiple class="w-full border border-gray-300 rounded-lg px-2 py-1 text-xs bg-white h-20">
-              <option value="Ninjutsu Adulti/ragazzi">Ninjutsu Adulti/ragazzi</option>
-              <option value="Ninjutsu bambini">Ninjutsu bambini</option>
-              <option value="Vietvodao Adulti/ragazzi">Vietvodao Adulti/ragazzi</option>
-              <option value="Vietvodao bambini">Vietvodao bambini</option>
-              <option value="Shodo (via della calligrafia Giapponese)">Shodo (Calligrafia)</option>
-            </select>
-          </div>
-          <div class="flex items-end">
-            <button onclick="registraIstruttore()" class="w-full bg-gray-900 hover:bg-black text-white font-bold py-2 rounded-lg text-xs transition">
-              Crea Credenziali
+    <!-- LOGIN AREA -->
+    <section id="loginSection" class="max-w-md mx-auto bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-8 space-y-6">
+      <div class="text-center">
+        <h2 class="text-lg font-bold text-white uppercase tracking-wide">Accesso Protetto</h2>
+        <p class="text-xs text-slate-400 mt-1">Inserisci le tue credenziali autorizzate.</p>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Email di Accesso</label>
+          <input type="email" id="adminEmail" placeholder="es. istruttore@email.it" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-sm text-white focus:ring-2 focus:ring-red-500 outline-none transition">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Password / PIN</label>
+          <div class="relative">
+            <input type="password" id="adminPassword" placeholder="••••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 pr-12 text-sm text-white focus:ring-2 focus:ring-red-500 outline-none transition">
+            <button type="button" onclick="togglePassword('adminPassword', 'eyeIconLogin')" class="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-500 hover:text-white transition focus:outline-none">
+              <i id="eyeIconLogin" class="fa-solid fa-eye"></i>
             </button>
           </div>
         </div>
+        <button onclick="autenticaAdmin()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg transform active:scale-95">
+          <i class="fa-solid fa-unlock-keyhole mr-2"></i>Accedi al Pannello
+        </button>
       </div>
+    </section>
 
-      <!-- RESOCONTO FINANZIARIO PER CORSO -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
-        <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
-          <span>📊</span> Resoconto Finanziario e Versamenti per Corso
-        </h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-gray-50 text-gray-700 uppercase font-semibold border-b border-gray-200">
-              <tr>
-                <th class="p-3">Corso</th>
-                <th class="p-3">Periodo / Mese</th>
-                <th class="p-3">Totale Versato (€)</th>
-                <th class="p-3">Stato Verifica</th>
-              </tr>
-            </thead>
-            <tbody id="resocontiTableBody" class="divide-y divide-gray-100"></tbody>
-          </table>
+    <!-- DASHBOARD OPERATIVA -->
+    <div id="dashboardSection" class="hidden space-y-8">
+      
+      <!-- MENU RAPIDO -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="presenze.html" class="bg-purple-600 hover:bg-purple-700 p-4 rounded-2xl shadow-lg transition flex items-center justify-between group">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-clipboard-user text-2xl"></i>
+            <span class="font-bold">Registro Appello</span>
+          </div>
+          <i class="fa-solid fa-chevron-right opacity-50 group-hover:translate-x-1 transition"></i>
+        </a>
+        <a href="admin-scadenze.html" class="bg-amber-600 hover:bg-amber-700 p-4 rounded-2xl shadow-lg transition flex items-center justify-between group">
+          <div class="flex items-center gap-3">
+            <i class="fa-solid fa-bell text-2xl"></i>
+            <span class="font-bold">Alert Scadenze</span>
+          </div>
+          <i class="fa-solid fa-chevron-right opacity-50 group-hover:translate-x-1 transition"></i>
+        </a>
+        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex items-center gap-3">
+          <i class="fa-solid fa-database text-2xl text-slate-500"></i>
+          <span class="text-xs text-slate-400">Database: <span class="text-emerald-500 font-mono">Connesso</span></span>
         </div>
       </div>
 
-      <!-- RICEVUTE E PAGAMENTI DA VERIFICARE -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
-        <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
-          <span>💶</span> Ricevute e Pagamenti da Verificare
+      <!-- SEZIONE RISERVATA AL PRESIDENTE -->
+      <section id="sezionePresidenteGestione" class="hidden bg-slate-800 rounded-2xl shadow-lg border border-red-900/30 p-6 space-y-6">
+        <h2 class="text-base font-bold text-red-500 flex items-center gap-2">
+          <i class="fa-solid fa-gears"></i>
+          <span>Gestione Credenziali Istruttori</span>
         </h2>
-        <div id="pagamentiContainer" class="space-y-3"></div>
-      </div>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
+          <div class="lg:col-span-1">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Socio</label>
+            <select id="selectSocioIstruttore" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white outline-none">
+              <!-- Popolato dinamicamente -->
+            </select>
+          </div>
+          <div class="lg:col-span-1">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Email Login</label>
+            <input type="email" id="nuovaEmailLogin" placeholder="es. istru@email.it" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white outline-none">
+          </div>
+          <div class="lg:col-span-1">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Password</label>
+            <input type="text" id="nuovaPasswordIstruttore" placeholder="Password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white outline-none">
+          </div>
+          <div class="lg:col-span-1">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Corsi (Selez. multipla)</label>
+            <select id="selectCorsiCompetenza" multiple class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1 text-[10px] text-white h-24">
+              <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti/Ragazzi</option>
+              <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
+              <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi</option>
+              <option value="Vietvodao Bambini">Vietvodao Bambini</option>
+              <option value="Shodo (Calligrafia)">Shodo (Calligrafia)</option>
+            </select>
+          </div>
+          <div class="flex items-end lg:col-span-1">
+            <button onclick="registraIstruttore()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-lg">
+              Crea Istruttore
+            </button>
+          </div>
+        </div>
+      </section>
 
-      <!-- ELENCO SOCI E CERTIFICATI -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-4">
-        <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
-          <span>👥</span> Elenco Soci, Certificati e Controllo Scadenze (Entro il 3 del mese)
+      <!-- RESOCONTO FINANZIARIO -->
+      <section class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6 space-y-4">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-chart-line text-emerald-500"></i>
+          <span>Resoconto Versamenti per Corso</span>
         </h2>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs">
-            <thead class="bg-gray-50 text-gray-700 uppercase font-semibold border-b border-gray-200">
+            <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700">
               <tr>
-                <th class="p-3">Socio</th>
-                <th class="p-3">Corso</th>
-                <th class="p-3">Certificato Medico</th>
-                <th class="p-3">Scadenza</th>
-                <th class="p-3">Stato Pagamento</th>
+                <th class="p-4">Corso</th>
+                <th class="p-4">Periodo</th>
+                <th class="p-4 text-right">Totale (€)</th>
+                <th class="p-4">Stato</th>
               </tr>
             </thead>
-            <tbody id="sociTableBody" class="divide-y divide-gray-100"></tbody>
+            <tbody id="resocontiTableBody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
           </table>
         </div>
-      </div>
+      </section>
 
-      <button onclick="location.reload()" class="text-xs text-gray-500 hover:text-red-700 font-semibold">
-        &larr; Esci / Cambia Account
+      <!-- RICEVUTE DA VERIFICARE -->
+      <section class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6 space-y-4">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-receipt text-amber-500"></i>
+          <span>Ricevute Bonifici da Verificare</span>
+        </h2>
+        <div id="pagamentiContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </section>
+
+      <!-- ELENCO SOCI -->
+      <section class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6 space-y-4">
+        <h2 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-users text-blue-500"></i>
+          <span>Elenco Soci e Certificati Medici</span>
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700">
+              <tr>
+                <th class="p-4">Socio</th>
+                <th class="p-4">Corso</th>
+                <th class="p-4">Certificato</th>
+                <th class="p-4">Scadenza</th>
+                <th class="p-4">Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="sociTableBody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-500 hover:text-white px-4 py-2 rounded-xl text-xs transition border border-slate-700">
+        <i class="fa-solid fa-power-off mr-2"></i>Esci / Cambia Account
       </button>
     </div>
   </div>
@@ -159,16 +189,17 @@
 
     let currentUser = null;
 
-    // Funzione per mostrare/nascondere la password con l'icona dell'occhio
     function togglePassword(inputId, iconId) {
       const input = document.getElementById(inputId);
       const icon = document.getElementById(iconId);
       if (input.type === 'password') {
         input.type = 'text';
-        icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a10.05 10.05 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.542 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />`;
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
       } else {
         input.type = 'password';
-        icon.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />`;
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
       }
     }
 
@@ -197,16 +228,16 @@
         document.getElementById('loginSection').classList.add('hidden');
         document.getElementById('dashboardSection').classList.remove('hidden');
         document.getElementById('userInfo').classList.remove('hidden');
-        document.getElementById('welcomeUser').innerText = `${currentUser.nome} (${(currentUser.corsi_competenze || []).join(', ')})`;
+        document.getElementById('welcomeUser').innerText = currentUser.nome;
         
         const badge = document.getElementById('userRoleBadge');
         if (currentUser.ruolo === 'presidente') {
-          badge.className = "text-[10px] px-2 py-0.5 rounded-full font-semibold bg-red-100 text-red-800";
-          badge.innerText = "PRESIDENTE (ACCESSO GLOBALE)";
+          badge.className = "text-[9px] px-2 py-0.5 rounded-full font-bold bg-red-600 text-white";
+          badge.innerText = "PRESIDENTE";
           document.getElementById('sezionePresidenteGestione').classList.remove('hidden');
           caricaSelectSoci();
         } else {
-          badge.className = "text-[10px] px-2 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-800";
+          badge.className = "text-[9px] px-2 py-0.5 rounded-full font-bold bg-blue-600 text-white";
           badge.innerText = `ISTRUTTORE`;
         }
 
@@ -223,7 +254,7 @@
         const select = document.getElementById('selectSocioIstruttore');
         select.innerHTML = '<option value="">-- Seleziona Socio --</option>';
         data.forEach(s => {
-          select.innerHTML += `<option value="${s.id}" data-email="${s.email}">${s.cognome} ${s.nome} (${s.email})</option>`;
+          select.innerHTML += `<option value="${s.id}" data-email="${s.email}">${s.cognome} ${s.nome}</option>`;
         });
         
         select.onchange = function() {
@@ -240,28 +271,19 @@
     async function registraIstruttore() {
       const select = document.getElementById('selectSocioIstruttore');
       const socioId = select.value;
-      if (!socioId) {
-        alert("Seleziona un socio.");
-        return;
-      }
-      const option = select.options[select.selectedIndex];
-      const nomeSocio = option.text.split('(')[0].trim();
+      if (!socioId) { alert("Seleziona un socio."); return; }
       
+      const option = select.options[select.selectedIndex];
+      const nomeSocio = option.text;
       const emailLogin = document.getElementById('nuovaEmailLogin').value.trim().toLowerCase();
       const pass = document.getElementById('nuovaPasswordIstruttore').value.trim();
 
-      if (!emailLogin || !pass) {
-        alert("Inserisci un'email di login dedicata e una password.");
-        return;
-      }
+      if (!emailLogin || !pass) { alert("Inserisci email e password."); return; }
 
       const corsiSelect = document.getElementById('selectCorsiCompetenza');
       const corsiScelti = Array.from(corsiSelect.selectedOptions).map(opt => opt.value);
 
-      if (corsiScelti.length === 0) {
-        alert("Seleziona almeno un corso di competenza.");
-        return;
-      }
+      if (corsiScelti.length === 0) { alert("Seleziona almeno un corso."); return; }
 
       try {
         const { error } = await supabaseClient
@@ -276,10 +298,10 @@
           }]);
 
         if (error) throw error;
-        alert("Credenziali istruttore create con successo!");
+        alert("Credenziali istruttore create!");
         location.reload();
       } catch (err) {
-        alert("Errore salvataggio credenziali: " + err.message);
+        alert("Errore salvataggio: " + err.message);
       }
     }
 
@@ -291,7 +313,7 @@
 
     async function caricaSociEVerifiche() {
       try {
-        let query = supabaseClient.from('soci').select('*');
+        let query = supabaseClient.from('soci').select('*').order('cognome');
         if (currentUser.ruolo !== 'presidente') {
           const comp = currentUser.corsi_competenze || [];
           query = query.in('corso_scelto', comp);
@@ -305,19 +327,22 @@
 
         soci.forEach(socio => {
           const tr = document.createElement('tr');
-          const isScaduto = socio.scadenza_certificato && new Date(socio.scadenza_certificato) < new Date();
+          const isScaduto = socio.scadenza_certificato_medico && new Date(socio.scadenza_certificato_medico) < new Date();
           
           tr.innerHTML = `
-            <td class="p-3 font-medium text-gray-900">${socio.nome} ${socio.cognome}<br><span class="text-[10px] text-gray-400">CF: ${socio.codice_fiscale || 'N/D'}</span></td>
-            <td class="p-3">${socio.corso_scelto || 'N/D'}</td>
-            <td class="p-3">
-              ${socio.certificato_url ? `<a href="${socio.certificato_url}" target="_blank" class="text-blue-600 underline font-semibold">Visualizza File</a>` : '<span class="text-gray-400">Non caricato</span>'}
+            <td class="p-4">
+                <p class="font-bold text-white text-sm">${socio.cognome} ${socio.nome}</p>
+                <p class="text-[9px] text-slate-500 font-mono">${socio.codice_fiscale || ''}</p>
             </td>
-            <td class="p-3">
-              <span class="${isScaduto ? 'text-red-600 font-bold' : 'text-gray-700'}">${socio.scadenza_certificato || 'Da impostare'}</span>
+            <td class="p-4 text-xs">${socio.corso_scelto || '<span class="text-slate-600 italic">N/D</span>'}</td>
+            <td class="p-4">
+              ${socio.certificato_medico_url ? `<a href="${socio.certificato_medico_url}" target="_blank" class="bg-blue-600/20 text-blue-400 border border-blue-600/30 px-2 py-1 rounded-lg font-bold text-[10px] hover:bg-blue-600 hover:text-white transition">VISUALIZZA PDF</a>` : '<span class="text-slate-600 text-[10px] italic">Non caricato</span>'}
             </td>
-            <td class="p-3">
-              <span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded-full font-semibold text-[10px]">Verifica entro il 3 del mese</span>
+            <td class="p-4">
+              <span class="text-[11px] ${isScaduto ? 'text-red-500 font-bold' : 'text-slate-300'}">${socio.scadenza_certificato_medico || '---'}</span>
+            </td>
+            <td class="p-4">
+              <button onclick="alert('Funzione di modifica anagrafica socio in arrivo')" class="text-slate-500 hover:text-white transition"><i class="fa-solid fa-pen-to-square"></i></button>
             </td>
           `;
           tbody.appendChild(tr);
@@ -331,8 +356,9 @@
       try {
         const { data, error } = await supabaseClient
           .from('pagamenti')
-          .select('*, pagamento_soci(*, soci(nome, cognome, corso_scelto))')
-          .order('data_inserimento', { ascending: false });
+          .select('*')
+          .eq('stato', 'In attesa di verifica')
+          .order('id', { ascending: false });
 
         if (error) throw error;
 
@@ -340,41 +366,23 @@
         container.innerHTML = '';
 
         if (!data || data.length === 0) {
-          container.innerHTML = '<p class="text-xs text-gray-400">Nessun pagamento registrato.</p>';
+          container.innerHTML = '<p class="text-xs text-slate-500 italic p-2 col-span-2">Nessuna ricevuta in attesa di verifica.</p>';
           return;
         }
 
         data.forEach(pag => {
-          if (currentUser.ruolo !== 'presidente') {
-            const comp = currentUser.corsi_competenze || [];
-            const rel = pag.pagamento_soci || [];
-            const appartieneAlCorso = rel.some(r => r.soci && comp.includes(r.soci.corso_scelto));
-            if (!appartieneAlCorso) return;
-          }
-
-          let dettagliHtml = '';
-          (pag.pagamento_soci || []).forEach(ps => {
-            dettagliHtml += `<li class="text-[11px] text-gray-600">- ${ps.soci ? ps.soci.nome + ' ' + ps.soci.cognome : 'Socio'} (${ps.corso_riferimento || 'Corso'}): €${ps.importo}</li>`;
-          });
-
           const div = document.createElement('div');
-          div.className = "border border-gray-200 rounded-xl p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gray-50/50";
+          div.className = "bg-slate-800 border border-slate-700 rounded-2xl p-4 flex justify-between items-center shadow-lg";
           div.innerHTML = `
             <div class="space-y-1">
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-sm text-gray-900">Totale: €${pag.importo_totale}</span>
-                <span class="text-[10px] px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full font-semibold">${pag.stato}</span>
-                <span class="text-[10px] text-gray-500">(${pag.tipo_pagamento} - ${pag.periodo_riferimento})</span>
-              </div>
-              <ul class="pl-2 space-y-0.5">${dettagliHtml}</ul>
-              <a href="${pag.ricevuta_url}" target="_blank" class="text-xs text-blue-600 underline font-semibold inline-block pt-1">Visualizza Contabile / Ricevuta</a>
+                <p class="font-bold text-white text-sm">Versamento: €${pag.importo}</p>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest">${pag.corso || 'Generale'}</p>
+                <a href="${pag.ricevuta_url}" target="_blank" class="text-[10px] text-emerald-400 underline font-bold">Apri Ricevuta</a>
             </div>
-            ${currentUser.ruolo === 'presidente' ? `
-              <div class="flex gap-2">
-                <button onclick="aggiornaStatoPagamento(${pag.id}, 'Confermato')" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">Conferma</button>
-                <button onclick="aggiornaStatoPagamento(${pag.id}, 'Da correggere')" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">Segnala Errore</button>
-              </div>
-            ` : '<span class="text-[10px] text-gray-400 font-medium">Solo visualizzazione istruttore</span>'}
+            <div class="flex gap-2">
+                <button onclick="aggiornaStatoPagamento(${pag.id}, 'Approvato')" class="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-lg transition" title="Approva"><i class="fa-solid fa-check"></i></button>
+                <button onclick="aggiornaStatoPagamento(${pag.id}, 'Rifiutato')" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition" title="Rifiuta"><i class="fa-solid fa-xmark"></i></button>
+            </div>
           `;
           container.appendChild(div);
         });
@@ -384,68 +392,51 @@
     }
 
     async function aggiornaStatoPagamento(pagId, nuovoStato) {
+      if(!confirm(`Vuoi impostare il pagamento come ${nuovoStato}?`)) return;
       try {
-        const { error } = await supabaseClient
-          .from('pagamenti')
-          .update({ stato: nuovoStato })
-          .eq('id', pagId);
-
+        const { error } = await supabaseClient.from('pagamenti').update({ stato: nuovoStato }).eq('id', pagId);
         if (error) throw error;
-        alert(`Stato pagamento aggiornato a: ${nuovoStato}`);
+        alert(`Pagamento ${nuovoStato}`);
         caricaPagamenti();
-      } catch (err) {
-        alert("Errore aggiornamento: " + err.message);
-      }
+      } catch (err) { alert("Errore: " + err.message); }
     }
 
     async function caricaResoconti() {
       try {
         const { data, error } = await supabaseClient
-          .from('pagamento_soci')
-          .select('*, pagamenti(periodo_riferimento, stato)');
+          .from('pagamenti')
+          .select('corso, importo, stato');
 
         if (error) throw error;
 
         const resocontiMap = {};
         data.forEach(item => {
-          const corso = item.corso_riferimento || 'Generale';
-          const periodo = item.pagamenti ? item.pagamenti.periodo_riferimento : 'N/D';
-          const key = `${corso}_${periodo}`;
-
+          if (item.stato !== 'Approvato') return;
+          const corso = item.corso || 'Generale';
           if (currentUser.ruolo !== 'presidente') {
             const comp = currentUser.corsi_competenze || [];
             if (!comp.includes(corso)) return;
           }
 
-          if (!resocontiMap[key]) {
-            resocontiMap[key] = { corso, periodo, totale: 0, stato: item.pagamenti ? item.pagamenti.stato : 'N/D' };
-          }
-          resocontiMap[key].totale += parseFloat(item.importo || 0);
+          if (!resocontiMap[corso]) { resocontiMap[corso] = 0; }
+          resocontiMap[corso] += parseFloat(item.importo || 0);
         });
 
         const tbody = document.getElementById('resocontiTableBody');
         tbody.innerHTML = '';
 
-        const keys = Object.keys(resocontiMap);
-        if (keys.length === 0) {
-          tbody.innerHTML = '<tr><td colspan="4" class="p-3 text-gray-400">Nessun versamento registrato per i filtri attivi.</td></tr>';
-          return;
-        }
-
-        keys.forEach(k => {
-          const r = resocontiMap[k];
+        for (const [corso, totale] of Object.entries(resocontiMap)) {
           const tr = document.createElement('tr');
           tr.innerHTML = `
-            <td class="p-3 font-bold text-gray-900">${r.corso}</td>
-            <td class="p-3">${r.periodo}</td>
-            <td class="p-3 font-semibold text-emerald-700">€${r.totale.toFixed(2)}</td>
-            <td class="p-3"><span class="px-2 py-0.5 bg-gray-100 text-gray-800 rounded-full text-[10px]">${r.stato}</span></td>
+            <td class="p-4 font-bold text-white">${corso}</td>
+            <td class="p-4 text-slate-500 uppercase tracking-tighter">Totale Storico</td>
+            <td class="p-4 text-right font-mono font-bold text-emerald-500">€${totale.toFixed(2)}</td>
+            <td class="p-4 text-center"><span class="px-2 py-0.5 bg-emerald-600/20 text-emerald-400 rounded-full font-bold text-[9px] border border-emerald-600/30">ATTIVO</span></td>
           `;
           tbody.appendChild(tr);
-        });
-      } catch (err) {
-        console.error("Errore caricamento resoconti:", err.message);
-      }
+        }
+        if (tbody.innerHTML === '') tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-slate-600 italic">Nessun dato finanziario disponibile.</td></tr>';
+      } catch (err) { console.error("Errore resoconti:", err.message); }
     }
   </script>
 </body>
