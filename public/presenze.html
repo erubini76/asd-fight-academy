@@ -6,21 +6,23 @@
     <title>A.S.D. Fight Academy - Registro Presenze</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen p-4 font-sans">
 
     <div class="container mx-auto max-w-2xl">
         <header class="mb-6 flex justify-between items-center bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg">
             <div>
-                <h1 class="text-xl font-bold text-purple-500">REGISTRO APPELLO</h1>
+                <h1 class="text-xl font-bold text-purple-500">REGISTRO APPEL</h1>
+                <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Area Riservata Istruttori</p>
             </div>
-            <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-xl text-xs transition">
+            <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-xl text-xs transition shadow-sm">
                 <i class="fa-solid fa-house"></i>
             </a>
         </header>
 
         <main class="space-y-6">
+            <!-- SELEZIONE CORSO E DATA -->
             <section class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -41,67 +43,154 @@
                 </div>
             </section>
 
+            <!-- LISTA ALLIEVI -->
             <section id="lista-allievi-container" class="hidden bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
                 <div class="p-4 bg-slate-700/30 border-b border-slate-700 flex justify-between items-center">
-                    <h3 class="text-sm font-bold text-white uppercase">Allievi Trovati</h3>
+                    <h3 class="text-sm font-bold text-white uppercase">Appello Allievi</h3>
+                    <span id="counter-presenti" class="text-[10px] bg-purple-600 text-white px-2 py-0.5 rounded-full font-bold">0 PRESENTI</span>
                 </div>
-                <div id="lista-iscritti" class="divide-y divide-slate-700 max-h-[400px] overflow-y-auto"></div>
+
+                <div id="lista-iscritti" class="divide-y divide-slate-700 max-h-[400px] overflow-y-auto">
+                    <!-- Dinamico -->
+                </div>
+
                 <div class="p-4 bg-slate-900/50">
-                    <button id="salva-btn" onclick="salvaPresenze()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-200">SALVA PRESENZE</button>
+                    <button id="salva-btn" onclick="salvaPresenze()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-200 flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        SALVA PRESENZE
+                    </button>
                 </div>
             </section>
+
+            <div id="placeholder" class="text-center py-12 text-slate-500 italic text-sm">
+                <i class="fa-solid fa-clipboard-list text-4xl mb-3 opacity-20"></i>
+                <p>Seleziona un corso per visualizzare gli allievi</p>
+            </div>
         </main>
     </div>
 
     <script>
-        const supabase = supabase.createClient('https://twiizsottstaacnvrxkg.supabase.co', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI');
+        const SUPABASE_URL = '<https://twiizsottstaacnvrxkg.supabase.co>';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         document.getElementById('data-lezione').value = new Date().toISOString().split('T')[0];
+
+        let allieviCaricati = [];
+        const presentiIds = new Set();
 
         async function caricaIscritti() {
             const corso = document.getElementById('corso-select').value;
             if (!corso) return;
 
-            const container = document.getElementById('lista-iscritti');
-            container.innerHTML = '<div class="p-4 text-center">Caricamento...</div>';
-            document.getElementById('lista-allievi-container').classList.remove('hidden');
+            const listContainer = document.getElementById('lista-allievi-container');
+            const placeholder = document.getElementById('placeholder');
+            const listContent = document.getElementById('lista-iscritti');
 
-            const { data, error } = await supabase
-                .from('soci')
-                .select('id, nome, cognome')
-                .or(`corso.eq.${corso},corso_scelto.eq.${corso}`);
-            
-            if (error) { alert("Errore: " + error.message); return; }
-            
-            if(data.length === 0) {
-                container.innerHTML = '<p class="p-4 text-center text-slate-500">Nessun iscritto trovato per questo corso.</p>';
-            } else {
-                container.innerHTML = data.map(s => `
-                    <div class="flex items-center gap-3 p-4 hover:bg-slate-700 transition">
-                        <input type="checkbox" class="presente-check w-5 h-5" value="${s.id}">
-                        <span class="text-lg">${s.cognome} ${s.nome}</span>
-                    </div>
-                `).join('');
+            listContent.innerHTML = '<div class="p-8 text-center"><i class="fa-solid fa-spinner fa-spin text-purple-500 text-2xl"></i></div>';
+            listContainer.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            presentiIds.clear();
+            aggiornaContatore();
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('soci')
+                    .select('id, nome, cognome, codice_fiscale')
+                    .eq('corso_scelto', corso)
+                    .order('cognome', { ascending: true });
+
+                if (error) throw error;
+
+                allieviCaricati = data || [];
+                renderLista();
+            } catch (err) {
+                console.error(err);
+                listContent.innerHTML = `<p class="p-8 text-center text-red-400">Errore nel caricamento allievi: ${err.message}</p>`;
             }
         }
 
+        function renderLista() {
+            const listContent = document.getElementById('lista-iscritti');
+            if (allieviCaricati.length === 0) {
+                listContent.innerHTML = '<p class="p-8 text-center text-slate-500">Nessun allievo trovato per questo corso.</p>';
+                return;
+            }
+
+            listContent.innerHTML = allieviCaricati.map(allievo => `
+                <div class="flex items-center justify-between p-4 hover:bg-slate-700/50 transition cursor-pointer" onclick="togglePresence('${allievo.id}')">
+                    <div class="flex items-center gap-3">
+                        <div id="check-${allievo.id}" class="w-6 h-6 border-2 border-slate-600 rounded-lg flex items-center justify-center transition-all">
+                            <i class="fa-solid fa-check text-white text-xs hidden"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-white">${allievo.cognome} ${allievo.nome}</p>
+                            <p class="text-[10px] text-slate-500 uppercase">${allievo.codice_fiscale || ''}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function togglePresence(id) {
+            const checkbox = document.getElementById(`check-${id}`);
+            const icon = checkbox.querySelector('i');
+            
+            if (presentiIds.has(id)) {
+                presentiIds.delete(id);
+                checkbox.classList.remove('bg-purple-600', 'border-purple-600');
+                checkbox.classList.add('border-slate-600');
+                icon.classList.add('hidden');
+            } else {
+                presentiIds.add(id);
+                checkbox.classList.add('bg-purple-600', 'border-purple-600');
+                checkbox.classList.remove('border-slate-600');
+                icon.classList.remove('hidden');
+            }
+            aggiornaContatore();
+        }
+
+        function aggiornaContatore() {
+            document.getElementById('counter-presenti').textContent = `${presentiIds.size} PRESENTI`;
+        }
+
         async function salvaPresenze() {
-            const data = document.getElementById('data-lezione').value;
             const corso = document.getElementById('corso-select').value;
-            const checked = document.querySelectorAll('.presente-check:checked');
+            const dataLezione = document.getElementById('data-lezione').value;
             
-            if (checked.length === 0) { alert("Seleziona almeno un socio!"); return; }
-            
-            const records = Array.from(checked).map(c => ({
-                socio_id: c.value,
-                data_presenza: data,
+            if (presentiIds.size === 0) {
+                if (!confirm("Nessun presente selezionato. Vuoi salvare un appello senza presenti?")) return;
+            }
+
+            const btn = document.getElementById('salva-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> SALVATAGGIO...';
+
+            const records = Array.from(presentiIds).map(socioId => ({
+                socio_id: socioId,
+                data_presenza: dataLezione,
                 corso: corso
             }));
 
-            const { error } = await supabase.from('presenze').insert(records);
-            if (error) alert("Errore: " + error.message);
-            else { alert("Presenze salvate!"); location.reload(); }
+            try {
+                // Se non ci sono presenti, non c'è nulla da inserire.
+                if (records.length > 0) {
+                    const { error } = await supabaseClient
+                        .from('presenze')
+                        .insert(records);
+                    if (error) throw error;
+                }
+
+                alert("Presenze salvate correttamente!");
+                location.reload();
+            } catch (err) {
+                alert("Errore nel salvataggio: " + err.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> SALVA PRESENZE';
+            }
         }
     </script>
 </body>
 </html>
+
