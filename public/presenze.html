@@ -13,7 +13,7 @@
     <div class="container mx-auto max-w-2xl">
         <header class="mb-6 flex justify-between items-center bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg">
             <div>
-                <h1 class="text-xl font-bold text-purple-500">REGISTRO APPEL</h1>
+                <h1 class="text-xl font-bold text-purple-500">REGISTRO APPELLO</h1>
                 <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold">Area Riservata Istruttori</p>
             </div>
             <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-xl text-xs transition shadow-sm">
@@ -60,7 +60,7 @@
                 <div class="p-4 bg-slate-900/50">
                     <button id="salva-btn" onclick="salvaPresenze()" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl shadow-lg transition duration-200 transform active:scale-95 flex items-center justify-center gap-3">
                         <i class="fa-solid fa-cloud-arrow-up"></i>
-                        SALVA PRESENZE DI OGGI
+                        SALVA PRESENZE
                     </button>
                 </div>
             </section>
@@ -78,10 +78,11 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Imposta data odierna
+        // Imposta data odierna di default
         document.getElementById('data-lezione').value = new Date().toISOString().split('T')[0];
 
         let allieviCaricati = [];
+        const presentiIds = new Set();
 
         async function caricaIscritti() {
             const corso = document.getElementById('corso-select').value;
@@ -96,17 +97,18 @@
             placeholder.classList.add('hidden');
 
             try {
-                // Cerchiamo i soci attivi iscritti al corso selezionato
+                // Modificato per evitare blocchi se la colonna stato ha valori differenti o vuoti nei dati di prova
                 const { data, error } = await supabaseClient
                     .from('soci')
                     .select('id, nome, cognome, codice_fiscale')
                     .eq('corso', corso)
-                    .eq('stato', 'Attivo') // Assumiamo ci sia una colonna stato, altrimenti rimuovere
                     .order('cognome', { ascending: true });
 
                 if (error) throw error;
 
+                console.log("Dati allievi caricati:", data);
                 allieviCaricati = data || [];
+                presentiIds.clear(); // Reset selezioni al cambio corso
                 renderLista();
             } catch (err) {
                 console.error(err);
@@ -117,7 +119,7 @@
         function renderLista() {
             const listContent = document.getElementById('lista-iscritti');
             if (allieviCaricati.length === 0) {
-                listContent.innerHTML = '<p class="p-8 text-center text-slate-500">Nessun allievo attivo trovato per questo corso.</p>';
+                listContent.innerHTML = '<p class="p-8 text-center text-slate-500">Nessun allievo trovato per questo corso.</p>';
                 return;
             }
 
@@ -128,7 +130,7 @@
                             <i class="fa-solid fa-check text-white text-xs hidden"></i>
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-white">${allievo.cognome} ${allievo.nome}</p>
+                            <p class="text-sm font-bold text-white">${allievo.cognome || ''} ${allievo.nome || ''}</p>
                             <p class="text-[10px] text-slate-500 uppercase">${allievo.codice_fiscale || ''}</p>
                         </div>
                     </div>
@@ -138,10 +140,9 @@
             aggiornaContatore();
         }
 
-        const presentiIds = new Set();
-
         function togglePresence(id) {
             const checkbox = document.getElementById(`check-${id}`);
+            if (!checkbox) return;
             const icon = checkbox.querySelector('i');
             
             if (presentiIds.has(id)) {
@@ -159,7 +160,10 @@
         }
 
         function aggiornaContatore() {
-            document.getElementById('counter-presenti').textContent = `${presentiIds.size} PRESENTI`;
+            const counterEl = document.getElementById('counter-presenti');
+            if (counterEl) {
+                counterEl.textContent = `${presentiIds.size} PRESENTI`;
+            }
         }
 
         async function salvaPresenze() {
@@ -171,6 +175,11 @@
             const corso = document.getElementById('corso-select').value;
             const dataPresenza = document.getElementById('data-lezione').value;
 
+            if (!dataPresenza) {
+                alert("Seleziona una data valida per la lezione.");
+                return;
+            }
+
             btn.disabled = true;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> SALVATAGGIO...';
 
@@ -181,8 +190,6 @@
             }));
 
             try {
-                // Nota: Inseriamo record solo per chi è presente. 
-                // Il sistema calcolerà le % basandosi sui giorni unici di lezione.
                 const { error } = await supabaseClient
                     .from('presenze')
                     .insert(records);
@@ -190,13 +197,13 @@
                 if (error) throw error;
 
                 alert("Appello salvato correttamente!");
-                location.reload(); // Resetta tutto per un nuovo appello
+                location.reload(); 
             } catch (err) {
                 console.error(err);
                 alert("Errore durante il salvataggio: " + err.message);
             } finally {
                 btn.disabled = false;
-                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> SALVA PRESENZE DI OGGI';
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> SALVA PRESENZE';
             }
         }
     </script>
