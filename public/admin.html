@@ -308,9 +308,12 @@
     }
 
     async function caricaDatiDashboard() {
-      await caricaSociEVerifiche();
-      await caricaPagamenti();
-      await caricaResoconti();
+      // Caricamento asincrono parallelo per migliorare la reattività
+      Promise.all([
+        caricaSociEVerifiche(),
+        caricaPagamenti(),
+        caricaResoconti()
+      ]).catch(err => console.error("Errore caricamento dashboard:", err));
     }
 
     async function caricaSociEVerifiche() {
