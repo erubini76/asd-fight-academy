@@ -64,23 +64,44 @@
       
       <!-- MENU RAPIDO -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <a href="presenze.html" class="bg-purple-600 hover:bg-purple-700 p-4 rounded-2xl shadow-lg transition flex items-center justify-between group">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-clipboard-user text-2xl"></i>
-            <span class="font-bold">Registro Appello</span>
+        <a href="presenze.html" class="bg-gradient-to-br from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 p-6 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-between group transform hover:-translate-y-1 border border-purple-400/20">
+          <div class="flex items-center gap-4">
+            <div class="bg-white/20 p-3 rounded-xl">
+              <i class="fa-solid fa-clipboard-user text-2xl text-white"></i>
+            </div>
+            <div>
+              <span class="block font-extrabold text-lg text-white">REGISTRO APPELLO</span>
+              <span class="block text-[10px] text-purple-200 uppercase tracking-widest font-bold">Firma Presenze Allievi</span>
+            </div>
           </div>
-          <i class="fa-solid fa-chevron-right opacity-50 group-hover:translate-x-1 transition"></i>
+          <i class="fa-solid fa-circle-arrow-right text-xl text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all"></i>
         </a>
-        <a href="admin-scadenze.html" class="bg-amber-600 hover:bg-amber-700 p-4 rounded-2xl shadow-lg transition flex items-center justify-between group">
-          <div class="flex items-center gap-3">
-            <i class="fa-solid fa-bell text-2xl"></i>
-            <span class="font-bold">Alert Scadenze</span>
+        
+        <a href="admin-scadenze.html" class="bg-gradient-to-br from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 p-6 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-between group transform hover:-translate-y-1 border border-amber-400/20">
+          <div class="flex items-center gap-4">
+            <div class="bg-white/20 p-3 rounded-xl">
+              <i class="fa-solid fa-bell text-2xl text-white"></i>
+            </div>
+            <div>
+              <span class="block font-extrabold text-lg text-white">ALERT SCADENZE</span>
+              <span class="block text-[10px] text-amber-100 uppercase tracking-widest font-bold">Documenti e Tessere</span>
+            </div>
           </div>
-          <i class="fa-solid fa-chevron-right opacity-50 group-hover:translate-x-1 transition"></i>
+          <i class="fa-solid fa-circle-arrow-right text-xl text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all"></i>
         </a>
-        <div class="bg-slate-800 p-4 rounded-2xl border border-slate-700 flex items-center gap-3">
-          <i class="fa-solid fa-database text-2xl text-slate-500"></i>
-          <span class="text-xs text-slate-400">Database: <span class="text-emerald-500 font-mono">Connesso</span></span>
+
+        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-center shadow-lg">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fa-solid fa-server text-emerald-500"></i>
+            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Stato Sistema</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="relative flex h-3 w-3">
+              <span class="animate-ping absolute inline-flex h-full w-3 rounded-full bg-emerald-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+            </span>
+            <span class="text-sm text-emerald-400 font-mono font-bold">DB CLOUD ONLINE</span>
+          </div>
         </div>
       </div>
 
@@ -319,9 +340,19 @@
     async function caricaSociEVerifiche() {
       try {
         let query = supabaseClient.from('soci').select('*').order('cognome');
+        
+        // Se non è presidente, filtra per i corsi di competenza
         if (currentUser.ruolo !== 'presidente') {
           const comp = currentUser.corsi_competenze || [];
-          query = query.in('corso_scelto', comp);
+          // Aggiungiamo una logica di filtro più robusta
+          if (comp.length > 0) {
+            query = query.in('corso_scelto', comp);
+          } else {
+            // Se l'istruttore non ha corsi assegnati, non vede nessuno
+            const tbody = document.getElementById('sociTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-slate-600 italic">Nessun corso assegnato a questo profilo.</td></tr>';
+            return;
+          }
         }
 
         const { data: soci, error } = await query;
@@ -337,9 +368,14 @@
           tr.innerHTML = `
             <td class="p-4">
                 <p class="font-bold text-white text-sm">${socio.cognome} ${socio.nome}</p>
+                <p class="text-[10px] text-slate-400 font-medium">${socio.email || ''}</p>
                 <p class="text-[9px] text-slate-500 font-mono">${socio.codice_fiscale || ''}</p>
             </td>
-            <td class="p-4 text-xs">${socio.corso_scelto || '<span class="text-slate-600 italic">N/D</span>'}</td>
+            <td class="p-4 text-xs">
+                <span class="px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 text-[10px] font-bold border border-slate-600">
+                    ${socio.corso_scelto || 'N/D'}
+                </span>
+            </td>
             <td class="p-4">
               ${socio.certificato_medico_url ? `<a href="${socio.certificato_medico_url}" target="_blank" class="bg-blue-600/20 text-blue-400 border border-blue-600/30 px-2 py-1 rounded-lg font-bold text-[10px] hover:bg-blue-600 hover:text-white transition">VISUALIZZA PDF</a>` : '<span class="text-slate-600 text-[10px] italic">Non caricato</span>'}
             </td>
