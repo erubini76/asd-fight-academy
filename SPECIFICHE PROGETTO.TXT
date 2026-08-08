@@ -1,0 +1,72 @@
+---
+
+# DOCUMENTO DI SPECIFICA DEI REQUISITI DI PROGETTO (SRS)
+
+**Progetto:** Piattaforma Gestionale ASD (MVP Lean)
+
+**Data:** 8 Agosto 2026
+
+**Target di Rilascio MVP:** Fine Agosto 2026
+
+**Budget:** 0€ / Costo Minimo (Sfruttamento infrastruttura esistente)
+
+---
+
+## 1. Panoramica del Progetto e Obiettivi
+
+* **Obiettivo:** Ridurre i tempi di gestione amministrativa, contabile e legale dell'ASD, automatizzando conformità, pagamenti, presenze e monitoraggio degli allievi.
+* **Modello:** Piattaforma Web App (PWA) multi-dispositivo accessibile tramite URL e scorciatoia su home screen (senza pubblicazione su App/Play Store).
+
+---
+
+## 2. Architettura Tecnologica e Infrastruttura (Stack)
+
+Il sistema è già impostato e funzionante sui seguenti servizi cloud a costo zero:
+
+* **Database & Auth:** Supabase (PostgreSQL relazionale) – *Progetto: Fight-Academy-DB (`twiizsottstaacnvrxkg`)*.
+* **Hosting & Deployment:** Vercel – Collegato direttamente al repository GitHub.
+* **Version Control:** GitHub – Repository ufficiale (*erubini76*).
+* **Invio Email Transazionali:** Resend API.
+
+---
+
+## 3. Architettura dei Ruoli (RBAC)
+
+* **Presidente / Amministratore:** Controllo globale e totale dell'ASD, visibilità finanziaria completa, gestione anagrafiche, listini e corsi.
+* **Istruttore:** Gestione dei propri corsi, visualizzazione allievi assegnati, stato economico/morosità dei propri iscritti, esecuzione appello e controllo percentuali di presenza (soglia esami).
+* **Super User (Tecnico):** Manutenzione sistemistica e architetturale, strettamente escluso dai dati finanziari.
+
+---
+
+## 4. Requisiti Funzionali - MVP (Rilascio Fine Agosto 2026)
+
+| ID | Modulo | Descrizione Funzionalità | Priorità |
+| --- | --- | --- | --- |
+| **FR-01** | Anagrafiche | Registrazione autonoma degli utenti e gestione dei nuclei familiari (genitore/figli). | Alta |
+| **FR-02** | Conformità Legale | Raccolta consensi digitali (Statuto, Privacy GDPR, Liberatoria foto, Tesseramento EPS) con tracciamento sicuro (timestamp e indirizzo IP) in sostituzione della firma cartacea. | Alta |
+| **FR-03** | Conformità Medica | Upload obbligatorio del file (PDF/foto) del certificato medico e tracciamento scadenze con alert via email e notifiche push in-app. | Alta |
+| **FR-04** | Economico | Gestione listini differenziati: <br>
+
+<br>• **Adulti:** €50/mese (singolo) o €45/mese (plurimensile anticipato con split contabile mensile), €12/lezione singola.<br>
+
+<br>• **Bambini:** €40/mese (singolo) o €35/mese (plurimensile anticipato con split contabile mensile). | Alta |
+| **FR-05** | Economico | Upload dello screenshot del bonifico da parte dell'utente e invio automatico di sollecito/marcatura di "morosità" dopo 3 giorni dalla scadenza. | Alta |
+| **FR-06** | Presenze | Esecuzione dell'appello rapido delle presenze direttamente da parte dell'istruttore tramite app. | Alta |
+| **FR-07** | Presenze | Calcolo automatico della percentuale di presenza per allievo e indicatore visivo di idoneità (soglia minima del 70% per l'accesso agli esami) visibile all'istruttore. | Alta |
+| **FR-08** | Notifiche | Sistema di alert limitato esclusivamente a Email (tramite Resend) e Notifiche Push In-App. | Alta |
+
+---
+
+## 5. Roadmap Evolutiva (Rilasci Post-Agosto)
+
+### 🔄 Evoluzione Gestione Pagamenti (3 Step)
+
+* **Step 1 (MVP - Fine Agosto):** L'utente carica lo screenshot; il Presidente verifica e registra l'avvenuto pagamento manualmente.
+* **Step 2 (Post-Agosto):** Interfaccia dedicata con lista di riscontro rapido ("check-list") per spuntare i pagamenti verificati rispetto ai bonifici ricevuti.
+* **Step 3 (Evoluto):** Importazione automatica del file CSV della banca e riconciliazione automatica assistita dal sistema (matching tra importi/intestatari e posizioni aperte).
+
+### 🚀 Funzionalità di Fase 2
+
+* **Self Check-in QR Code:** Scansione autonoma all'ingresso della palestra per gli adulti.
+* **CRM & Storico Annuale:** Analisi statistica dei volumi per anno e campagne di re-engagement tramite mailing list per gli ex iscritti.
+* **Personalizzazioni Tariffarie Avanzate:** Gestione sconti familiari o tariffe personalizzate gestite direttamente dal Presidente.
