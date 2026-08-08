@@ -94,15 +94,33 @@
             aggiornaContatore();
 
             try {
-                const { data, error } = await supabaseClient
+                // 1. Carica Soci
+                const { data: soci, error: sociError } = await supabaseClient
                     .from('soci')
                     .select('id, nome, cognome, codice_fiscale')
                     .eq('corso_scelto', corso)
                     .order('cognome', { ascending: true });
 
-                if (error) throw error;
+                if (sociError) throw sociError;
 
-                allieviCaricati = data || [];
+                // 2. Carica Totale Lezioni del corso (date uniche in presenze)
+                const { data: presenzeCorso, error: presenzeError } = await supabaseClient
+                    .from('presenze')
+                    .select('data_presenza, socio_id')
+                    .eq('corso', corso);
+                
+                if (presenzeError) throw presenzeError;
+
+                // Calcolo statistiche
+                const dateUniche = [...new Set(presenzeCorso.map(p => p.data_presenza))];
+                const totaleLezioni = dateUniche.length;
+
+                allieviCaricati = (soci || []).map(s => {
+                    const presenzeSocio = presenzeCorso.filter(p => p.socio_id === s.id).length;
+                    const percentuale = totaleLezioni > 0 ? Math.round((presenzeSocio / totaleLezioni) * 100) : 0;
+                    return { ...s, percentuale };
+                });
+
                 renderLista();
             } catch (err) {
                 console.error(err);
@@ -117,19 +135,28 @@
                 return;
             }
 
-            listContent.innerHTML = allieviCaricati.map(allievo => `
-                <div class="flex items-center justify-between p-4 hover:bg-slate-700/50 transition cursor-pointer" onclick="togglePresence('${allievo.id}')">
-                    <div class="flex items-center gap-3">
-                        <div id="check-${allievo.id}" class="w-6 h-6 border-2 border-slate-600 rounded-lg flex items-center justify-center transition-all">
-                            <i class="fa-solid fa-check text-white text-xs hidden"></i>
+            listContent.innerHTML = allieviCaricati.map(allievo => {
+                const isIdoneo = allievo.percentuale >= 70;
+                const colorClass = isIdoneo ? 'text-green-400' : 'text-red-400';
+                
+                return `
+                    <div class="flex items-center justify-between p-4 hover:bg-slate-700/50 transition cursor-pointer" onclick="togglePresence('${allievo.id}')">
+                        <div class="flex items-center gap-3">
+                            <div id="check-${allievo.id}" class="w-6 h-6 border-2 border-slate-600 rounded-lg flex items-center justify-center transition-all">
+                                <i class="fa-solid fa-check text-white text-xs hidden"></i>
+                            </div>
+                            <div>
+                                <p class="text-sm font-bold text-white">${allievo.cognome} ${allievo.nome}</p>
+                                <p class="text-[10px] text-slate-500 uppercase">${allievo.codice_fiscale || ''}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p class="text-sm font-bold text-white">${allievo.cognome} ${allievo.nome}</p>
-                            <p class="text-[10px] text-slate-500 uppercase">${allievo.codice_fiscale || ''}</p>
+                        <div class="text-right">
+                            <p class="text-xs font-bold ${colorClass}">${allievo.percentuale}%</p>
+                            <p class="text-[9px] text-slate-500 uppercase">${isIdoneo ? 'Idoneo Esami' : 'Frequenza Bassa'}</p>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function togglePresence(id) {
