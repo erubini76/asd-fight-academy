@@ -89,9 +89,24 @@
                     </select>
                 </div>
 
+                <div class="border-b border-slate-700 pb-3 mt-6 mb-2">
+                    <h3 class="text-sm font-bold text-red-500 uppercase tracking-wide">2. Documentazione Medica</h3>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300">Scadenza Certificato Medico</label>
+                        <input type="date" id="scadenza_medico" required class="mt-1 block w-full rounded-lg bg-slate-900 border-slate-700 text-white shadow-sm border p-2 text-sm focus:border-red-500 focus:ring-red-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300">Upload Certificato (PDF/Foto)</label>
+                        <input type="file" id="file_medico" accept="image/*,.pdf" required class="mt-1 block w-full text-xs text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-red-600 file:text-white hover:file:bg-red-700">
+                    </div>
+                </div>
+
                 <!-- Sezione Genitore / Tutore (Visibile per Minorenni) -->
                 <div id="sezione-tutore" class="hidden border border-amber-600/50 bg-amber-950/20 p-4 rounded-xl space-y-3 mt-4">
-                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wide">Dati Genitore / Tutore (Obbligatorio per Minorenni)[cite: 4]</h3>
+                    <h3 class="text-xs font-bold text-amber-400 uppercase tracking-wide">3. Dati Genitore / Tutore (Obbligatorio per Minorenni)</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <div>
                             <label class="block text-xs font-medium text-slate-300">Nome Genitore/Tutore</label>
@@ -185,26 +200,56 @@
             btn.disabled = true;
             btn.textContent = "Invio in corso...";
 
-            const formData = {
-                nome: document.getElementById('nome').value.trim(),
-                cognome: document.getElementById('cognome').value.trim(),
-                codice_fiscale: document.getElementById('codice_fiscale').value.trim().toUpperCase(),
-                data_nascita: document.getElementById('data_nascita').value,
-                luogo_nascita: document.getElementById('luogo_nascita').value.trim(),
-                residenza_indirizzo: document.getElementById('residenza_indirizzo').value.trim(),
-                residenza_cap: document.getElementById('residenza_cap').value.trim(),
-                residenza_citta: document.getElementById('residenza_città').value.trim(),
-                email: document.getElementById('email').value.trim(),
-                telefono: document.getElementById('telefono').value.trim(),
-                corso: document.getElementById('corso').value,
-                privacy_accettata: document.getElementById('privacy').checked,
-                liberatoria_immagini: document.getElementById('immagini').checked,
-                nome_tutore: document.getElementById('nome_tutore').value.trim() || null,
-                cognome_tutore: document.getElementById('cognome_tutore').value.trim() || null,
-                cf_tutore: document.getElementById('cf_tutore').value.trim().toUpperCase() || null
-            };
+            const fileInput = document.getElementById('file_medico');
+            const file = fileInput.files[0];
+            const scadenzaMedico = document.getElementById('scadenza_medico').value;
+            const cf = document.getElementById('codice_fiscale').value.trim().toUpperCase();
+
+            let fileUrl = null;
 
             try {
+                // 1. Upload Certificato a Supabase Storage
+                if (file) {
+                    const fileExt = file.name.split('.').pop();
+                    const fileName = `${cf}_${Math.random().toString(36).substring(2)}.${fileExt}`;
+                    const filePath = `certificati/${fileName}`;
+
+                    const { error: uploadError, data: uploadData } = await supabaseClient
+                        .storage
+                        .from('certificati')
+                        .upload(filePath, file);
+
+                    if (uploadError) throw new Error("Errore upload file: " + uploadError.message);
+
+                    const { data: publicUrlData } = supabaseClient
+                        .storage
+                        .from('certificati')
+                        .getPublicUrl(filePath);
+                    
+                    fileUrl = publicUrlData.publicUrl;
+                }
+
+                const formData = {
+                    nome: document.getElementById('nome').value.trim(),
+                    cognome: document.getElementById('cognome').value.trim(),
+                    codice_fiscale: cf,
+                    data_nascita: document.getElementById('data_nascita').value,
+                    luogo_nascita: document.getElementById('luogo_nascita').value.trim(),
+                    residenza_indirizzo: document.getElementById('residenza_indirizzo').value.trim(),
+                    residenza_cap: document.getElementById('residenza_cap').value.trim(),
+                    residenza_citta: document.getElementById('residenza_città').value.trim(),
+                    email: document.getElementById('email').value.trim(),
+                    telefono: document.getElementById('telefono').value.trim(),
+                    corso: document.getElementById('corso').value,
+                    privacy_accettata: document.getElementById('privacy').checked,
+                    liberatoria_immagini: document.getElementById('immagini').checked,
+                    nome_tutore: document.getElementById('nome_tutore').value.trim() || null,
+                    cognome_tutore: document.getElementById('cognome_tutore').value.trim() || null,
+                    cf_tutore: document.getElementById('cf_tutore').value.trim().toUpperCase() || null,
+                    scadenza_certificato_medico: scadenzaMedico,
+                    certificato_medico_url: fileUrl
+                };
+
                 const { error: dbError } = await supabaseClient
                     .from('soci')
                     .insert([formData]);
