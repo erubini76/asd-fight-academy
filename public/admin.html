@@ -225,6 +225,8 @@
         }
 
         currentUser = data;
+        localStorage.setItem('asd_admin_user', JSON.stringify(currentUser));
+        
         document.getElementById('loginSection').classList.add('hidden');
         document.getElementById('dashboardSection').classList.remove('hidden');
         document.getElementById('userInfo').classList.remove('hidden');

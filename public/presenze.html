@@ -29,11 +29,7 @@
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Seleziona Corso</label>
                         <select id="corso-select" onchange="caricaIscritti()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none">
                             <option value="">-- Scegli un corso --</option>
-                            <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti / Ragazzi</option>
-                            <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
-                            <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti / Ragazzi</option>
-                            <option value="Vietvodao Bambini">Vietvodao Bambini</option>
-                            <option value="Shodo (Calligrafia)">Shodo (Calligrafia)</option>
+                            <!-- Filtrati dinamicamente via JS al caricamento -->
                         </select>
                     </div>
                     <div>
@@ -70,11 +66,37 @@
     </div>
 
     <script>
+        // Controllo Accesso Istruttori / Presidente
+        const sessionUser = JSON.parse(localStorage.getItem('asd_admin_user'));
+        if (!sessionUser) {
+            alert("Accesso negato. Effettua il login dall'area istruttori.");
+            location.href = 'admin.html';
+        }
+
         const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
         document.getElementById('data-lezione').value = new Date().toISOString().split('T')[0];
+
+        // Popolamento dinamico select corsi in base ai permessi
+        const corsoSelect = document.getElementById('corso-select');
+        const tuttiICorsi = [
+            { val: "Ninjutsu Adulti/Ragazzi", lab: "Ninjutsu Adulti / Ragazzi" },
+            { val: "Ninjutsu Bambini", lab: "Ninjutsu Bambini" },
+            { val: "Vietvodao Adulti/Ragazzi", lab: "Vietvodao Adulti / Ragazzi" },
+            { val: "Vietvodao Bambini", lab: "Vietvodao Bambini" },
+            { val: "Shodo (Calligrafia)", lab: "Shodo (Calligrafia)" }
+        ];
+
+        tuttiICorsi.forEach(c => {
+            if (sessionUser.ruolo === 'presidente' || (sessionUser.corsi_competenze || []).includes(c.val)) {
+                const opt = document.createElement('option');
+                opt.value = c.val;
+                opt.textContent = c.lab;
+                corsoSelect.appendChild(opt);
+            }
+        });
 
         let allieviCaricati = [];
         const presentiIds = new Set();
@@ -94,6 +116,15 @@
             aggiornaContatore();
 
             try {
+                // Controllo competenza corso per istruttori (non presidente)
+                if (sessionUser.ruolo !== 'presidente') {
+                    const comp = sessionUser.corsi_competenze || [];
+                    if (!comp.includes(corso)) {
+                        alert("Non hai i permessi per gestire questo corso.");
+                        return;
+                    }
+                }
+
                 // 1. Carica Soci
                 const { data: soci, error: sociError } = await supabaseClient
                     .from('soci')
