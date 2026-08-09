@@ -220,19 +220,19 @@
                 // 1. Upload Certificato a Supabase Storage
                 if (file) {
                     const fileExt = file.name.split('.').pop();
-                    const fileName = `${cf}_${Math.random().toString(36).substring(2)}.${fileExt}`;
-                    const filePath = `certificati/${fileName}`;
+                    const fileName = `iscrizione_${cf}_${Date.now()}.${fileExt}`;
+                    const filePath = `${fileName}`; // Salviamo direttamente nel bucket
 
                     const { error: uploadError, data: uploadData } = await supabaseClient
                         .storage
-                        .from('certificati')
+                        .from('certificati_medici')
                         .upload(filePath, file);
 
                     if (uploadError) throw new Error("Errore upload file: " + uploadError.message);
 
                     const { data: publicUrlData } = supabaseClient
                         .storage
-                        .from('certificati')
+                        .from('certificati_medici')
                         .getPublicUrl(filePath);
                     
                     fileUrl = publicUrlData.publicUrl;

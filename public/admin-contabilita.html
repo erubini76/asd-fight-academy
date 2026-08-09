@@ -258,12 +258,15 @@
                 const { error } = await supabaseClient.from('pagamenti').insert([{
                     socio_id: currentSelection.socioId,
                     importo: parseFloat(importo),
+                    importo_totale: parseFloat(importo), // Allineamento colonne schema reale
                     mese_riferimento: currentSelection.mese,
                     anno_riferimento: currentSelection.anno,
                     data_pagamento: new Date().toISOString().split('T')[0],
                     metodo: metodo,
                     stato: 'Approvato',
-                    corso: 'Mensilità'
+                    corso: 'Mensilità',
+                    tipo_pagamento: 'Mensilità',
+                    periodo_riferimento: `${currentSelection.mese}/${currentSelection.anno}`
                 }]);
 
                 if (error) throw error;

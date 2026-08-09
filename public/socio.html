@@ -235,17 +235,17 @@
             const file = fileInput.files[0];
             const fileExt = file.name.split('.').pop();
             const fileName = `cert_${socioId}_${Date.now()}.${fileExt}`;
-            const filePath = `certificati/${fileName}`;
+            const filePath = `${fileName}`;
 
             try {
                 const { error: storageError } = await supabaseClient.storage
-                    .from('certificati')
+                    .from('certificati_medici')
                     .upload(filePath, file);
 
                 if (storageError) throw storageError;
 
                 const { data: publicUrlData } = supabaseClient.storage
-                    .from('certificati')
+                    .from('certificati_medici')
                     .getPublicUrl(filePath);
 
                 const { error: updateError } = await supabaseClient
@@ -287,17 +287,17 @@
                 const file = fileInput.files[0];
                 const fileExt = file.name.split('.').pop();
                 const fileName = `paga_${socioId}_${Date.now()}.${fileExt}`;
-                const filePath = `pagamenti/${fileName}`;
+                const filePath = `${fileName}`;
 
                 try {
                     const { error: storageError } = await supabaseClient.storage
-                        .from('certificati')
+                        .from('ricevute_pagamenti')
                         .upload(filePath, file);
 
                     if (storageError) throw storageError;
 
                     const { data: publicUrlData } = supabaseClient.storage
-                        .from('certificati')
+                        .from('ricevute_pagamenti')
                         .getPublicUrl(filePath);
                     
                     ricevutaUrl = publicUrlData.publicUrl;
