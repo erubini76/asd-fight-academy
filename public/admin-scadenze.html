@@ -22,12 +22,15 @@
                     <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Monitoraggio Certificati e Tessere ASI</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <button onclick="eseguiAlert(this)" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-lg flex items-center gap-2">
-                    <i class="fa-solid fa-paper-plane"></i> INVIA ALERT ORA
+            <div class="flex items-center gap-2">
+                <button onclick="eseguiAlert(this)" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition shadow-lg flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i> INVIA ALERT
                 </button>
-                <a href="admin.html" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-sm border border-slate-600 flex items-center gap-2">
-                    <i class="fa-solid fa-arrow-left"></i> DASHBOARD
+                <a href="admin.html" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition shadow-sm border border-slate-600 flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-arrow-left"></i> Indietro
+                </a>
+                <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition shadow-sm border border-slate-600 flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-house"></i> Home
                 </a>
             </div>
         </header>
@@ -105,6 +108,14 @@
                 tbody.innerHTML = sociFiltrati.map(socio => {
                     const medScaduto = socio.giorni_alla_scadenza_medica <= 0;
                     const asiScaduto = socio.giorni_alla_scadenza_asi <= 0;
+                    
+                    // Colore Tessera ASI (Giallo se < 30gg, Rosso se scaduta)
+                    let asiColor = 'text-slate-300';
+                    if (socio.giorni_alla_scadenza_asi <= 0) {
+                        asiColor = 'text-red-500';
+                    } else if (socio.giorni_alla_scadenza_asi <= 30) {
+                        asiColor = 'text-amber-400';
+                    }
 
                     return `
                         <tr class="hover:bg-slate-700/30 transition">
@@ -127,7 +138,7 @@
                                 </div>
                             </td>
                             <td class="p-4">
-                                <div class="${asiScaduto ? 'text-orange-500' : 'text-slate-300'} font-bold">
+                                <div class="${asiColor} font-bold text-xs">
                                     ${socio.scadenza_tessera_asi || 'N/D'}
                                 </div>
                                 <div class="text-[9px] opacity-60 uppercase font-bold">

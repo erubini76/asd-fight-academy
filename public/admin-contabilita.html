@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A.S.D. Fight Academy - Gestione Contabilità</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-6 font-sans">
+
+    <div class="max-w-7xl mx-auto space-y-6">
+        <!-- HEADER -->
+        <header class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="bg-emerald-600 p-3 rounded-2xl text-white shadow-lg">
+                    <i class="fa-solid fa-chart-pie text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold text-white tracking-tight uppercase">Gestione Contabilità</h1>
+                    <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Metriche, Pagamenti e Morosità</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="admin.html" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition shadow-sm border border-slate-600 flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-arrow-left"></i> Indietro
+                </a>
+                <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition shadow-sm border border-slate-600 flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-house"></i> Home
+                </a>
+            </div>
+        </header>
+
+        <!-- KPI SUMMARY (Solo per Presidente) -->
+        <div id="kpi-section" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <!-- Dinamico -->
+        </div>
+
+        <!-- GRIGLIA PAGAMENTI MENSILI -->
+        <main class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+            <div class="p-6 border-b border-slate-700 bg-slate-700/30 flex justify-between items-center">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-calendar-days text-emerald-400"></i> Registro Pagamenti A.A. 2026/2027
+                </h2>
+                <div class="flex gap-4 text-[10px] font-bold uppercase">
+                    <span class="flex items-center gap-1.5 text-green-400"><i class="fa-solid fa-square"></i> Pagato</span>
+                    <span class="flex items-center gap-1.5 text-red-500"><i class="fa-solid fa-square"></i> Moroso</span>
+                    <span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-square"></i> Non Praticante</span>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-[10px] border-collapse min-w-[1000px]">
+                    <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700">
+                        <tr id="table-header-row">
+                            <th class="p-4 sticky left-0 bg-slate-900 z-10 min-w-[180px]">Socio / Corso</th>
+                            <!-- Mesi da Settembre a Agosto -->
+                        </tr>
+                    </thead>
+                    <tbody id="contabilita-tbody" class="divide-y divide-slate-700/50 text-slate-300">
+                        <tr>
+                            <td colspan="13" class="p-12 text-center">
+                                <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-500 mb-2"></i>
+                                <p class="text-slate-500 italic">Analisi flussi contabili e presenze...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALE REGISTRAZIONE PAGAMENTO -->
+    <div id="modal-pagamento" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-3xl p-6 w-full max-w-sm shadow-2xl space-y-4">
+            <h3 class="text-lg font-bold text-white" id="modal-title">Registra Pagamento</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Importo (€)</label>
+                    <input type="number" id="pay-amount" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Metodo</label>
+                    <select id="pay-method" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none">
+                        <option value="contanti">Contanti</option>
+                        <option value="bonifico">Bonifico</option>
+                    </select>
+                </div>
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="salvaPagamentoRapido()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs transition uppercase">Salva</button>
+                <button onclick="toggleMorositaConvalidata()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-xs transition uppercase">Non Praticante</button>
+            </div>
+            <button onclick="closeModal()" class="w-full text-slate-500 text-[10px] font-bold uppercase hover:text-white transition">Annulla</button>
+        </div>
+    </div>
+
+    <script>
+        const sessionUser = JSON.parse(localStorage.getItem('asd_admin_user'));
+        if (!sessionUser) location.href = 'admin.html';
+
+        const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const mesiAccademici = [
+            { id: 9, nome: 'Set' }, { id: 10, nome: 'Ott' }, { id: 11, nome: 'Nov' }, { id: 12, nome: 'Dic' },
+            { id: 1, nome: 'Gen' }, { id: 2, nome: 'Feb' }, { id: 3, nome: 'Mar' }, { id: 4, nome: 'Apr' },
+            { id: 5, nome: 'Mag' }, { id: 6, nome: 'Giu' }, { id: 7, nome: 'Lug' }, { id: 8, nome: 'Ago' }
+        ];
+
+        let currentSelection = { socioId: null, mese: null, anno: null };
+
+        async function init() {
+            renderHeader();
+            await caricaDatiContabili();
+        }
+
+        function renderHeader() {
+            const row = document.getElementById('table-header-row');
+            mesiAccademici.forEach(m => {
+                const th = document.createElement('th');
+                th.className = "p-4 text-center border-l border-slate-800";
+                th.textContent = m.nome;
+                row.appendChild(th);
+            });
+        }
+
+        async function caricaDatiContabili() {
+            const tbody = document.getElementById('contabilita-tbody');
+            
+            try {
+                // 1. Carica Soci
+                let querySoci = supabaseClient.from('soci').select('*').order('cognome');
+                if (sessionUser.ruolo !== 'presidente') {
+                    querySoci = querySoci.in('corso_scelto', sessionUser.corsi_competenze || []);
+                }
+                const { data: soci, error: errSoci } = await querySoci;
+                if (errSoci) throw errSoci;
+
+                // 2. Carica Pagamenti Mensilità
+                const { data: pagamenti, error: errPag } = await supabaseClient.from('pagamenti').select('*');
+                if (errPag) throw errPag;
+
+                // 3. Carica Presenze per controllo morosità
+                const { data: presenze, error: errPres } = await supabaseClient.from('presenze').select('*');
+                if (errPres) throw errPres;
+
+                tbody.innerHTML = '';
+                
+                soci.forEach(s => {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-700/20 transition";
+                    
+                    let html = `
+                        <td class="p-4 sticky left-0 bg-slate-800 z-10 border-r border-slate-700">
+                            <p class="font-bold text-white text-xs">${s.cognome} ${s.nome}</p>
+                            <p class="text-[8px] text-slate-500 uppercase">${s.corso_scelto || 'N/D'}</p>
+                        </td>
+                    `;
+
+                    mesiAccademici.forEach(m => {
+                        const anno = (m.id >= 9) ? 2026 : 2027;
+                        
+                        // Verifica se ha pagato questo mese
+                        const pagato = pagamenti.find(p => p.socio_id === s.id && p.mese_riferimento === m.id && p.anno_riferimento === anno && p.stato === 'Approvato');
+                        
+                        // Verifica se è stato presente questo mese
+                        const eraPresente = presenze.some(p => {
+                            const d = new Date(p.data_presenza);
+                            return p.socio_id === s.id && (d.getMonth() + 1) === m.id && d.getFullYear() === anno;
+                        });
+
+                        // Verifica se morosità convalidata (non praticante)
+                        const nonPraticante = s.mesi_non_praticante && s.mesi_non_praticante.includes(`${m.id}-${anno}`);
+
+                        let bgColor = 'bg-slate-900/30';
+                        let icon = '';
+
+                        if (pagato) {
+                            bgColor = 'bg-green-600/20 text-green-400 border-green-500/30';
+                            icon = '<i class="fa-solid fa-check"></i>';
+                        } else if (eraPresente && !nonPraticante) {
+                            bgColor = 'bg-red-600/20 text-red-500 border-red-500/30 animate-pulse';
+                            icon = '<i class="fa-solid fa-circle-exclamation"></i>';
+                        } else if (nonPraticante) {
+                            bgColor = 'bg-slate-700/50 text-slate-500';
+                            icon = '<i class="fa-solid fa-user-slash"></i>';
+                        }
+
+                        html += `
+                            <td class="p-2 text-center border-l border-slate-800 cursor-pointer hover:bg-slate-700/50 transition-all ${bgColor}" 
+                                onclick="openPayModal('${s.id}', '${s.nome} ${s.cognome}', ${m.id}, ${anno})">
+                                ${icon}
+                            </td>
+                        `;
+                    });
+
+                    tr.innerHTML = html;
+                    tbody.appendChild(tr);
+                });
+
+                if (sessionUser.ruolo === 'presidente') renderKPI(pagamenti);
+
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="13" class="p-8 text-red-400 font-bold">Errore: ${err.message}</td></tr>`;
+            }
+        }
+
+        function renderKPI(pagamenti) {
+            const container = document.getElementById('kpi-section');
+            const ora = new Date();
+            const annoSolare = ora.getFullYear();
+            
+            const totaleAnnoSolare = pagamenti
+                .filter(p => p.stato === 'Approvato' && new Date(p.data_pagamento).getFullYear() === annoSolare)
+                .reduce((sum, p) => sum + (parseFloat(p.importo) || 0), 0);
+
+            const totaleMeseCorrente = pagamenti
+                .filter(p => p.stato === 'Approvato' && (new Date(p.data_pagamento).getMonth() + 1) === (ora.getMonth() + 1))
+                .reduce((sum, p) => sum + (parseFloat(p.importo) || 0), 0);
+
+            container.innerHTML = `
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
+                    <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">Entrate Mese Corrente</p>
+                    <p class="text-2xl font-black text-emerald-400">€${totaleMeseCorrente.toFixed(2)}</p>
+                </div>
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
+                    <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">Entrate Anno Solare ${annoSolare}</p>
+                    <p class="text-2xl font-black text-white">€${totaleAnnoSolare.toFixed(2)}</p>
+                </div>
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
+                    <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">Stato Global</p>
+                    <p class="text-sm font-bold text-cyan-400 uppercase tracking-widest">Contabilità Attiva</p>
+                </div>
+            `;
+        }
+
+        function openPayModal(id, nome, mese, anno) {
+            currentSelection = { socioId: id, mese, anno };
+            document.getElementById('modal-title').textContent = `Pagamento ${mesiAccademici.find(m => m.id === mese).nome} ${anno} - ${nome}`;
+            document.getElementById('modal-pagamento').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-pagamento').classList.add('hidden');
+        }
+
+        async function salvaPagamentoRapido() {
+            const importo = document.getElementById('pay-amount').value;
+            const metodo = document.getElementById('pay-method').value;
+
+            if (!importo) { alert("Inserisci l'importo."); return; }
+
+            try {
+                const { error } = await supabaseClient.from('pagamenti').insert([{
+                    socio_id: currentSelection.socioId,
+                    importo: parseFloat(importo),
+                    mese_riferimento: currentSelection.mese,
+                    anno_riferimento: currentSelection.anno,
+                    data_pagamento: new Date().toISOString().split('T')[0],
+                    metodo: metodo,
+                    stato: 'Approvato',
+                    corso: 'Mensilità'
+                }]);
+
+                if (error) throw error;
+                alert("Pagamento registrato!");
+                closeModal();
+                caricaDatiContabili();
+            } catch (err) { alert(err.message); }
+        }
+
+        async function toggleMorositaConvalidata() {
+            const key = `${currentSelection.mese}-${currentSelection.anno}`;
+            try {
+                // Recupera socio attuale per aggiornare array mesi_non_praticante
+                const { data: socio } = await supabaseClient.from('soci').select('mesi_non_praticante').eq('id', currentSelection.socioId).single();
+                let mesi = socio.mesi_non_praticante || [];
+                
+                if (mesi.includes(key)) {
+                    mesi = mesi.filter(m => m !== key);
+                } else {
+                    mesi.push(key);
+                }
+
+                const { error } = await supabaseClient.from('soci').update({ mesi_non_praticante: mesi }).eq('id', currentSelection.socioId);
+                if (error) throw error;
+                
+                alert("Stato aggiornato correttamente!");
+                closeModal();
+                caricaDatiContabili();
+            } catch (err) { alert(err.message); }
+        }
+
+        init();
+    </script>
+</body>
+</html>

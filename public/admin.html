@@ -18,17 +18,17 @@
           <i class="fa-solid fa-user-shield text-xl"></i>
         </div>
         <div>
-          <h1 class="text-2xl font-extrabold text-white tracking-tight">AREA RISERVATA</h1>
-          <p class="text-xs text-slate-400 font-medium uppercase tracking-widest">Pannello Sicuro Presidente & Istruttori</p>
+          <h1 class="text-2xl font-extrabold text-white tracking-tight uppercase">Area Riservata</h1>
+          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Dashboard Presidente & Istruttori</p>
         </div>
       </div>
       <div class="flex items-center gap-4">
         <div id="userInfo" class="hidden text-right">
-          <span id="welcomeUser" class="text-sm font-bold text-white block"></span>
-          <span id="userRoleBadge" class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter"></span>
+          <span id="welcomeUser" class="text-sm font-bold text-white block leading-none mb-1"></span>
+          <span id="userRoleBadge" class="text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-tighter"></span>
         </div>
-        <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2 rounded-xl text-xs transition shadow-sm border border-slate-600">
-          <i class="fa-solid fa-house mr-2"></i>Home
+        <a href="index.html" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition shadow-sm border border-slate-600 flex items-center gap-2 uppercase">
+          <i class="fa-solid fa-house"></i> Home
         </a>
       </div>
     </header>
@@ -37,7 +37,7 @@
     <section id="loginSection" class="max-w-md mx-auto bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 p-8 space-y-6">
       <div class="text-center">
         <h2 class="text-lg font-bold text-white uppercase tracking-wide">Accesso Protetto</h2>
-        <p class="text-xs text-slate-400 mt-1">Inserisci le tue credenziali autorizzate.</p>
+        <p class="text-xs text-slate-400 mt-1 italic">Inserisci le tue credenziali autorizzate.</p>
       </div>
       <div class="space-y-4">
         <div>
@@ -53,8 +53,8 @@
             </button>
           </div>
         </div>
-        <button onclick="autenticaAdmin()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg transform active:scale-95">
-          <i class="fa-solid fa-unlock-keyhole mr-2"></i>Accedi al Pannello
+        <button onclick="autenticaAdmin()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl text-sm transition shadow-lg transform active:scale-95 flex items-center justify-center gap-2 uppercase tracking-wider">
+          <i class="fa-solid fa-unlock-keyhole"></i> Accedi al Pannello
         </button>
       </div>
     </section>
@@ -64,132 +64,77 @@
       
       <!-- MENU RAPIDO -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <a href="presenze.html" class="bg-gradient-to-br from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 p-6 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-between group transform hover:-translate-y-1 border border-purple-400/20">
+        <a href="presenze.html" class="bg-gradient-to-br from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 p-5 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-between group border border-purple-400/20">
           <div class="flex items-center gap-4">
-            <div class="bg-white/20 p-3 rounded-xl">
-              <i class="fa-solid fa-clipboard-user text-2xl text-white"></i>
-            </div>
+            <div class="bg-white/20 p-3 rounded-xl"><i class="fa-solid fa-clipboard-user text-xl text-white"></i></div>
             <div>
-              <span class="block font-extrabold text-lg text-white">REGISTRO APPELLO</span>
-              <span class="block text-[10px] text-purple-200 uppercase tracking-widest font-bold">Firma Presenze Allievi</span>
+              <span class="block font-bold text-sm text-white uppercase tracking-tight">Registro Appello</span>
+              <span class="block text-[8px] text-purple-200 uppercase font-bold tracking-widest">Firma Presenze</span>
             </div>
           </div>
-          <i class="fa-solid fa-circle-arrow-right text-xl text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all"></i>
+          <i class="fa-solid fa-circle-arrow-right text-lg text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all"></i>
         </a>
         
-        <a href="admin-scadenze.html" class="bg-gradient-to-br from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 p-6 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-between group transform hover:-translate-y-1 border border-amber-400/20">
-          <div class="flex items-center gap-4">
-            <div class="bg-white/20 p-3 rounded-xl">
-              <i class="fa-solid fa-bell text-2xl text-white"></i>
+        <a href="admin-contabilita.html" class="bg-gradient-to-br from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 p-5 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-between group border border-emerald-400/20">
+            <div class="flex items-center gap-4">
+              <div class="bg-white/20 p-3 rounded-xl"><i class="fa-solid fa-chart-pie text-xl text-white"></i></div>
+              <div>
+                <span class="block font-bold text-sm text-white uppercase tracking-tight">Contabilità</span>
+                <span class="block text-[8px] text-emerald-100 uppercase font-bold tracking-widest">Mensilità & Report</span>
+              </div>
             </div>
-            <div>
-              <span class="block font-extrabold text-lg text-white">ALERT SCADENZE</span>
-              <span class="block text-[10px] text-amber-100 uppercase tracking-widest font-bold">Documenti e Tessere</span>
-            </div>
-          </div>
-          <i class="fa-solid fa-circle-arrow-right text-xl text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all"></i>
+            <i class="fa-solid fa-circle-arrow-right text-lg text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all"></i>
         </a>
 
-        <div class="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-center shadow-lg">
-          <div class="flex items-center gap-3 mb-2">
-            <i class="fa-solid fa-server text-emerald-500"></i>
-            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">Stato Sistema</span>
+        <a href="admin-scadenze.html" class="bg-gradient-to-br from-amber-500 to-amber-700 hover:from-amber-400 hover:to-amber-600 p-5 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-between group border border-amber-400/20">
+          <div class="flex items-center gap-4">
+            <div class="bg-white/20 p-3 rounded-xl"><i class="fa-solid fa-bell text-xl text-white"></i></div>
+            <div>
+              <span class="block font-bold text-sm text-white uppercase tracking-tight">Scadenze Critiche</span>
+              <span class="block text-[8px] text-amber-100 uppercase font-bold tracking-widest">Certificati & Tessere</span>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <span class="relative flex h-3 w-3">
-              <span class="animate-ping absolute inline-flex h-full w-3 rounded-full bg-emerald-400 opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-            </span>
-            <span class="text-sm text-emerald-400 font-mono font-bold">DB CLOUD ONLINE</span>
-          </div>
-        </div>
+          <i class="fa-solid fa-circle-arrow-right text-lg text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all"></i>
+        </a>
       </div>
 
-      <!-- SEZIONE RISERVATA AL PRESIDENTE -->
+      <!-- SEZIONE GESTIONE ISTRUTTORI (SOLO PRESIDENTE) -->
       <section id="sezionePresidenteGestione" class="hidden bg-slate-800 rounded-2xl shadow-lg border border-red-900/30 p-6 space-y-6">
-        <h2 class="text-base font-bold text-red-500 flex items-center gap-2">
-          <i class="fa-solid fa-gears"></i>
-          <span>Gestione Credenziali Istruttori</span>
+        <h2 class="text-xs font-bold text-red-500 flex items-center gap-2 uppercase tracking-widest">
+          <i class="fa-solid fa-gears"></i> Gestione Credenziali Istruttori
         </h2>
-        
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-          <div class="lg:col-span-1">
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Socio</label>
-            <select id="selectSocioIstruttore" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white outline-none">
-              <!-- Popolato dinamicamente -->
-            </select>
-          </div>
-          <div class="lg:col-span-1">
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Email Login</label>
-            <input type="email" id="nuovaEmailLogin" placeholder="es. istru@email.it" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white outline-none">
-          </div>
-          <div class="lg:col-span-1">
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Password</label>
-            <input type="text" id="nuovaPasswordIstruttore" placeholder="Password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white outline-none">
-          </div>
-          <div class="lg:col-span-1">
-            <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Corsi (Selez. multipla)</label>
-            <select id="selectCorsiCompetenza" multiple class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1 text-[10px] text-white h-24">
+            <select id="selectSocioIstruttore" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none font-medium"></select>
+            <input type="email" id="nuovaEmailLogin" placeholder="Email Login" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
+            <input type="text" id="nuovaPasswordIstruttore" placeholder="Password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
+            <select id="selectCorsiCompetenza" multiple class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1 text-[9px] text-white h-16">
               <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti/Ragazzi</option>
               <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
               <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi</option>
               <option value="Vietvodao Bambini">Vietvodao Bambini</option>
               <option value="Shodo (Calligrafia)">Shodo (Calligrafia)</option>
             </select>
-          </div>
-          <div class="flex items-end lg:col-span-1">
-            <button onclick="registraIstruttore()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-xl text-xs transition shadow-lg">
-              Crea Istruttore
-            </button>
-          </div>
+            <button onclick="registraIstruttore()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-xl text-[10px] transition shadow-lg uppercase">Crea Istruttore</button>
         </div>
       </section>
 
-      <!-- RESOCONTO FINANZIARIO -->
-      <section class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6 space-y-4">
-        <h2 class="text-base font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-chart-line text-emerald-500"></i>
-          <span>Resoconto Versamenti per Corso</span>
-        </h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700">
-              <tr>
-                <th class="p-4">Corso</th>
-                <th class="p-4">Periodo</th>
-                <th class="p-4 text-right">Totale (€)</th>
-                <th class="p-4">Stato</th>
-              </tr>
-            </thead>
-            <tbody id="resocontiTableBody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
-          </table>
+      <!-- ELENCO SOCI UNIFICATO -->
+      <section class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 overflow-hidden">
+        <div class="p-6 bg-slate-700/30 border-b border-slate-700">
+            <h2 class="text-xs font-bold text-white flex items-center gap-2 uppercase tracking-widest">
+                <i class="fa-solid fa-users text-blue-500"></i> Registro Unificato Soci & Documenti
+            </h2>
         </div>
-      </section>
-
-      <!-- RICEVUTE DA VERIFICARE -->
-      <section class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6 space-y-4">
-        <h2 class="text-base font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-receipt text-amber-500"></i>
-          <span>Ricevute Bonifici da Verificare</span>
-        </h2>
-        <div id="pagamentiContainer" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-      </section>
-
-      <!-- ELENCO SOCI -->
-      <section class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6 space-y-4">
-        <h2 class="text-base font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-users text-blue-500"></i>
-          <span>Elenco Soci e Certificati Medici</span>
-        </h2>
         <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700">
+          <table class="w-full text-left text-[10px] border-collapse">
+            <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700 tracking-tighter">
               <tr>
-                <th class="p-4">Socio</th>
-                <th class="p-4">Corso</th>
-                <th class="p-4">Certificato</th>
-                <th class="p-4">Scadenza</th>
-                <th class="p-4">Azioni</th>
+                <th class="p-4">Socio / Email</th>
+                <th class="p-4 text-center">Stato Iscrizione</th>
+                <th class="p-4 text-center">Quota Iscrizione</th>
+                <th class="p-4 text-center">Certificato</th>
+                <th class="p-4 text-center">Tessera ASI</th>
+                <th class="p-4 text-right">Azioni</th>
               </tr>
             </thead>
             <tbody id="sociTableBody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
@@ -197,8 +142,8 @@
         </div>
       </section>
 
-      <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-500 hover:text-white px-4 py-2 rounded-xl text-xs transition border border-slate-700">
-        <i class="fa-solid fa-power-off mr-2"></i>Esci / Cambia Account
+      <button onclick="location.reload()" class="bg-slate-800 hover:bg-slate-700 text-slate-500 hover:text-white px-4 py-2 rounded-xl text-[10px] font-bold transition border border-slate-700 uppercase tracking-widest">
+        <i class="fa-solid fa-power-off mr-2"></i> Esci / Cambia Account
       </button>
     </div>
   </div>
@@ -227,32 +172,24 @@
     async function autenticaAdmin() {
       const email = document.getElementById('adminEmail').value.trim().toLowerCase();
       const password = document.getElementById('adminPassword').value.trim();
-
-      if (!email || !password) {
-        alert("Inserisci email e password.");
-        return;
-      }
+      if (!email || !password) { alert("Inserisci credenziali."); return; }
 
       try {
-        const { data, error } = await supabaseClient
-          .from('istruttori_corsi')
-          .select('*')
-          .eq('email', email)
-          .single();
-
+        const { data, error } = await supabaseClient.from('istruttori_corsi').select('*').eq('email', email).single();
         if (error || !data || data.password_accesso !== password) {
-          alert("Credenziali non valide o accesso non autorizzato.");
-          return;
+          alert("Credenziali non valide."); return;
         }
-
         currentUser = data;
         localStorage.setItem('asd_admin_user', JSON.stringify(currentUser));
-        
+        renderDashboard();
+      } catch (err) { alert(err.message); }
+    }
+
+    function renderDashboard() {
         document.getElementById('loginSection').classList.add('hidden');
         document.getElementById('dashboardSection').classList.remove('hidden');
         document.getElementById('userInfo').classList.remove('hidden');
         document.getElementById('welcomeUser').innerText = currentUser.nome;
-        
         const badge = document.getElementById('userRoleBadge');
         if (currentUser.ruolo === 'presidente') {
           badge.className = "text-[9px] px-2 py-0.5 rounded-full font-bold bg-red-600 text-white";
@@ -260,14 +197,88 @@
           document.getElementById('sezionePresidenteGestione').classList.remove('hidden');
           caricaSelectSoci();
         } else {
-          badge.className = "text-[9px] px-2 py-0.5 rounded-full font-bold bg-blue-600 text-white";
-          badge.innerText = `ISTRUTTORE`;
+          badge.className = "text-[9px] px-2 py-0.5 rounded-full font-bold bg-blue-600 text-white uppercase";
+          badge.innerText = `Istruttore`;
         }
+        caricaSociEVerifiche();
+    }
 
-        caricaDatiDashboard();
-      } catch (err) {
-        alert("Errore di autenticazione: " + err.message);
-      }
+    async function caricaSociEVerifiche() {
+      try {
+        let query = supabaseClient.from('soci').select('*').order('cognome');
+        if (currentUser.ruolo !== 'presidente') {
+          query = query.in('corso_scelto', currentUser.corsi_competenze || []);
+        }
+        const { data: soci, error } = await query;
+        if (error) throw error;
+
+        const tbody = document.getElementById('sociTableBody');
+        tbody.innerHTML = '';
+
+        soci.forEach(s => {
+          const medScaduto = !s.scadenza_certificato_medico || new Date(s.scadenza_certificato_medico) < new Date();
+          
+          // Logica Scadenza ASI
+          let asiClass = 'text-slate-300';
+          if (s.scadenza_tessera_asi) {
+              const diff = (new Date(s.scadenza_tessera_asi) - new Date()) / (1000*60*60*24);
+              if (diff <= 0) asiClass = 'text-red-500 font-bold';
+              else if (diff <= 30) asiClass = 'text-amber-400 font-bold';
+          }
+
+          const tr = document.createElement('tr');
+          tr.className = "hover:bg-slate-700/20 transition";
+          tr.innerHTML = `
+            <td class="p-4 border-b border-slate-700/50">
+                <p class="font-bold text-white text-sm leading-tight">${s.cognome} ${s.nome}</p>
+                <p class="text-[9px] text-slate-500 font-mono">${s.codice_fiscale || ''}</p>
+                <span class="text-[8px] px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase tracking-widest">${s.corso_scelto || 'N/D'}</span>
+            </td>
+            <td class="p-4 text-center border-b border-slate-700/50">
+                <button onclick="toggleStato('${s.id}', 'stato_approvazione', '${s.stato_approvazione}')" class="px-2 py-1 rounded border ${s.stato_approvazione === 'Approvato' ? 'bg-green-600/10 text-green-500 border-green-500/30' : 'bg-amber-600/10 text-amber-500 border-amber-500/30'} font-bold uppercase text-[8px]">
+                    ${s.stato_approvazione || 'In Attesa'}
+                </button>
+            </td>
+            <td class="p-4 text-center border-b border-slate-700/50">
+                <button onclick="toggleStato('${s.id}', 'pagamento_iscrizione_2627', ${s.pagamento_iscrizione_2627})" class="px-2 py-1 rounded border ${s.pagamento_iscrizione_2627 ? 'bg-green-600/10 text-green-500 border-green-500/30' : 'bg-red-600/10 text-red-500 border-red-500/30'} font-bold uppercase text-[8px]">
+                    ${s.pagamento_iscrizione_2627 ? 'PAGATA' : 'DA PAGARE'}
+                </button>
+            </td>
+            <td class="p-4 text-center border-b border-slate-700/50">
+                <p class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">${s.scadenza_certificato_medico || '---'}</p>
+            </td>
+            <td class="p-4 text-center border-b border-slate-700/50">
+                <p class="${asiClass}">${s.scadenza_tessera_asi || '---'}</p>
+            </td>
+            <td class="p-4 text-right border-b border-slate-700/50">
+                <div class="flex justify-end gap-2">
+                    ${s.certificato_medico_url ? `<a href="${s.certificato_medico_url}" target="_blank" class="text-blue-400 hover:text-white"><i class="fa-solid fa-file-medical"></i></a>` : ''}
+                    <button onclick="alert('Modifica in arrivo')" class="text-slate-500 hover:text-white"><i class="fa-solid fa-pen-to-square"></i></button>
+                </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) { console.error(err.message); }
+    }
+
+    async function toggleStato(id, campo, valoreAttuale) {
+        let nuovoValore;
+        if (typeof valoreAttuale === 'boolean') nuovoValore = !valoreAttuale;
+        else nuovoValore = (valoreAttuale === 'Approvato' ? 'In Attesa' : 'Approvato');
+
+        try {
+            const { error } = await supabaseClient.from('soci').update({ [campo]: nuovoValore }).eq('id', id);
+            if (error) throw error;
+            
+            // Se approvato iscrizione, invia email
+            if (campo === 'stato_approvazione' && nuovoValore === 'Approvato') {
+                alert("Iscrizione approvata! Email di conferma in fase di invio...");
+                // Logica email qui se necessaria
+            }
+
+            caricaSociEVerifiche();
+        } catch (err) { alert(err.message); }
     }
 
     async function caricaSelectSoci() {
@@ -279,205 +290,30 @@
         data.forEach(s => {
           select.innerHTML += `<option value="${s.id}" data-email="${s.email}">${s.cognome} ${s.nome}</option>`;
         });
-        
         select.onchange = function() {
           const opt = select.options[select.selectedIndex];
-          if (opt && opt.getAttribute('data-email')) {
-            document.getElementById('nuovaEmailLogin').value = opt.getAttribute('data-email');
-          }
+          if (opt && opt.getAttribute('data-email')) document.getElementById('nuovaEmailLogin').value = opt.getAttribute('data-email');
         };
-      } catch (err) {
-        console.error("Errore caricamento soci select:", err);
-      }
+      } catch (err) {}
     }
 
     async function registraIstruttore() {
-      const select = document.getElementById('selectSocioIstruttore');
-      const socioId = select.value;
-      if (!socioId) { alert("Seleziona un socio."); return; }
-      
-      const option = select.options[select.selectedIndex];
-      const nomeSocio = option.text;
-      const emailLogin = document.getElementById('nuovaEmailLogin').value.trim().toLowerCase();
-      const pass = document.getElementById('nuovaPasswordIstruttore').value.trim();
-
-      if (!emailLogin || !pass) { alert("Inserisci email e password."); return; }
-
-      const corsiSelect = document.getElementById('selectCorsiCompetenza');
-      const corsiScelti = Array.from(corsiSelect.selectedOptions).map(opt => opt.value);
-
-      if (corsiScelti.length === 0) { alert("Seleziona almeno un corso."); return; }
+      const socioId = document.getElementById('selectSocioIstruttore').value;
+      const email = document.getElementById('nuovaEmailLogin').value;
+      const pass = document.getElementById('nuovaPasswordIstruttore').value;
+      const corsi = Array.from(document.getElementById('selectCorsiCompetenza').selectedOptions).map(o => o.value);
+      if (!socioId || !email || !pass || corsi.length === 0) { alert("Dati mancanti."); return; }
 
       try {
-        const { error } = await supabaseClient
-          .from('istruttori_corsi')
-          .insert([{
-            socio_id: socioId,
-            email: emailLogin,
-            nome: nomeSocio,
-            corsi_competenze: corsiScelti,
-            ruolo: 'istruttore',
-            password_accesso: pass
-          }]);
-
+        const { error } = await supabaseClient.from('istruttori_corsi').insert([{ socio_id: socioId, email, password_accesso: pass, corsi_competenze: corsi, ruolo: 'istruttore', nome: document.getElementById('selectSocioIstruttore').selectedOptions[0].text }]);
         if (error) throw error;
-        alert("Credenziali istruttore create!");
-        location.reload();
-      } catch (err) {
-        alert("Errore salvataggio: " + err.message);
-      }
+        alert("Istruttore creato!"); location.reload();
+      } catch (err) { alert(err.message); }
     }
 
-    async function caricaDatiDashboard() {
-      // Caricamento asincrono parallelo per migliorare la reattività
-      Promise.all([
-        caricaSociEVerifiche(),
-        caricaPagamenti(),
-        caricaResoconti()
-      ]).catch(err => console.error("Errore caricamento dashboard:", err));
-    }
-
-    async function caricaSociEVerifiche() {
-      try {
-        let query = supabaseClient.from('soci').select('*').order('cognome');
-        
-        // Se non è presidente, filtra per i corsi di competenza
-        if (currentUser.ruolo !== 'presidente') {
-          const comp = currentUser.corsi_competenze || [];
-          // Aggiungiamo una logica di filtro più robusta
-          if (comp.length > 0) {
-            query = query.in('corso_scelto', comp);
-          } else {
-            // Se l'istruttore non ha corsi assegnati, non vede nessuno
-            const tbody = document.getElementById('sociTableBody');
-            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-slate-600 italic">Nessun corso assegnato a questo profilo.</td></tr>';
-            return;
-          }
-        }
-
-        const { data: soci, error } = await query;
-        if (error) throw error;
-
-        const tbody = document.getElementById('sociTableBody');
-        tbody.innerHTML = '';
-
-        soci.forEach(socio => {
-          const tr = document.createElement('tr');
-          const isScaduto = socio.scadenza_certificato_medico && new Date(socio.scadenza_certificato_medico) < new Date();
-          
-          tr.innerHTML = `
-            <td class="p-4">
-                <p class="font-bold text-white text-sm">${socio.cognome} ${socio.nome}</p>
-                <p class="text-[10px] text-slate-400 font-medium">${socio.email || ''}</p>
-                <p class="text-[9px] text-slate-500 font-mono">${socio.codice_fiscale || ''}</p>
-            </td>
-            <td class="p-4 text-xs">
-                <span class="px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 text-[10px] font-bold border border-slate-600">
-                    ${socio.corso_scelto || 'N/D'}
-                </span>
-            </td>
-            <td class="p-4">
-              ${socio.certificato_medico_url ? `<a href="${socio.certificato_medico_url}" target="_blank" class="bg-blue-600/20 text-blue-400 border border-blue-600/30 px-2 py-1 rounded-lg font-bold text-[10px] hover:bg-blue-600 hover:text-white transition">VISUALIZZA PDF</a>` : '<span class="text-slate-600 text-[10px] italic">Non caricato</span>'}
-            </td>
-            <td class="p-4">
-              <span class="text-[11px] ${isScaduto ? 'text-red-500 font-bold' : 'text-slate-300'}">${socio.scadenza_certificato_medico || '---'}</span>
-            </td>
-            <td class="p-4">
-              <button onclick="alert('Funzione di modifica anagrafica socio in arrivo')" class="text-slate-500 hover:text-white transition"><i class="fa-solid fa-pen-to-square"></i></button>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-      } catch (err) {
-        console.error("Errore caricamento soci:", err.message);
-      }
-    }
-
-    async function caricaPagamenti() {
-      try {
-        const { data, error } = await supabaseClient
-          .from('pagamenti')
-          .select('*')
-          .eq('stato', 'In attesa di verifica')
-          .order('id', { ascending: false });
-
-        if (error) throw error;
-
-        const container = document.getElementById('pagamentiContainer');
-        container.innerHTML = '';
-
-        if (!data || data.length === 0) {
-          container.innerHTML = '<p class="text-xs text-slate-500 italic p-2 col-span-2">Nessuna ricevuta in attesa di verifica.</p>';
-          return;
-        }
-
-        data.forEach(pag => {
-          const div = document.createElement('div');
-          div.className = "bg-slate-800 border border-slate-700 rounded-2xl p-4 flex justify-between items-center shadow-lg";
-          div.innerHTML = `
-            <div class="space-y-1">
-                <p class="font-bold text-white text-sm">Versamento: €${pag.importo}</p>
-                <p class="text-[10px] text-slate-400 uppercase tracking-widest">${pag.corso || 'Generale'}</p>
-                <a href="${pag.ricevuta_url}" target="_blank" class="text-[10px] text-emerald-400 underline font-bold">Apri Ricevuta</a>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="aggiornaStatoPagamento(${pag.id}, 'Approvato')" class="bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-lg transition" title="Approva"><i class="fa-solid fa-check"></i></button>
-                <button onclick="aggiornaStatoPagamento(${pag.id}, 'Rifiutato')" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg transition" title="Rifiuta"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-          `;
-          container.appendChild(div);
-        });
-      } catch (err) {
-        console.error("Errore caricamento pagamenti:", err.message);
-      }
-    }
-
-    async function aggiornaStatoPagamento(pagId, nuovoStato) {
-      if(!confirm(`Vuoi impostare il pagamento come ${nuovoStato}?`)) return;
-      try {
-        const { error } = await supabaseClient.from('pagamenti').update({ stato: nuovoStato }).eq('id', pagId);
-        if (error) throw error;
-        alert(`Pagamento ${nuovoStato}`);
-        caricaPagamenti();
-      } catch (err) { alert("Errore: " + err.message); }
-    }
-
-    async function caricaResoconti() {
-      try {
-        const { data, error } = await supabaseClient
-          .from('pagamenti')
-          .select('corso, importo, stato');
-
-        if (error) throw error;
-
-        const resocontiMap = {};
-        data.forEach(item => {
-          if (item.stato !== 'Approvato') return;
-          const corso = item.corso || 'Generale';
-          if (currentUser.ruolo !== 'presidente') {
-            const comp = currentUser.corsi_competenze || [];
-            if (!comp.includes(corso)) return;
-          }
-
-          if (!resocontiMap[corso]) { resocontiMap[corso] = 0; }
-          resocontiMap[corso] += parseFloat(item.importo || 0);
-        });
-
-        const tbody = document.getElementById('resocontiTableBody');
-        tbody.innerHTML = '';
-
-        for (const [corso, totale] of Object.entries(resocontiMap)) {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td class="p-4 font-bold text-white">${corso}</td>
-            <td class="p-4 text-slate-500 uppercase tracking-tighter">Totale Storico</td>
-            <td class="p-4 text-right font-mono font-bold text-emerald-500">€${totale.toFixed(2)}</td>
-            <td class="p-4 text-center"><span class="px-2 py-0.5 bg-emerald-600/20 text-emerald-400 rounded-full font-bold text-[9px] border border-emerald-600/30">ATTIVO</span></td>
-          `;
-          tbody.appendChild(tr);
-        }
-        if (tbody.innerHTML === '') tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-slate-600 italic">Nessun dato finanziario disponibile.</td></tr>';
-      } catch (err) { console.error("Errore resoconti:", err.message); }
+    if (localStorage.getItem('asd_admin_user')) {
+        currentUser = JSON.parse(localStorage.getItem('asd_admin_user'));
+        renderDashboard();
     }
   </script>
 </body>
