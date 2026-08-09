@@ -32,18 +32,48 @@
             </div>
         </header>
 
-        <!-- KPI SUMMARY (Solo per Presidente) -->
+        <!-- KPI SUMMARY -->
         <div id="kpi-section" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <!-- Dinamico -->
         </div>
 
+        <!-- FILTRI AVANZATI -->
+        <section id="filters-section" class="hidden bg-slate-800 p-4 rounded-2xl border border-slate-700 shadow-lg flex flex-wrap gap-4 items-end text-[10px]">
+            <div class="flex-1 min-w-[150px]">
+                <label class="block font-bold text-slate-500 uppercase mb-1">Visualizza Per</label>
+                <select id="filter-year-type" onchange="caricaDatiContabili()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white outline-none">
+                    <option value="accademico">Anno Accademico (Sett-Ago)</option>
+                    <option value="solare">Anno Solare (Gen-Dic)</option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[120px]">
+                <label class="block font-bold text-slate-500 uppercase mb-1">Seleziona Anno</label>
+                <select id="filter-year-val" onchange="caricaDatiContabili()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white outline-none">
+                    <option value="2026">2026</option>
+                    <option value="2027">2027</option>
+                    <option value="2028">2028</option>
+                </select>
+            </div>
+            <div class="flex-1 min-w-[150px]">
+                <label class="block font-bold text-slate-500 uppercase mb-1">Filtra Corso</label>
+                <select id="filter-corso" onchange="caricaDatiContabili()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-white outline-none">
+                    <option value="tutti">Tutti i Corsi</option>
+                    <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti / Ragazzi</option>
+                    <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
+                    <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti / Ragazzi</option>
+                    <option value="Vietvodao Bambini">Vietvodao Bambini</option>
+                    <option value="Shodo (Calligrafia)">Shodo</option>
+                </select>
+            </div>
+        </section>
+
         <!-- GRIGLIA PAGAMENTI MENSILI -->
         <main class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
-            <div class="p-6 border-b border-slate-700 bg-slate-700/30 flex justify-between items-center">
+            <div class="p-6 border-b border-slate-700 bg-slate-700/30 flex justify-between items-center text-[10px]">
                 <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-calendar-days text-emerald-400"></i> Registro Pagamenti A.A. 2026/2027
                 </h2>
-                <div class="flex gap-4 text-[10px] font-bold uppercase">
+                <div class="flex gap-4 font-bold uppercase">
                     <span class="flex items-center gap-1.5 text-green-400"><i class="fa-solid fa-square"></i> Pagato</span>
                     <span class="flex items-center gap-1.5 text-red-500"><i class="fa-solid fa-square"></i> Moroso</span>
                     <span class="flex items-center gap-1.5 text-slate-500"><i class="fa-solid fa-square"></i> Non Praticante</span>
@@ -51,19 +81,15 @@
             </div>
             
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-[10px] border-collapse min-w-[1000px]">
+                <table class="w-full text-left text-[10px] border-collapse min-w-[1200px]">
                     <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700">
                         <tr id="table-header-row">
-                            <th class="p-4 sticky left-0 bg-slate-900 z-10 min-w-[180px]">Socio / Corso</th>
-                            <!-- Mesi da Settembre a Agosto -->
+                            <!-- Dinamico -->
                         </tr>
                     </thead>
-                    <tbody id="contabilita-tbody" class="divide-y divide-slate-700/50 text-slate-300">
+                    <tbody id="contabilita-tbody" class="divide-y divide-slate-700/50 text-slate-300 text-center">
                         <tr>
-                            <td colspan="13" class="p-12 text-center">
-                                <i class="fa-solid fa-spinner fa-spin text-2xl text-emerald-500 mb-2"></i>
-                                <p class="text-slate-500 italic">Analisi flussi contabili e presenze...</p>
-                            </td>
+                            <td colspan="14" class="p-12 text-center text-slate-500 italic">Analisi contabile e incrocio presenze...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -78,7 +104,7 @@
             <div class="space-y-3">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Importo (€)</label>
-                    <input type="number" id="pay-amount" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none">
+                    <input type="number" id="pay-amount" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none">
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Metodo</label>
@@ -109,17 +135,20 @@
             { id: 1, nome: 'Gen' }, { id: 2, nome: 'Feb' }, { id: 3, nome: 'Mar' }, { id: 4, nome: 'Apr' },
             { id: 5, nome: 'Mag' }, { id: 6, nome: 'Giu' }, { id: 7, nome: 'Lug' }, { id: 8, nome: 'Ago' }
         ];
+        const mesiSolari = [
+            { id: 1, nome: 'Gen' }, { id: 2, nome: 'Feb' }, { id: 3, nome: 'Mar' }, { id: 4, nome: 'Apr' },
+            { id: 5, nome: 'Mag' }, { id: 6, nome: 'Giu' }, { id: 7, nome: 'Lug' }, { id: 8, nome: 'Ago' },
+            { id: 9, nome: 'Set' }, { id: 10, nome: 'Ott' }, { id: 11, nome: 'Nov' }, { id: 12, nome: 'Dic' }
+        ];
 
-        let currentSelection = { socioId: null, mese: null, anno: null };
-
-        async function init() {
-            renderHeader();
-            await caricaDatiContabili();
-        }
+        let currentSelection = { socioId: null, mese: null, anno: null, tipo: '' };
 
         function renderHeader() {
             const row = document.getElementById('table-header-row');
-            mesiAccademici.forEach(m => {
+            row.innerHTML = '<th class="p-4 sticky left-0 bg-slate-900 z-10 min-w-[200px] text-left">Socio / Corso</th><th class="p-4 text-center border-l border-slate-800 bg-slate-900/80">Iscrizione</th>';
+            const tipoAnno = document.getElementById('filter-year-type').value;
+            const mesi = (tipoAnno === 'accademico') ? mesiAccademici : mesiSolari;
+            mesi.forEach(m => {
                 const th = document.createElement('th');
                 th.className = "p-4 text-center border-l border-slate-800";
                 th.textContent = m.nome;
@@ -129,176 +158,152 @@
 
         async function caricaDatiContabili() {
             const tbody = document.getElementById('contabilita-tbody');
-            
+            document.getElementById('filters-section').classList.remove('hidden');
+
             try {
-                // 1. Carica Soci
-                let querySoci = supabaseClient.from('soci').select('*').order('cognome');
+                const tipoAnno = document.getElementById('filter-year-type').value;
+                const annoSelezionato = parseInt(document.getElementById('filter-year-val').value);
+                const corsoFiltro = document.getElementById('filter-corso').value;
+                const mesiCorrenti = (tipoAnno === 'accademico') ? mesiAccademici : mesiSolari;
+
+                renderHeader();
+
+                const { data: allSoci } = await supabaseClient.from('soci').select('*').order('cognome');
+                let soci = allSoci;
                 if (sessionUser.ruolo !== 'presidente') {
-                    querySoci = querySoci.in('corso_scelto', sessionUser.corsi_competenze || []);
+                    const comp = (sessionUser.corsi_competenze || []).map(c => c.toLowerCase().trim());
+                    soci = allSoci.filter(s => {
+                        const cs = (s.corso_scelto || '').toLowerCase().trim();
+                        return comp.some(c => cs.includes(c) || c.includes(cs));
+                    });
+                } else if (corsoFiltro !== 'tutti') {
+                    soci = allSoci.filter(s => (s.corso_scelto || '').includes(corsoFiltro));
                 }
-                const { data: soci, error: errSoci } = await querySoci;
-                if (errSoci) throw errSoci;
 
-                // 2. Carica Pagamenti Mensilità
-                const { data: pagamenti, error: errPag } = await supabaseClient.from('pagamenti').select('*');
-                if (errPag) throw errPag;
-
-                // 3. Carica Presenze per controllo morosità
-                const { data: presenze, error: errPres } = await supabaseClient.from('presenze').select('*');
-                if (errPres) throw errPres;
+                const { data: pagamenti } = await supabaseClient.from('pagamenti').select('*');
+                const { data: presenze } = await supabaseClient.from('presenze').select('*');
 
                 tbody.innerHTML = '';
-                
+                const totaliMese = { iscrizione: 0 };
+                mesiCorrenti.forEach(m => totaliMese[m.id] = 0);
+
                 soci.forEach(s => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-700/20 transition";
-                    
                     let html = `
-                        <td class="p-4 sticky left-0 bg-slate-800 z-10 border-r border-slate-700">
-                            <p class="font-bold text-white text-xs">${s.cognome} ${s.nome}</p>
+                        <td class="p-4 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left">
+                            <p class="font-bold text-white text-[11px] leading-tight">${s.cognome} ${s.nome}</p>
                             <p class="text-[8px] text-slate-500 uppercase">${s.corso_scelto || 'N/D'}</p>
                         </td>
                     `;
 
-                    mesiAccademici.forEach(m => {
-                        const anno = (m.id >= 9) ? 2026 : 2027;
-                        
-                        // Verifica se ha pagato questo mese
-                        const pagato = pagamenti.find(p => p.socio_id === s.id && p.mese_riferimento === m.id && p.anno_riferimento === anno && p.stato === 'Approvato');
-                        
-                        // Verifica se è stato presente questo mese
-                        const eraPresente = presenze.some(p => {
-                            const d = new Date(p.data_presenza);
-                            return p.socio_id === s.id && (d.getMonth() + 1) === m.id && d.getFullYear() === anno;
+                    const pIsc = pagamenti.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'Approvato');
+                    if (pIsc) totaliMese.iscrizione += (parseFloat(pIsc.importo) || 0);
+                    html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer ${pIsc ? 'bg-cyan-600/20 text-cyan-400 font-bold' : 'bg-slate-900/30'}" onclick="openPayModal('${s.id}', '${s.nome} ${s.cognome}', 0, ${annoSelezionato}, 'Iscrizione Annuale')">${pIsc ? '€' + parseFloat(pIsc.importo).toFixed(0) : '<i class="fa-solid fa-plus opacity-10"></i>'}</td>`;
+
+                    mesiCorrenti.forEach(m => {
+                        const annoMese = (tipoAnno === 'solare') ? annoSelezionato : ((m.id >= 9) ? annoSelezionato : annoSelezionato + 1);
+                        const p = pagamenti.find(pag => pag.socio_id === s.id && pag.mese_riferimento === m.id && pag.anno_riferimento === annoMese && pag.stato === 'Approvato');
+                        if (p) totaliMese[m.id] += (parseFloat(p.importo) || 0);
+
+                        const eraPres = presenze.some(pr => {
+                            const d = new Date(pr.data_presenza);
+                            return pr.socio_id === s.id && (d.getMonth()+1) === m.id && d.getFullYear() === annoMese;
                         });
+                        const nonPrat = s.mesi_non_praticante && s.mesi_non_praticante.includes(`${m.id}-${annoMese}`);
 
-                        // Verifica se morosità convalidata (non praticante)
-                        const nonPraticante = s.mesi_non_praticante && s.mesi_non_praticante.includes(`${m.id}-${anno}`);
+                        let style = 'bg-slate-900/30';
+                        let content = '<i class="fa-solid fa-plus opacity-5"></i>';
+                        if (p) { style = 'bg-green-600/20 text-green-400 font-bold'; content = '€' + parseFloat(p.importo).toFixed(0); }
+                        else if (eraPres && !nonPrat) { style = 'bg-red-600/20 text-red-500 animate-pulse'; content = '<i class="fa-solid fa-triangle-exclamation"></i>'; }
+                        else if (nonPrat) { style = 'bg-slate-700/50 text-slate-500'; content = '<i class="fa-solid fa-user-slash text-[8px]"></i>'; }
 
-                        let bgColor = 'bg-slate-900/30';
-                        let icon = '';
-
-                        if (pagato) {
-                            bgColor = 'bg-green-600/20 text-green-400 border-green-500/30';
-                            icon = '<i class="fa-solid fa-check"></i>';
-                        } else if (eraPresente && !nonPraticante) {
-                            bgColor = 'bg-red-600/20 text-red-500 border-red-500/30 animate-pulse';
-                            icon = '<i class="fa-solid fa-circle-exclamation"></i>';
-                        } else if (nonPraticante) {
-                            bgColor = 'bg-slate-700/50 text-slate-500';
-                            icon = '<i class="fa-solid fa-user-slash"></i>';
-                        }
-
-                        html += `
-                            <td class="p-2 text-center border-l border-slate-800 cursor-pointer hover:bg-slate-700/50 transition-all ${bgColor}" 
-                                onclick="openPayModal('${s.id}', '${s.nome} ${s.cognome}', ${m.id}, ${anno})">
-                                ${icon}
-                            </td>
-                        `;
+                        html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer hover:bg-slate-700/50 transition-all ${style}" onclick="openPayModal('${s.id}', '${s.nome} ${s.cognome}', ${m.id}, ${annoMese}, 'Mensilità')">${content}</td>`;
                     });
-
                     tr.innerHTML = html;
                     tbody.appendChild(tr);
                 });
 
-                if (sessionUser.ruolo === 'presidente') renderKPI(pagamenti);
+                const trTot = document.createElement('tr');
+                trTot.className = "bg-slate-900/90 font-black text-white border-t-2 border-slate-600";
+                let totHtml = `<td class="p-4 sticky left-0 bg-slate-900 z-10 uppercase tracking-widest text-[9px] text-left">Totali Mensili</td><td class="p-2 text-center border-l border-slate-700 text-cyan-400 font-bold">€${totaliMese.iscrizione.toFixed(0)}</td>`;
+                mesiCorrenti.forEach(m => totHtml += `<td class="p-2 text-center border-l border-slate-800">€${totaliMese[m.id].toFixed(0)}</td>`);
+                trTot.innerHTML = totHtml;
+                tbody.appendChild(trTot);
 
-            } catch (err) {
-                console.error(err);
-                tbody.innerHTML = `<tr><td colspan="13" class="p-8 text-red-400 font-bold">Errore: ${err.message}</td></tr>`;
-            }
+                renderKPI(pagamenti, soci);
+            } catch (err) { console.error(err); }
         }
 
-        function renderKPI(pagamenti) {
+        function renderKPI(pagamenti, sociVis) {
             const container = document.getElementById('kpi-section');
             const ora = new Date();
-            const annoSolare = ora.getFullYear();
-            
-            const totaleAnnoSolare = pagamenti
-                .filter(p => p.stato === 'Approvato' && new Date(p.data_pagamento).getFullYear() === annoSolare)
-                .reduce((sum, p) => sum + (parseFloat(p.importo) || 0), 0);
-
-            const totaleMeseCorrente = pagamenti
-                .filter(p => p.stato === 'Approvato' && (new Date(p.data_pagamento).getMonth() + 1) === (ora.getMonth() + 1))
-                .reduce((sum, p) => sum + (parseFloat(p.importo) || 0), 0);
+            const sIds = sociVis.map(s => s.id);
+            const pFilt = pagamenti.filter(p => p.stato === 'Approvato' && sIds.includes(p.socio_id));
+            const totVis = pFilt.reduce((sum, p) => sum + (parseFloat(p.importo) || 0), 0);
+            const totMese = pFilt.filter(p => (new Date(p.data_pagamento).getMonth()+1) === (ora.getMonth()+1)).reduce((sum, p) => sum + (parseFloat(p.importo) || 0), 0);
 
             container.innerHTML = `
                 <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
-                    <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">Entrate Mese Corrente</p>
-                    <p class="text-2xl font-black text-emerald-400">€${totaleMeseCorrente.toFixed(2)}</p>
+                    <p class="text-[8px] font-bold text-slate-500 uppercase mb-1 tracking-widest leading-tight">Entrate Mese Corrente</p>
+                    <p class="text-2xl font-black text-emerald-400">€${totMese.toFixed(0)}</p>
                 </div>
                 <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
-                    <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">Entrate Anno Solare ${annoSolare}</p>
-                    <p class="text-2xl font-black text-white">€${totaleAnnoSolare.toFixed(2)}</p>
+                    <p class="text-[8px] font-bold text-slate-500 uppercase mb-1 tracking-widest leading-tight">Totale Soci Visualizzati</p>
+                    <p class="text-2xl font-black text-white">€${totVis.toFixed(0)}</p>
                 </div>
-                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg">
-                    <p class="text-[9px] font-bold text-slate-500 uppercase mb-1">Stato Global</p>
-                    <p class="text-sm font-bold text-cyan-400 uppercase tracking-widest">Contabilità Attiva</p>
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg col-span-2">
+                    <p class="text-[8px] font-bold text-slate-500 uppercase mb-1 tracking-widest leading-tight">Istruttore / Filtro</p>
+                    <p class="text-xs font-bold text-cyan-400 uppercase tracking-widest truncate">${sessionUser.nome}</p>
                 </div>
             `;
         }
 
-        function openPayModal(id, nome, mese, anno) {
-            currentSelection = { socioId: id, mese, anno };
-            document.getElementById('modal-title').textContent = `Pagamento ${mesiAccademici.find(m => m.id === mese).nome} ${anno} - ${nome}`;
+        function openPayModal(id, nome, mese, anno, tipo) {
+            currentSelection = { socioId: id, mese, anno, tipo };
+            const label = (mese === 0) ? 'Iscrizione' : (mesiAccademici.find(m => m.id === mese) || mesiSolari.find(m => m.id === mese)).nome;
+            document.getElementById('modal-title').textContent = `${label} ${anno} - ${nome}`;
             document.getElementById('modal-pagamento').classList.remove('hidden');
         }
 
-        function closeModal() {
-            document.getElementById('modal-pagamento').classList.add('hidden');
-        }
+        function closeModal() { document.getElementById('modal-pagamento').classList.add('hidden'); }
 
         async function salvaPagamentoRapido() {
-            const importo = document.getElementById('pay-amount').value;
-            const metodo = document.getElementById('pay-method').value;
-
-            if (!importo) { alert("Inserisci l'importo."); return; }
-
+            const imp = document.getElementById('pay-amount').value;
+            const met = document.getElementById('pay-method').value;
+            if (!imp) return;
             try {
                 const { error } = await supabaseClient.from('pagamenti').insert([{
                     socio_id: currentSelection.socioId,
-                    importo: parseFloat(importo),
-                    importo_totale: parseFloat(importo), // Allineamento colonne schema reale
+                    importo: parseFloat(imp),
+                    importo_totale: parseFloat(imp),
                     mese_riferimento: currentSelection.mese,
                     anno_riferimento: currentSelection.anno,
                     data_pagamento: new Date().toISOString().split('T')[0],
-                    metodo: metodo,
+                    metodo: met,
                     stato: 'Approvato',
-                    corso: 'Mensilità',
-                    tipo_pagamento: 'Mensilità',
-                    periodo_riferimento: `${currentSelection.mese}/${currentSelection.anno}`
+                    corso: currentSelection.tipo,
+                    tipo_pagamento: currentSelection.tipo,
+                    periodo_riferimento: currentSelection.mese === 0 ? 'Annuale' : `${currentSelection.mese}/${currentSelection.anno}`
                 }]);
-
                 if (error) throw error;
-                alert("Pagamento registrato!");
-                closeModal();
-                caricaDatiContabili();
+                closeModal(); caricaDatiContabili();
             } catch (err) { alert(err.message); }
         }
 
         async function toggleMorositaConvalidata() {
             const key = `${currentSelection.mese}-${currentSelection.anno}`;
             try {
-                // Recupera socio attuale per aggiornare array mesi_non_praticante
-                const { data: socio } = await supabaseClient.from('soci').select('mesi_non_praticante').eq('id', currentSelection.socioId).single();
-                let mesi = socio.mesi_non_praticante || [];
-                
-                if (mesi.includes(key)) {
-                    mesi = mesi.filter(m => m !== key);
-                } else {
-                    mesi.push(key);
-                }
-
+                const { data: s } = await supabaseClient.from('soci').select('mesi_non_praticante').eq('id', currentSelection.socioId).single();
+                let mesi = s.mesi_non_praticante || [];
+                mesi = mesi.includes(key) ? mesi.filter(m => m !== key) : [...mesi, key];
                 const { error } = await supabaseClient.from('soci').update({ mesi_non_praticante: mesi }).eq('id', currentSelection.socioId);
                 if (error) throw error;
-                
-                alert("Stato aggiornato correttamente!");
-                closeModal();
-                caricaDatiContabili();
+                closeModal(); caricaDatiContabili();
             } catch (err) { alert(err.message); }
         }
 
-        init();
+        caricaDatiContabili();
     </script>
 </body>
 </html>
