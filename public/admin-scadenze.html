@@ -4,42 +4,58 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>A.S.D. Fight Academy - Controllo Scadenze</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Supabase JS Client CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body class="bg-gray-100 font-sans">
-    <div class="container mx-auto px-4 py-8">
-        <header class="mb-8 flex flex-col md:flex-row justify-between items-center bg-white p-6 rounded-lg shadow-md gap-4">
-            <div>
-                <h1 class="text-2xl font-bold text-red-700">A.S.D. FIGHT ACADEMY</h1>
-                <p class="text-sm text-gray-600">Monitoraggio Scadenze Certificati Medici e Tessere ASI</p>
+<body class="bg-slate-900 text-slate-100 min-h-screen p-4 md:p-6 font-sans">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+        <!-- HEADER -->
+        <header class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center space-x-4">
+                <div class="bg-amber-500 p-3 rounded-2xl text-white shadow-lg">
+                    <i class="fa-solid fa-bell text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold text-white tracking-tight uppercase">Controllo Scadenze</h1>
+                    <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Monitoraggio Certificati e Tessere ASI</p>
+                </div>
             </div>
             <div class="flex items-center gap-3">
-                <button onclick="eseguiAlert(this)" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 text-sm font-semibold transition">
-                    Invia Alert Scadenze Ora
+                <button onclick="eseguiAlert(this)" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-lg flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i> INVIA ALERT ORA
                 </button>
-                <a href="index.html" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 text-sm">Torna alla Home</a>
+                <a href="admin.html" class="bg-slate-700 hover:bg-slate-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold transition shadow-sm border border-slate-600 flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> DASHBOARD
+                </a>
             </div>
         </header>
 
-        <main class="bg-white rounded-lg shadow-md overflow-hidden p-6">
-            <h2 class="text-lg font-semibold mb-4 text-gray-800">Soci in Prossima Scadenza</h2>
+        <!-- TABELLA SCADENZE -->
+        <main class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+            <div class="p-6 border-b border-slate-700 bg-slate-700/30">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-amber-400"></i> Soci in Scadenza o Scaduti
+                </h2>
+            </div>
+            
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Socio</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Corso</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contatti</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scadenza Medico</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Scadenza ASI</th>
+                            <th class="p-4">Socio / Corso</th>
+                            <th class="p-4">Contatti</th>
+                            <th class="p-4">Scadenza Medico</th>
+                            <th class="p-4">Scadenza ASI</th>
                         </tr>
                     </thead>
-                    <tbody id="scadenze-tbody" class="bg-white divide-y divide-gray-200">
+                    <tbody id="scadenze-tbody" class="divide-y divide-slate-700/50 text-slate-300">
                         <tr>
-                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Caricamento dati in corso...</td>
+                            <td colspan="4" class="p-12 text-center">
+                                <i class="fa-solid fa-spinner fa-spin text-2xl text-amber-500 mb-2"></i>
+                                <p class="text-slate-500 italic">Recupero dati dal cloud...</p>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -48,51 +64,91 @@
     </div>
 
     <script>
+        // Protezione Accesso
+        const sessionUser = JSON.parse(localStorage.getItem('asd_admin_user'));
+        if (!sessionUser) {
+            alert("Accesso negato. Effettua il login.");
+            location.href = 'admin.html';
+        }
+
         const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
-        
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function caricaScadenze() {
             const tbody = document.getElementById('scadenze-tbody');
-            const { data, error } = await supabaseClient
-                .from('v_scadenze_soci')
-                .select('*');
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('v_scadenze_soci')
+                    .select('*');
 
-            if (error) {
-                console.error("Errore nel recupero scadenze:", error);
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-sm text-red-500">Errore di caricamento dati: ${error.message}</td></tr>`;
-                return;
+                if (error) throw error;
+
+                if (!data || data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-12 text-center text-slate-500 italic font-medium">Nessuna scadenza critica rilevata al momento.</td></tr>';
+                    return;
+                }
+
+                // Filtraggio per Istruttore (se non è presidente)
+                let sociFiltrati = data;
+                if (sessionUser.ruolo !== 'presidente') {
+                    const comp = sessionUser.corsi_competenze || [];
+                    sociFiltrati = data.filter(s => comp.includes(s.corso));
+                }
+
+                if (sociFiltrati.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="p-12 text-center text-slate-500 italic font-medium">Nessun allievo dei tuoi corsi ha scadenze imminenti.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = sociFiltrati.map(socio => {
+                    const medScaduto = socio.giorni_alla_scadenza_medica <= 0;
+                    const asiScaduto = socio.giorni_alla_scadenza_asi <= 0;
+
+                    return `
+                        <tr class="hover:bg-slate-700/30 transition">
+                            <td class="p-4">
+                                <p class="font-bold text-white text-sm">${socio.nome} ${socio.cognome}</p>
+                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 font-mono border border-slate-700 uppercase tracking-tighter">
+                                    ${socio.corso || 'GENERALE'}
+                                </span>
+                            </td>
+                            <td class="p-4">
+                                <p class="text-[10px] text-slate-400"><i class="fa-solid fa-envelope mr-1 text-slate-600 text-[8px]"></i>${socio.email}</p>
+                                <p class="text-[10px] text-slate-400"><i class="fa-solid fa-phone mr-1 text-slate-600 text-[8px]"></i>${socio.telefono || '---'}</p>
+                            </td>
+                            <td class="p-4">
+                                <div class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">
+                                    ${socio.scadenza_certificato_medico || 'N/D'}
+                                </div>
+                                <div class="text-[9px] opacity-60 uppercase font-bold">
+                                    ${socio.giorni_alla_scadenza_medica} GIORNI RIMANENTI
+                                </div>
+                            </td>
+                            <td class="p-4">
+                                <div class="${asiScaduto ? 'text-orange-500' : 'text-slate-300'} font-bold">
+                                    ${socio.scadenza_tessera_asi || 'N/D'}
+                                </div>
+                                <div class="text-[9px] opacity-60 uppercase font-bold">
+                                    ${socio.giorni_alla_scadenza_asi} GIORNI RIMANENTI
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-red-400 font-bold uppercase tracking-widest text-[10px]">Errore critico caricamento dati: ${err.message}</td></tr>`;
             }
-
-            if (!data || data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">Nessuna scadenza imminente rilevata.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = '';
-            data.forEach(socio => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${socio.nome} ${socio.cognome}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${socio.corso || 'N/D'}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${socio.email}<br>${socio.telefono || ''}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${socio.scadenza_certificato_medico ? `${socio.scadenza_certificato_medico} <br><span class="text-xs text-red-600 font-semibold">(${socio.giorni_alla_scadenza_medica} gg)</span>` : 'N/D'}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        ${socio.scadenza_tessera_asi ? `${socio.scadenza_tessera_asi} <br><span class="text-xs text-orange-600 font-semibold">(${socio.giorni_alla_scadenza_asi} gg)</span>` : 'N/D'}
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
         }
 
         async function eseguiAlert(btn) {
-            if (!confirm("Vuoi avviare la verifica e l'invio immediato delle email di sollecito scadenze?")) return;
+            if (!confirm("Vuoi inviare via email i solleciti automatici ai soci filtrati?")) return;
             
-            const originalText = btn.textContent;
-            btn.textContent = "Elaborazione in corso...";
+            const originalContent = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> INVIO IN CORSO...';
             btn.disabled = true;
 
             try {
@@ -100,15 +156,14 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    alert(`Controllo completato con successo!\nSoci processati: ${result.processed}\nLog:\n- ` + (result.logs.length > 0 ? result.logs.join('\n- ') : 'Nessun alert inviato in base alle finestre temporali odierne.'));
+                    alert(`Operazione completata!\nSoci processati: ${result.processed}\nEmail inviate: ${result.logs.length}`);
                 } else {
-                    alert("Errore durante l'invio degli alert: " + (result.error || 'Errore sconosciuto'));
+                    alert("Errore API: " + (result.error || 'Sconosciuto'));
                 }
             } catch (err) {
-                console.error(err);
-                alert("Errore di connessione con la Serverless Function: " + err.message);
+                alert("Errore connessione: " + err.message);
             } finally {
-                btn.textContent = originalText;
+                btn.innerHTML = originalContent;
                 btn.disabled = false;
             }
         }
