@@ -23,8 +23,8 @@
                 </div>
             </div>
             <div class="flex items-center gap-2">
-                <button onclick="eseguiAlert(this)" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition shadow-lg flex items-center gap-2">
-                    <i class="fa-solid fa-paper-plane"></i> INVIA ALERT
+                <button onclick="eseguiAlert(this)" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition shadow-lg flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-paper-plane"></i> Invia Alert
                 </button>
                 <a href="admin.html" class="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition shadow-sm border border-slate-600 flex items-center gap-2 uppercase">
                     <i class="fa-solid fa-arrow-left"></i> Indietro
@@ -97,7 +97,7 @@
                 let sociFiltrati = data;
                 if (sessionUser.ruolo !== 'presidente') {
                     const comp = sessionUser.corsi_competenze || [];
-                    sociFiltrati = data.filter(s => comp.includes(s.corso));
+                    sociFiltrati = data.filter(s => comp.includes(s.corso) || comp.includes(s.corso_scelto));
                 }
 
                 if (sociFiltrati.length === 0) {
@@ -106,43 +106,42 @@
                 }
 
                 tbody.innerHTML = sociFiltrati.map(socio => {
-                    const medScaduto = socio.giorni_alla_scadenza_medica <= 0;
-                    const asiScaduto = socio.giorni_alla_scadenza_asi <= 0;
+                    const medScaduto = (socio.giorni_alla_scadenza_medica || 0) <= 0;
                     
                     // Colore Tessera ASI (Giallo se < 30gg, Rosso se scaduta)
                     let asiColor = 'text-slate-300';
-                    if (socio.giorni_alla_scadenza_asi <= 0) {
-                        asiColor = 'text-red-500';
-                    } else if (socio.giorni_alla_scadenza_asi <= 30) {
-                        asiColor = 'text-amber-400';
+                    const giorniAsi = socio.giorni_alla_scadenza_asi;
+                    if (giorniAsi !== null && giorniAsi !== undefined) {
+                        if (giorniAsi <= 0) asiColor = 'text-red-500';
+                        else if (giorniAsi <= 30) asiColor = 'text-amber-400';
                     }
 
                     return `
                         <tr class="hover:bg-slate-700/30 transition">
                             <td class="p-4">
-                                <p class="font-bold text-white text-sm">${socio.nome} ${socio.cognome}</p>
+                                <p class="font-bold text-white text-sm uppercase">${socio.nome || ''} ${socio.cognome || ''}</p>
                                 <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 font-mono border border-slate-700 uppercase tracking-tighter">
-                                    ${socio.corso || 'GENERALE'}
+                                    ${socio.corso || socio.corso_scelto || 'GENERALE'}
                                 </span>
                             </td>
                             <td class="p-4">
-                                <p class="text-[10px] text-slate-400"><i class="fa-solid fa-envelope mr-1 text-slate-600 text-[8px]"></i>${socio.email}</p>
-                                <p class="text-[10px] text-slate-400"><i class="fa-solid fa-phone mr-1 text-slate-600 text-[8px]"></i>${socio.telefono || '---'}</p>
+                                <p class="text-[10px] text-slate-400 tracking-tight"><i class="fa-solid fa-envelope mr-1 text-slate-600"></i>${socio.email || ''}</p>
+                                <p class="text-[10px] text-slate-400 tracking-tight"><i class="fa-solid fa-phone mr-1 text-slate-600"></i>${socio.telefono || '---'}</p>
                             </td>
                             <td class="p-4">
                                 <div class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">
                                     ${socio.scadenza_certificato_medico || 'N/D'}
                                 </div>
-                                <div class="text-[9px] opacity-60 uppercase font-bold">
-                                    ${socio.giorni_alla_scadenza_medica} GIORNI RIMANENTI
+                                <div class="text-[9px] opacity-60 uppercase font-bold tracking-tighter">
+                                    ${socio.giorni_alla_scadenza_medica !== null ? socio.giorni_alla_scadenza_medica + ' GIORNI RIMANENTI' : 'DATA ASSENTE'}
                                 </div>
                             </td>
                             <td class="p-4">
-                                <div class="${asiColor} font-bold text-xs">
+                                <div class="${asiColor} font-bold">
                                     ${socio.scadenza_tessera_asi || 'N/D'}
                                 </div>
-                                <div class="text-[9px] opacity-60 uppercase font-bold">
-                                    ${socio.giorni_alla_scadenza_asi} GIORNI RIMANENTI
+                                <div class="text-[9px] opacity-60 uppercase font-bold tracking-tighter">
+                                    ${socio.giorni_alla_scadenza_asi !== null ? socio.giorni_alla_scadenza_asi + ' GIORNI RIMANENTI' : 'DATA ASSENTE'}
                                 </div>
                             </td>
                         </tr>
@@ -151,7 +150,7 @@
 
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-red-400 font-bold uppercase tracking-widest text-[10px]">Errore critico caricamento dati: ${err.message}</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" class="p-12 text-center text-red-400 font-bold uppercase tracking-widest text-[10px]">Errore caricamento dati: ${err.message}</td></tr>`;
             }
         }
 
@@ -159,7 +158,7 @@
             if (!confirm("Vuoi inviare via email i solleciti automatici ai soci filtrati?")) return;
             
             const originalContent = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> INVIO IN CORSO...';
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> INVIO...';
             btn.disabled = true;
 
             try {
