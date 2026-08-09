@@ -143,64 +143,61 @@
 
                     <!-- Indicatori di Stato -->
                     <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <!-- Stato Iscrizione -->
-                        <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 flex flex-col items-center justify-center text-center">
+                        <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 flex flex-col items-center justify-center text-center text-[10px]">
                             <span class="text-[8px] font-bold text-slate-500 uppercase mb-1">Stato Iscrizione</span>
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid ${iscrizioneConfermata ? 'fa-circle-check text-green-500' : 'fa-clock text-amber-500'} text-xs"></i>
-                                <span class="text-[10px] font-extrabold ${iscrizioneConfermata ? 'text-green-400' : 'text-amber-400'} uppercase">
-                                    ${iscrizioneConfermata ? 'Attiva' : 'In Approvazione'}
-                                </span>
-                            </div>
+                            <span class="font-extrabold ${iscrizioneConfermata ? 'text-green-400' : 'text-amber-400'} uppercase underline decoration-dotted">
+                                ${iscrizioneConfermata ? 'Attiva' : 'In Approvazione'}
+                            </span>
                         </div>
-                        <!-- Quota A.A. 26/27 -->
-                        <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 flex flex-col items-center justify-center text-center">
+                        <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 flex flex-col items-center justify-center text-center text-[10px]">
                             <span class="text-[8px] font-bold text-slate-500 uppercase mb-1">Quota Iscrizione 26/27</span>
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid ${quotaPagata ? 'fa-receipt text-green-500' : 'fa-triangle-exclamation text-red-500'} text-xs"></i>
-                                <span class="text-[10px] font-extrabold ${quotaPagata ? 'text-green-400' : 'text-red-400'} uppercase">
-                                    ${quotaPagata ? 'Versata' : 'Non Versata'}
-                                </span>
-                            </div>
+                            <span class="font-extrabold ${quotaPagata ? 'text-green-400' : 'text-red-400'} uppercase underline decoration-dotted">
+                                ${quotaPagata ? 'Versata' : 'Non Versata'}
+                            </span>
                         </div>
-                        <!-- Certificato Medico -->
-                        <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 flex flex-col items-center justify-center text-center">
+                        <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 flex flex-col items-center justify-center text-center text-[10px]">
                             <span class="text-[8px] font-bold text-slate-500 uppercase mb-1">Certificato Medico</span>
-                            <div class="flex items-center gap-2">
-                                <i class="fa-solid ${medScaduto ? 'fa-ban text-red-500' : 'fa-heart-pulse text-green-500'} text-xs"></i>
-                                <span class="text-[10px] font-extrabold ${medScaduto ? 'text-red-400' : 'text-green-400'} uppercase">
-                                    ${medScaduto ? 'Scaduto/Assente' : 'In Regola'}
-                                </span>
-                            </div>
+                            <span class="font-extrabold ${medScaduto ? 'text-red-400' : 'text-green-400'} uppercase underline decoration-dotted">
+                                ${medScaduto ? 'Scaduto/Assente' : 'In Regola'}
+                            </span>
                         </div>
                     </div>
 
                     <!-- Sezione Azioni Documenti -->
                     <div class="p-5 border-t border-slate-700/50 space-y-4">
-                        <h5 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <i class="fa-solid fa-file-arrow-up text-cyan-500"></i> Carica Documentazione
-                        </h5>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Upload Certificato -->
-                            <div class="space-y-2">
-                                <label class="block text-[9px] font-bold text-slate-500 uppercase">Certificato Medico</label>
+                            <div class="space-y-2 bg-slate-900/30 p-4 rounded-xl border border-slate-700/50">
+                                <h5 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                                    <i class="fa-solid fa-stethoscope text-red-500"></i> Certificato Medico
+                                </h5>
+                                <label class="block text-[8px] font-bold text-slate-500 uppercase">Scadenza Certificato</label>
                                 <input type="date" id="scadenza_${socio.id}" value="${socio.scadenza_certificato_medico || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-white outline-none mb-2">
-                                <input type="file" id="fileCert_${socio.id}" accept="image/*,.pdf" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[9px] file:font-bold file:bg-slate-700 file:text-white cursor-pointer mb-2">
-                                <button onclick="uploadCertificato('${socio.id}')" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg text-[9px] transition uppercase tracking-wider">
-                                    Aggiorna Certificato
+                                <input type="file" id="fileCert_${socio.id}" accept="image/*,.pdf" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-[9px] file:font-bold file:bg-slate-700 file:text-white cursor-pointer mb-3">
+                                <button onclick="uploadCertificato('${socio.id}')" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg text-[9px] transition uppercase tracking-wider border border-slate-600">
+                                    Aggiorna Documento
                                 </button>
                             </div>
 
                             <!-- Invio Pagamento -->
-                            <div class="space-y-2">
-                                <label class="block text-[9px] font-bold text-slate-500 uppercase">Versamento Quota Iscrizione</label>
+                            <div class="space-y-2 bg-slate-900/30 p-4 rounded-xl border border-slate-700/50">
+                                <h5 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-3">
+                                    <i class="fa-solid fa-receipt text-emerald-500"></i> Pagamento Mensilità / Quota
+                                </h5>
+                                <label class="block text-[8px] font-bold text-slate-500 uppercase">Corso di riferimento</label>
+                                <select id="corso_paga_${socio.id}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-white outline-none mb-2">
+                                    <option value="Iscrizione Annuale">Iscrizione Annuale 2026/2027</option>
+                                    <option value="${socio.corso_scelto || ''}">${socio.corso_scelto || 'Corso Principale'}</option>
+                                    <option value="Mensilità">Altra Mensilità / Corso</option>
+                                </select>
+                                <label class="block text-[8px] font-bold text-slate-500 uppercase">Metodo di Pagamento</label>
                                 <select id="metodo_${socio.id}" onchange="toggleFilePaga('${socio.id}')" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-white outline-none mb-2">
-                                    <option value="bonifico">Bonifico Bancario</option>
+                                    <option value="bonifico">Bonifico Bancario (Richiede Upload)</option>
                                     <option value="contanti">Contanti / Manuale</option>
                                 </select>
                                 <div id="container_file_paga_${socio.id}">
-                                    <input type="file" id="filePaga_${socio.id}" accept="image/*,.pdf" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[9px] file:font-bold file:bg-emerald-700 file:text-white cursor-pointer mb-2">
+                                    <label class="block text-[8px] font-bold text-slate-500 uppercase mb-1">Contabile Bonifico</label>
+                                    <input type="file" id="filePaga_${socio.id}" accept="image/*,.pdf" class="w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-3 file:rounded file:border-0 file:text-[9px] file:font-bold file:bg-emerald-700 file:text-white cursor-pointer mb-3">
                                 </div>
                                 <button onclick="inviaRichiestaPagamento('${socio.id}')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg text-[9px] transition uppercase tracking-wider shadow-lg">
                                     Conferma Pagamento
@@ -216,11 +213,8 @@
         function toggleFilePaga(socioId) {
             const metodo = document.getElementById(`metodo_${socioId}`).value;
             const container = document.getElementById(`container_file_paga_${socioId}`);
-            if (metodo === 'contanti') {
-                container.classList.add('hidden');
-            } else {
-                container.classList.remove('hidden');
-            }
+            if (metodo === 'contanti') container.classList.add('hidden');
+            else container.classList.remove('hidden');
         }
 
         async function uploadCertificato(socioId) {
@@ -228,117 +222,62 @@
             const dataScadenza = document.getElementById(`scadenza_${socioId}`).value;
 
             if (!fileInput.files.length || !dataScadenza) {
-                alert("Seleziona il file del certificato e inserisci la data di scadenza.");
-                return;
+                alert("Inserisci scadenza e file del certificato."); return;
             }
 
             const file = fileInput.files[0];
-            const fileExt = file.name.split('.').pop();
-            const fileName = `cert_${socioId}_${Date.now()}.${fileExt}`;
-            const filePath = `${fileName}`;
+            const fileName = `cert_${socioId}_${Date.now()}.${file.name.split('.').pop()}`;
 
             try {
-                const { error: storageError } = await supabaseClient.storage
-                    .from('certificati_medici')
-                    .upload(filePath, file);
-
+                const { error: storageError } = await supabaseClient.storage.from('certificati_medici').upload(fileName, file);
                 if (storageError) throw storageError;
 
-                const { data: publicUrlData } = supabaseClient.storage
-                    .from('certificati_medici')
-                    .getPublicUrl(filePath);
+                const { data: publicUrlData } = supabaseClient.storage.from('certificati_medici').getPublicUrl(fileName);
 
-                const { error: updateError } = await supabaseClient
-                    .from('soci')
-                    .update({
-                        certificato_medico_url: publicUrlData.publicUrl,
-                        scadenza_certificato_medico: dataScadenza
-                    })
-                    .eq('id', socioId);
+                const { error: updateError } = await supabaseClient.from('soci').update({
+                    certificato_medico_url: publicUrlData.publicUrl,
+                    scadenza_certificato_medico: dataScadenza
+                }).eq('id', socioId);
 
                 if (updateError) throw updateError;
-
-                alert("Certificato caricato con successo!");
-                
-                // Aggiorna i dati locali
-                const { data: updatedData } = await supabaseClient.from('soci').select('*').eq('email', foundSociList[0].email);
-                if (updatedData) {
-                    foundSociList = updatedData;
-                    localStorage.setItem('foundSociList', JSON.stringify(foundSociList));
-                }
-                location.reload();
-            } catch (err) {
-                alert("Errore: " + err.message);
-            }
+                alert("Certificato caricato!"); location.reload();
+            } catch (err) { alert(err.message); }
         }
 
         async function inviaRichiestaPagamento(socioId) {
             const metodo = document.getElementById(`metodo_${socioId}`).value;
+            const corsoScelto = document.getElementById(`corso_paga_${socioId}`).value;
             const fileInput = document.getElementById(`filePaga_${socioId}`);
-            
             let ricevutaUrl = null;
 
             if (metodo === 'bonifico') {
-                if (!fileInput.files.length) {
-                    alert("Per il bonifico è obbligatorio caricare lo screenshot o il PDF della contabile.");
-                    return;
-                }
-
+                if (!fileInput.files.length) { alert("Per il bonifico carica la ricevuta."); return; }
                 const file = fileInput.files[0];
-                const fileExt = file.name.split('.').pop();
-                const fileName = `paga_${socioId}_${Date.now()}.${fileExt}`;
-                const filePath = `${fileName}`;
-
+                const fileName = `paga_${socioId}_${Date.now()}.${file.name.split('.').pop()}`;
                 try {
-                    const { error: storageError } = await supabaseClient.storage
-                        .from('ricevute_pagamenti')
-                        .upload(filePath, file);
-
+                    const { error: storageError } = await supabaseClient.storage.from('ricevute_pagamenti').upload(fileName, file);
                     if (storageError) throw storageError;
-
-                    const { data: publicUrlData } = supabaseClient.storage
-                        .from('ricevute_pagamenti')
-                        .getPublicUrl(filePath);
-                    
+                    const { data: publicUrlData } = supabaseClient.storage.from('ricevute_pagamenti').getPublicUrl(fileName);
                     ricevutaUrl = publicUrlData.publicUrl;
-                } catch (err) {
-                    alert("Errore upload: " + err.message);
-                    return;
-                }
+                } catch (err) { alert(err.message); return; }
             }
 
             try {
-                // Registra nella tabella pagamenti (tipologia Iscrizione)
-                const { error } = await supabaseClient
-                    .from('pagamenti')
-                    .insert([{
-                        socio_id: socioId,
-                        importo: 0, 
-                        importo_totale: 0, // Allineamento vincolo NOT NULL
-                        metodo: metodo,
-                        ricevuta_url: ricevutaUrl,
-                        stato: 'In attesa di verifica',
-                        data_pagamento: new Date().toISOString().split('T')[0],
-                        corso: 'Iscrizione Annuale'
-                    }]);
-
+                const { error } = await supabaseClient.from('pagamenti').insert([{
+                    socio_id: socioId,
+                    importo: 0, importo_totale: 0,
+                    metodo: metodo,
+                    ricevuta_url: ricevutaUrl,
+                    stato: 'In attesa di verifica',
+                    data_pagamento: new Date().toISOString().split('T')[0],
+                    corso: corsoScelto
+                }]);
                 if (error) throw error;
-
-                alert("Richiesta inviata! L'amministrazione verificherà il pagamento e attiverà l'iscrizione.");
-                
-                // Aggiorna i dati locali
-                const { data: updatedData } = await supabaseClient.from('soci').select('*').eq('email', foundSociList[0].email);
-                if (updatedData) {
-                    foundSociList = updatedData;
-                    localStorage.setItem('foundSociList', JSON.stringify(foundSociList));
-                }
+                alert("Richiesta inviata! L'amministrazione verificherà il pagamento.");
                 location.reload();
-            } catch (err) {
-                alert("Errore: " + err.message);
-            }
+            } catch (err) { alert(err.message); }
         }
 
-        // Controllo Sessione all'avvio
         if (localStorage.getItem('foundSociList')) {
             foundSociList = JSON.parse(localStorage.getItem('foundSociList'));
             renderPortal();
