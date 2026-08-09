@@ -59,7 +59,7 @@
                 <!-- LISTA PROFILI -->
                 <div id="profiliContainer" class="space-y-6"></div>
 
-                <button onclick="location.reload()" class="w-full text-center text-[10px] text-slate-500 hover:text-slate-300 transition mt-4 font-bold uppercase tracking-[0.2em]">
+                <button onclick="logoutSocio()" class="w-full text-center text-[10px] text-slate-500 hover:text-slate-300 transition mt-4 font-bold uppercase tracking-[0.2em]">
                     <i class="fa-solid fa-right-from-bracket mr-2"></i> Esci / Cambia Profilo
                 </button>
             </div>
@@ -101,10 +101,16 @@
                 }
 
                 foundSociList = data;
+                localStorage.setItem('foundSociList', JSON.stringify(foundSociList));
                 renderPortal();
             } catch (err) {
                 alert("Errore durante l'accesso: " + err.message);
             }
+        }
+
+        async function logoutSocio() {
+            localStorage.removeItem('foundSociList');
+            location.reload();
         }
 
         function renderPortal() {
@@ -253,6 +259,13 @@
                 if (updateError) throw updateError;
 
                 alert("Certificato caricato con successo!");
+                
+                // Aggiorna i dati locali
+                const { data: updatedData } = await supabaseClient.from('soci').select('*').eq('email', foundSociList[0].email);
+                if (updatedData) {
+                    foundSociList = updatedData;
+                    localStorage.setItem('foundSociList', JSON.stringify(foundSociList));
+                }
                 location.reload();
             } catch (err) {
                 alert("Errore: " + err.message);
@@ -300,7 +313,7 @@
                     .from('pagamenti')
                     .insert([{
                         socio_id: socioId,
-                        importo: 0, // Verrà inserito dal presidente
+                        importo: 0, 
                         metodo: metodo,
                         ricevuta_url: ricevutaUrl,
                         stato: 'In attesa di verifica',
@@ -311,10 +324,23 @@
                 if (error) throw error;
 
                 alert("Richiesta inviata! L'amministrazione verificherà il pagamento e attiverà l'iscrizione.");
+                
+                // Aggiorna i dati locali
+                const { data: updatedData } = await supabaseClient.from('soci').select('*').eq('email', foundSociList[0].email);
+                if (updatedData) {
+                    foundSociList = updatedData;
+                    localStorage.setItem('foundSociList', JSON.stringify(foundSociList));
+                }
                 location.reload();
             } catch (err) {
                 alert("Errore: " + err.message);
             }
+        }
+
+        // Controllo Sessione all'avvio
+        if (localStorage.getItem('foundSociList')) {
+            foundSociList = JSON.parse(localStorage.getItem('foundSociList'));
+            renderPortal();
         }
     </script>
 </body>
