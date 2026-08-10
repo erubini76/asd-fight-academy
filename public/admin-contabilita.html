@@ -73,8 +73,14 @@
                 </div>
             </div>
             
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-[10px] border-collapse min-w-[1300px]">
+            <div class="overflow-x-auto relative">
+                <div class="absolute right-4 top-4 hidden sm:block rounded-full bg-slate-900/90 border border-slate-700 px-3 py-1 text-[10px] text-slate-300 shadow-lg">
+                    Scorri orizzontalmente ↔
+                </div>
+                <div class="mb-3 block sm:hidden text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">
+                    Scorri la tabella a sinistra/destra
+                </div>
+                <table class="w-full text-left text-[10px] border-collapse min-w-[1000px] table-fixed">
                     <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700">
                         <tr id="table-header-row"></tr>
                     </thead>
@@ -177,7 +183,7 @@
                 sociFiltrati.forEach(s => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-700/20 transition";
-                    let html = `<td class="p-4 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight"><p class="font-bold text-white text-[11px]">${s.cognome} ${s.nome}</p><span class="text-[7px] px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase">${s.corso_scelto || 'N/D'}</span></td>`;
+                    let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight max-w-[130px] break-words"><p class="font-bold text-white text-[11px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase max-w-[110px] truncate">${s.corso_scelto || 'N/D'}</span></td>`;
 
                     const pIsc = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'Approvato');
                     const pIscPending = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'In attesa di verifica');
