@@ -141,7 +141,7 @@
 
         function renderHeader() {
             const row = document.getElementById('table-header-row');
-            row.innerHTML = '<th class="p-4 sticky left-0 bg-slate-900 z-10 min-w-[220px] text-left">Socio / Corso</th><th class="p-4 text-center border-l border-slate-800 bg-slate-900/80">Iscrizione</th>';
+            row.innerHTML = '<th class="p-4 sticky left-0 bg-slate-900 z-10 min-w-[260px] text-left">Socio / Corso</th><th class="p-4 text-center border-l border-slate-800 bg-slate-900/80">Iscrizione</th>';
             const mesi = document.getElementById('filter-year-type').value === 'accademico' ? mesiAccademici : mesiSolari;
             mesi.forEach(m => row.innerHTML += `<th class="p-4 text-center border-l border-slate-800">${m.nome}</th>`);
         }
@@ -183,7 +183,7 @@
                 sociFiltrati.forEach(s => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-700/20 transition";
-                    let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight max-w-[130px] break-words"><p class="font-bold text-white text-[11px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase max-w-[110px] truncate">${s.corso_scelto || 'N/D'}</span></td>`;
+                    let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[260px] break-words"><p class="font-bold text-white text-[11px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase max-w-[180px] truncate">${s.corso_scelto || 'N/D'}</span></td>`;
 
                     const pIsc = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'Approvato');
                     const pIscPending = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'In attesa di verifica');
