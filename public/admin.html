@@ -320,10 +320,31 @@
       const email = document.getElementById('nuovaEmailLogin').value;
       const pass = document.getElementById('nuovaPasswordIstruttore').value;
       const corsi = Array.from(document.getElementById('selectCorsiCompetenza').selectedOptions).map(o => o.value);
-      if (!socioId || !email || !pass || corsi.length === 0) { alert("Dati mancanti."); return; }
+      if (!socioId || !email || corsi.length === 0) { alert("Dati mancanti."); return; }
 
       try {
-        const { error } = await supabaseClient.from('istruttori_corsi').insert([{ socio_id: socioId, email, password_accesso: pass, corsi_competenze: corsi, ruolo: 'istruttore', nome: document.getElementById('selectSocioIstruttore').selectedOptions[0].text }]);
+        const { data: existing, error: fetchError } = await supabaseClient.from('istruttori_corsi').select('*').eq('email', email).maybeSingle();
+        if (fetchError) throw fetchError;
+
+        const nomeIstruttore = document.getElementById('selectSocioIstruttore').selectedOptions[0].text;
+        if (existing) {
+          const mergedCourses = Array.from(new Set([...(existing.corsi_competenze || []), ...corsi]));
+          const updatePayload = {
+            socio_id: socioId,
+            corsi_competenze: mergedCourses,
+            nome: nomeIstruttore,
+          };
+          if (pass) updatePayload.password_accesso = pass;
+
+          const { error } = await supabaseClient.from('istruttori_corsi').update(updatePayload).eq('email', email);
+          if (error) throw error;
+          alert("Istruttore esistente aggiornato con i nuovi corsi.");
+          location.reload();
+          return;
+        }
+
+        if (!pass) { alert("Password obbligatoria per nuovo istruttore."); return; }
+        const { error } = await supabaseClient.from('istruttori_corsi').insert([{ socio_id: socioId, email, password_accesso: pass, corsi_competenze: corsi, ruolo: 'istruttore', nome: nomeIstruttore }]);
         if (error) throw error;
         alert("Istruttore creato!"); location.reload();
       } catch (err) { alert(err.message); }
