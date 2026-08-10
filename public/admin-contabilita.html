@@ -8,13 +8,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        .contab-table td:first-child p {
+            font-size: 12px !important;
+        }
         @media (max-width: 640px) {
             .contab-table th:first-child,
             .contab-table td:first-child {
                 min-width: 180px !important;
             }
             .contab-table td:first-child p {
-                font-size: 10px;
+                font-size: 12px !important;
             }
             .contab-table td:first-child span {
                 max-width: 140px !important;
@@ -205,7 +208,7 @@
                 sociFiltrati.forEach(s => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-700/20 transition";
-                    let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[180px] sm:min-w-[220px] break-words"><p class="font-bold text-white text-[11px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase max-w-[140px] sm:max-w-[200px] truncate">${s.corso_scelto || 'N/D'}</span></td>`;
+                    let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[180px] sm:min-w-[220px] break-words"><p class="font-bold text-white text-[12px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase max-w-[140px] sm:max-w-[200px] truncate">${s.corso_scelto || 'N/D'}</span></td>`;
 
                     const pIsc = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'Approvato');
                     const pIscPending = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'In attesa di verifica');
