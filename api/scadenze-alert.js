@@ -19,7 +19,7 @@ export default async function handler(req, res) {
     }
 
     if (!sociScadenze || sociScadenze.length === 0) {
-      return res.status(200).json({ success: true, processed: 0, logs: ["Nessun socio trovato nella vista di controllo."] });
+      return res.status(200).json({ success: true, processed: 0, logs: ["Nessun tesserato trovato nella vista di controllo."] });
     }
 
     let emailLogs = [];

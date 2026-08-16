@@ -161,8 +161,8 @@
                 const totaleLezioni = dateUniche.length;
 
                 allieviCaricati = (soci || []).map(s => {
-                    const presenzeSocio = presenzeCorso.filter(p => p.socio_id === s.id).length;
-                    const percentuale = totaleLezioni > 0 ? Math.round((presenzeSocio / totaleLezioni) * 100) : 0;
+                    const presenzeTesserato = presenzeCorso.filter(p => p.socio_id === s.id).length;
+                    const percentuale = totaleLezioni > 0 ? Math.round((presenzeTesserato / totaleLezioni) * 100) : 0;
                     return { ...s, percentuale };
                 });
 

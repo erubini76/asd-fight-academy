@@ -39,7 +39,7 @@
         <main class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
             <div class="p-6 border-b border-slate-700 bg-slate-700/30">
                 <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-list-check text-amber-400"></i> Soci in Scadenza o Scaduti
+                    <i class="fa-solid fa-list-check text-amber-400"></i> Tesserati in Scadenza o Scaduti
                 </h2>
             </div>
             
@@ -47,7 +47,7 @@
                 <table class="w-full text-left text-xs border-collapse">
                     <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700">
                         <tr>
-                            <th class="p-4">Socio / Corso</th>
+                            <th class="p-4">Tesserato / Corso</th>
                             <th class="p-4">Contatti</th>
                             <th class="p-4">Scadenza Medico</th>
                             <th class="p-4">Scadenza ASI</th>
@@ -105,12 +105,12 @@
                     return;
                 }
 
-                tbody.innerHTML = sociFiltrati.map(socio => {
-                    const medScaduto = (socio.giorni_alla_scadenza_medica || 0) <= 0;
+                tbody.innerHTML = sociFiltrati.map(tesserato => {
+                    const medScaduto = (tesserato.giorni_alla_scadenza_medica || 0) <= 0;
                     
                     // Colore Tessera ASI (Giallo se < 30gg, Rosso se scaduta)
                     let asiColor = 'text-slate-300';
-                    const giorniAsi = socio.giorni_alla_scadenza_asi;
+                    const giorniAsi = tesserato.giorni_alla_scadenza_asi;
                     if (giorniAsi !== null && giorniAsi !== undefined) {
                         if (giorniAsi <= 0) asiColor = 'text-red-500';
                         else if (giorniAsi <= 30) asiColor = 'text-amber-400';
@@ -119,29 +119,29 @@
                     return `
                         <tr class="hover:bg-slate-700/30 transition">
                             <td class="p-4">
-                                <p class="font-bold text-white text-sm uppercase">${socio.nome || ''} ${socio.cognome || ''}</p>
+                                <p class="font-bold text-white text-sm uppercase">${tesserato.nome || ''} ${tesserato.cognome || ''}</p>
                                 <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 font-mono border border-slate-700 uppercase tracking-tighter">
-                                    ${socio.corso || socio.corso_scelto || 'GENERALE'}
+                                    ${tesserato.corso || tesserato.corso_scelto || 'GENERALE'}
                                 </span>
                             </td>
                             <td class="p-4">
-                                <p class="text-[10px] text-slate-400 tracking-tight"><i class="fa-solid fa-envelope mr-1 text-slate-600"></i>${socio.email || ''}</p>
-                                <p class="text-[10px] text-slate-400 tracking-tight"><i class="fa-solid fa-phone mr-1 text-slate-600"></i>${socio.telefono || '---'}</p>
+                                <p class="text-[10px] text-slate-400 tracking-tight"><i class="fa-solid fa-envelope mr-1 text-slate-600"></i>${tesserato.email || ''}</p>
+                                <p class="text-[10px] text-slate-400 tracking-tight"><i class="fa-solid fa-phone mr-1 text-slate-600"></i>${tesserato.telefono || '---'}</p>
                             </td>
                             <td class="p-4">
                                 <div class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">
-                                    ${socio.scadenza_certificato_medico || 'N/D'}
+                                    ${tesserato.scadenza_certificato_medico || 'N/D'}
                                 </div>
                                 <div class="text-[9px] opacity-60 uppercase font-bold tracking-tighter">
-                                    ${socio.giorni_alla_scadenza_medica !== null ? socio.giorni_alla_scadenza_medica + ' GIORNI RIMANENTI' : 'DATA ASSENTE'}
+                                    ${tesserato.giorni_alla_scadenza_medica !== null ? tesserato.giorni_alla_scadenza_medica + ' GIORNI RIMANENTI' : 'DATA ASSENTE'}
                                 </div>
                             </td>
                             <td class="p-4">
                                 <div class="${asiColor} font-bold">
-                                    ${socio.scadenza_tessera_asi || 'N/D'}
+                                    ${tesserato.scadenza_tessera_asi || 'N/D'}
                                 </div>
                                 <div class="text-[9px] opacity-60 uppercase font-bold tracking-tighter">
-                                    ${socio.giorni_alla_scadenza_asi !== null ? socio.giorni_alla_scadenza_asi + ' GIORNI RIMANENTI' : 'DATA ASSENTE'}
+                                    ${tesserato.giorni_alla_scadenza_asi !== null ? tesserato.giorni_alla_scadenza_asi + ' GIORNI RIMANENTI' : 'DATA ASSENTE'}
                                 </div>
                             </td>
                         </tr>
@@ -155,7 +155,7 @@
         }
 
         async function eseguiAlert(btn) {
-            if (!confirm("Vuoi inviare via email i solleciti automatici ai soci filtrati?")) return;
+            if (!confirm("Vuoi inviare via email i solleciti automatici ai tesserati filtrati?")) return;
             
             const originalContent = btn.innerHTML;
             btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> INVIO...';
@@ -166,7 +166,7 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    alert(`Operazione completata!\nSoci processati: ${result.processed}\nEmail inviate: ${result.logs.length}`);
+                    alert(`Operazione completata!\nTesserati processati: ${result.processed}\nEmail inviate: ${result.logs.length}`);
                 } else {
                     alert("Errore API: " + (result.error || 'Sconosciuto'));
                 }

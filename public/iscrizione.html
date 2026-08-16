@@ -20,13 +20,13 @@
             <div class="text-center">
                 <h1 class="text-2xl font-bold text-red-600">A.S.D. FIGHT ACADEMY</h1>
                 <p class="text-[10px] text-slate-400 mt-1 uppercase tracking-widest">Affiliata ASI VEN-PD0814 | Este (PD)</p>
-                <h2 class="text-lg font-semibold mt-4 mb-6 text-white uppercase tracking-tight">Domanda di Ammissione a Socio</h2>
+                <h2 class="text-lg font-semibold mt-4 mb-6 text-white uppercase tracking-tight">Domanda di Tesseramento</h2>
             </div>
 
-            <!-- BOX AUTOCOMPILAZIONE SEI GIA SOCIO -->
+            <!-- BOX AUTOCOMPILAZIONE SEI GIA TESSERATO -->
             <section id="autofill-section" class="bg-slate-900/50 p-5 rounded-xl border border-cyan-600/30">
                 <h3 class="text-xs font-bold text-cyan-400 uppercase tracking-widest flex items-center gap-2 mb-3">
-                    <i class="fa-solid fa-id-card-clip"></i> Sei già Socio?
+                    <i class="fa-solid fa-id-card-clip"></i> Sei già tesserato?
                 </h3>
                 <p class="text-[9px] text-slate-400 mb-3 uppercase font-bold tracking-tight">Inserisci Email e CF per autocompilare i tuoi dati:</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -109,13 +109,13 @@
                         <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti / Ragazzi</option>
                         <option value="Vietvodao Bambini">Vietvodao Bambini</option>
                         <option value="Shodo (Calligrafia)">Shodo (Calligrafia Giapponese)</option>
-                        <option value="Socio Sostenitore">Socio Sostenitore (Solo supporto, non pratica sportiva)</option>
+                        <option value="Tesserato Sostenitore">Tesserato Sostenitore (Solo supporto, non pratica sportiva)</option>
                     </select>
                 </div>
 
                 <div class="border-b border-slate-700 pb-3 mt-6 mb-2">
                     <h3 class="text-sm font-bold text-red-500 uppercase tracking-wide">2. Documentazione Medica</h3>
-                    <p class="text-[10px] text-slate-500 mt-1 italic font-medium uppercase tracking-tight">Facoltativo. Non obbligatorio per l'iscrizione a socio (es. per soci non atleti).</p>
+                    <p class="text-[10px] text-slate-500 mt-1 italic font-medium uppercase tracking-tight">Facoltativo. Non obbligatorio per il tesseramento (es. per tesserati non atleti).</p>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -173,7 +173,7 @@
                 <div class="pt-4 flex items-center justify-between">
                     <a href="index.html" class="text-sm text-slate-400 hover:text-white transition">Torna alla Home</a>
                     <button type="submit" id="submit-btn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm shadow-lg transition duration-200">
-                        Invia Domanda di Ammissione
+                        Invia Domanda di Tesseramento
                     </button>
                 </div>
             </form>
@@ -197,7 +197,7 @@
 
             try {
                 const { data, error } = await supabaseClient.from('soci').select('*').eq('email', email).eq('codice_fiscale', cf).single();
-                if (error || !data) throw new Error("Socio non trovato con questi dati.");
+                if (error || !data) throw new Error("Tesserato non trovato con questi dati.");
 
                 // Compilazione campi
                 document.getElementById('nome').value = data.nome || '';
@@ -325,7 +325,7 @@
                     console.warn("Dati salvati, ma notifica email parziale.");
                 }
 
-                alert("Registrazione completata con successo!\n\nPer attivare l'iscrizione e la tessera assicurativa ASI, accedi ora all'Area Socio con il tuo Codice Fiscale, seleziona la modalità di versamento della quota e carica l'eventuale ricevuta del bonifico.");
+                alert("Registrazione completata con successo!\n\nPer attivare il tesseramento e la tessera assicurativa ASI, accedi ora all'Area Tesserati con il tuo Codice Fiscale, seleziona la modalità di versamento della quota e carica l'eventuale ricevuta del bonifico.");
                 location.href = 'socio.html';
             } catch (err) {
                 console.error(err);

@@ -26,7 +26,7 @@ module.exports = async (req, res) => {
   const targetEmail = 'erubini@gmail.com';
 
   try {
-    // 1. Email di conferma simulata al Socio
+    // 1. Email di conferma simulata al Tesserato
     const resendUser = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -41,7 +41,7 @@ module.exports = async (req, res) => {
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
             <h2 style="color: #b91c1c;">A.S.D. FIGHT ACADEMY</h2>
             <p>Ciao <strong>${nome} ${cognome}</strong>,</p>
-            <p>Abbiamo ricevuto correttamente la tua domanda di ammissione a socio per il corso <strong>${corso || 'Selezionato'}</strong>.</p>
+            <p>Abbiamo ricevuto correttamente la tua domanda di tesseramento per il corso <strong>${corso || 'Selezionato'}</strong>.</p>
             <p>Email originale destinatario: ${email}</p>
           </div>
         `
@@ -67,7 +67,7 @@ module.exports = async (req, res) => {
         subject: `[NUOVA ISCRIZIONE ADMIN] ${nome} ${cognome} - ${corso || 'Corso'}`,
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-            <h3 style="color: #b91c1c;">Nuova Domanda di Ammissione a Socio</h3>
+            <h3 style="color: #b91c1c;">Nuovo Tesseramento</h3>
             <ul>
               <li><strong>Nome e Cognome:</strong> ${nome} ${cognome}</li>
               <li><strong>Codice Fiscale:</strong> ${codice_fiscale}</li>

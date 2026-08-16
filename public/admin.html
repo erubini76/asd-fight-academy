@@ -104,7 +104,7 @@
           <i class="fa-solid fa-gears"></i> Gestione Credenziali Istruttori
         </h2>
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
-            <select id="selectSocioIstruttore" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none font-medium"></select>
+            <select id="selectTesseratoIstruttore" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none font-medium"></select>
             <input type="email" id="nuovaEmailLogin" placeholder="Email Login" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
             <input type="text" id="nuovaPasswordIstruttore" placeholder="Password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
             <select id="selectCorsiCompetenza" multiple class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1 text-[9px] text-white h-16">
@@ -122,14 +122,14 @@
       <section class="bg-slate-800 rounded-2xl shadow-lg border border-slate-700 overflow-hidden">
         <div class="p-6 bg-slate-700/30 border-b border-slate-700">
             <h2 class="text-xs font-bold text-white flex items-center gap-2 uppercase tracking-widest">
-                <i class="fa-solid fa-users text-blue-500"></i> Registro Unificato Soci & Documenti
+                <i class="fa-solid fa-users text-blue-500"></i> Registro Unificato Tesserati & Documenti
             </h2>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-[10px] border-collapse">
             <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700 tracking-tighter">
               <tr>
-                <th class="p-4">Socio / Email</th>
+                <th class="p-4">Tesserato / Email</th>
                 <th class="p-4 text-center">Stato Iscrizione</th>
                 <th class="p-4 text-center">Quota Iscrizione</th>
                 <th class="p-4 text-center">Certificato</th>
@@ -195,7 +195,7 @@
           badge.className = "text-[9px] px-2 py-0.5 rounded-full font-bold bg-red-600 text-white";
           badge.innerText = "PRESIDENTE";
           document.getElementById('sezionePresidenteGestione').classList.remove('hidden');
-          caricaSelectSoci();
+          caricaSelectTesserati();
         } else {
           badge.className = "text-[9px] px-2 py-0.5 rounded-full font-bold bg-blue-600 text-white uppercase";
           badge.innerText = `Istruttore`;
@@ -253,7 +253,7 @@
             <td class="p-4 text-right border-b border-slate-700/50">
                 <div class="flex justify-end gap-2">
                     ${s.certificato_medico_url ? `<a href="${s.certificato_medico_url}" target="_blank" class="text-blue-400 hover:text-white" title="Visualizza Certificato"><i class="fa-solid fa-file-medical"></i></a>` : ''}
-                    <button onclick="editSocio('${s.id}', '${s.nome} ${s.cognome}', '${s.scadenza_certificato_medico || ''}', '${s.scadenza_tessera_asi || ''}')" class="text-slate-500 hover:text-white" title="Modifica Scadenze"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button onclick="editTesserato('${s.id}', '${s.nome} ${s.cognome}', '${s.scadenza_certificato_medico || ''}', '${s.scadenza_tessera_asi || ''}')" class="text-slate-500 hover:text-white" title="Modifica Scadenze"><i class="fa-solid fa-pen-to-square"></i></button>
                 </div>
             </td>
           `;
@@ -281,12 +281,12 @@
         } catch (err) { alert(err.message); }
     }
 
-    async function caricaSelectSoci() {
+    async function caricaSelectTesserati() {
       try {
         const { data, error } = await supabaseClient.from('soci').select('id, nome, cognome, email').order('cognome');
         if (error) throw error;
-        const select = document.getElementById('selectSocioIstruttore');
-        select.innerHTML = '<option value="">-- Seleziona Socio --</option>';
+        const select = document.getElementById('selectTesseratoIstruttore');
+        select.innerHTML = '<option value="">-- Seleziona Tesserato --</option>';
         data.forEach(s => {
           select.innerHTML += `<option value="${s.id}" data-email="${s.email}">${s.cognome} ${s.nome}</option>`;
         });
@@ -297,7 +297,7 @@
       } catch (err) {}
     }
 
-    async function editSocio(id, nominativo, med, asi) {
+    async function editTesserato(id, nominativo, med, asi) {
         const nuovaMed = prompt(`Modifica scadenza Certificato Medico per ${nominativo} (AAAA-MM-DD):`, med);
         const nuovaAsi = prompt(`Modifica scadenza Tessera ASI per ${nominativo} (AAAA-MM-DD):`, asi);
         
@@ -316,21 +316,21 @@
     }
 
     async function registraIstruttore() {
-      const socioId = document.getElementById('selectSocioIstruttore').value;
+      const tesseratoId = document.getElementById('selectTesseratoIstruttore').value;
       const email = document.getElementById('nuovaEmailLogin').value;
       const pass = document.getElementById('nuovaPasswordIstruttore').value;
       const corsi = Array.from(document.getElementById('selectCorsiCompetenza').selectedOptions).map(o => o.value);
-      if (!socioId || !email || corsi.length === 0) { alert("Dati mancanti."); return; }
+      if (!tesseratoId || !email || corsi.length === 0) { alert("Dati mancanti."); return; }
 
       try {
         const { data: existing, error: fetchError } = await supabaseClient.from('istruttori_corsi').select('*').eq('email', email).maybeSingle();
         if (fetchError) throw fetchError;
 
-        const nomeIstruttore = document.getElementById('selectSocioIstruttore').selectedOptions[0].text;
+        const nomeIstruttore = document.getElementById('selectTesseratoIstruttore').selectedOptions[0].text;
         if (existing) {
           const mergedCourses = Array.from(new Set([...(existing.corsi_competenze || []), ...corsi]));
           const updatePayload = {
-            socio_id: socioId,
+            socio_id: tesseratoId,
             corsi_competenze: mergedCourses,
             nome: nomeIstruttore,
           };
@@ -344,7 +344,7 @@
         }
 
         if (!pass) { alert("Password obbligatoria per nuovo istruttore."); return; }
-        const { error } = await supabaseClient.from('istruttori_corsi').insert([{ socio_id: socioId, email, password_accesso: pass, corsi_competenze: corsi, ruolo: 'istruttore', nome: nomeIstruttore }]);
+        const { error } = await supabaseClient.from('istruttori_corsi').insert([{ socio_id: tesseratoId, email, password_accesso: pass, corsi_competenze: corsi, ruolo: 'istruttore', nome: nomeIstruttore }]);
         if (error) throw error;
         alert("Istruttore creato!"); location.reload();
       } catch (err) { alert(err.message); }
