@@ -106,15 +106,24 @@
                 }
 
                 tbody.innerHTML = sociFiltrati.map(tesserato => {
-                    const medScaduto = (tesserato.giorni_alla_scadenza_medica || 0) <= 0;
-                    
-                    // Colore Tessera ASI (Giallo se < 30gg, Rosso se scaduta)
-                    let asiColor = 'text-slate-300';
+                    const giorniMed = tesserato.giorni_alla_scadenza_medica;
                     const giorniAsi = tesserato.giorni_alla_scadenza_asi;
-                    if (giorniAsi !== null && giorniAsi !== undefined) {
-                        if (giorniAsi <= 0) asiColor = 'text-red-500';
-                        else if (giorniAsi <= 30) asiColor = 'text-amber-400';
-                    }
+
+                    const medColor = (giorniMed === null || giorniMed === undefined)
+                        ? 'text-slate-300'
+                        : (giorniMed <= 0 ? 'text-red-500' : (giorniMed <= 30 ? 'text-amber-400' : 'text-slate-300'));
+
+                    const asiColor = (giorniAsi === null || giorniAsi === undefined)
+                        ? 'text-slate-300'
+                        : (giorniAsi <= 0 ? 'text-red-500' : (giorniAsi <= 30 ? 'text-amber-400' : 'text-slate-300'));
+
+                    const medLabel = (giorniMed === null || giorniMed === undefined)
+                        ? 'DATA ASSENTE'
+                        : (giorniMed <= 0 ? `${Math.abs(giorniMed)} GIORNI SCADUTI` : `${giorniMed} GIORNI RIMANENTI`);
+
+                    const asiLabel = (giorniAsi === null || giorniAsi === undefined)
+                        ? 'DATA ASSENTE'
+                        : (giorniAsi <= 0 ? `${Math.abs(giorniAsi)} GIORNI SCADUTI` : `${giorniAsi} GIORNI RIMANENTI`);
 
                     return `
                         <tr class="hover:bg-slate-700/30 transition">
@@ -129,19 +138,19 @@
                                 <p class="text-[10px] text-slate-400 tracking-tight"><i class="fa-solid fa-phone mr-1 text-slate-600"></i>${tesserato.telefono || '---'}</p>
                             </td>
                             <td class="p-4">
-                                <div class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">
+                                <div class="${medColor} font-bold">
                                     ${tesserato.scadenza_certificato_medico || 'N/D'}
                                 </div>
-                                <div class="text-[9px] opacity-60 uppercase font-bold tracking-tighter">
-                                    ${tesserato.giorni_alla_scadenza_medica !== null ? tesserato.giorni_alla_scadenza_medica + ' GIORNI RIMANENTI' : 'DATA ASSENTE'}
+                                <div class="text-[9px] opacity-60 uppercase font-bold tracking-tighter ${medColor}">
+                                    ${medLabel}
                                 </div>
                             </td>
                             <td class="p-4">
                                 <div class="${asiColor} font-bold">
                                     ${tesserato.scadenza_tessera_asi || 'N/D'}
                                 </div>
-                                <div class="text-[9px] opacity-60 uppercase font-bold tracking-tighter">
-                                    ${tesserato.giorni_alla_scadenza_asi !== null ? tesserato.giorni_alla_scadenza_asi + ' GIORNI RIMANENTI' : 'DATA ASSENTE'}
+                                <div class="text-[9px] opacity-60 uppercase font-bold tracking-tighter ${asiColor}">
+                                    ${asiLabel}
                                 </div>
                             </td>
                         </tr>

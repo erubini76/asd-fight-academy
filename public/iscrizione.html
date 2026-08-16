@@ -223,6 +223,19 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        function mergeCorsiEsistenti(valoreEsistente, nuovoCorso) {
+            const corsi = new Set();
+            const source = Array.isArray(valoreEsistente) ? valoreEsistente : String(valoreEsistente || '')
+                .split(/[;,]/)
+                .map(v => v.trim())
+                .filter(Boolean);
+
+            source.forEach(corso => corsi.add(corso));
+            const corsoPulito = String(nuovoCorso || '').trim();
+            if (corsoPulito) corsi.add(corsoPulito);
+            return Array.from(corsi).join('; ');
+        }
+
         function verificaEta() {
             const dataNascitaVal = document.getElementById('data_nascita').value;
             const sezioneTutore = document.getElementById('sezione-tutore');
@@ -288,6 +301,17 @@
                     fileUrl = publicUrlData.publicUrl;
                 }
 
+                const { data: existingRecord, error: existingError } = await supabaseClient
+                    .from('soci')
+                    .select('id, corso_scelto')
+                    .eq('codice_fiscale', cf)
+                    .maybeSingle();
+
+                if (existingError && existingError.code !== 'PGRST116') throw existingError;
+
+                const nuovoCorso = document.getElementById('corso').value;
+                const corsiUniti = mergeCorsiEsistenti(existingRecord?.corso_scelto, nuovoCorso);
+
                 const formData = {
                     nome: document.getElementById('nome').value.trim(),
                     cognome: document.getElementById('cognome').value.trim(),
@@ -299,7 +323,7 @@
                     residenza_citta: document.getElementById('residenza_città').value.trim(),
                     email: document.getElementById('email').value.trim(),
                     telefono: document.getElementById('telefono').value.trim(),
-                    corso_scelto: document.getElementById('corso').value,
+                    corso_scelto: corsiUniti,
                     privacy_accettata: document.getElementById('privacy').checked,
                     liberatoria_immagini: document.getElementById('immagini').checked,
                     nome_tutore: document.getElementById('nome_tutore').value.trim() || null,
@@ -309,11 +333,16 @@
                     certificato_medico_url: fileUrl
                 };
 
-                const { error: dbError } = await supabaseClient
+                const { data: upsertedRecord, error: upsertError } = await supabaseClient
                     .from('soci')
-                    .insert([formData]);
+                    .upsert(formData, { onConflict: 'codice_fiscale' })
+                    .select('id')
+                    .single();
 
-                if (dbError) throw dbError;
+                if (upsertError) throw upsertError;
+                if (!upsertedRecord || !upsertedRecord.id) {
+                    throw new Error('Impossibile salvare il profilo del tesserato.');
+                }
 
                 const emailResponse = await fetch('/api/send-email', {
                     method: 'POST',
