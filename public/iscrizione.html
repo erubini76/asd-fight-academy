@@ -223,17 +223,49 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        function mergeCorsiEsistenti(valoreEsistente, nuovoCorso) {
-            const corsi = new Set();
-            const source = Array.isArray(valoreEsistente) ? valoreEsistente : String(valoreEsistente || '')
-                .split(/[;,]/)
-                .map(v => v.trim())
-                .filter(Boolean);
+        async function trovaTabellaRelazione() {
+            const tabelleCandidate = ['soci_corsi', 'iscrizioni_corsi', 'socio_corsi'];
+            for (const tabella of tabelleCandidate) {
+                const { error } = await supabaseClient
+                    .from(tabella)
+                    .select('id')
+                    .limit(1);
 
-            source.forEach(corso => corsi.add(corso));
-            const corsoPulito = String(nuovoCorso || '').trim();
-            if (corsoPulito) corsi.add(corsoPulito);
-            return Array.from(corsi).join('; ');
+                if (!error) return tabella;
+                const codice = error?.code;
+                if (codice !== 'PGRST116' && codice !== '42P01' && codice !== '42703') {
+                    throw error;
+                }
+            }
+            throw new Error('Tabella di relazione tra soci e corsi non trovata.');
+        }
+
+        async function trovaCorsoIdPerNome(nomeCorso) {
+            const corso = String(nomeCorso || '').trim();
+            if (!corso) return null;
+
+            const candidateFields = [
+                { table: 'corsi', field: 'nome' },
+                { table: 'corsi', field: 'titolo' },
+                { table: 'corsi', field: 'corso' }
+            ];
+
+            for (const candidate of candidateFields) {
+                const { data, error } = await supabaseClient
+                    .from(candidate.table)
+                    .select('id')
+                    .eq(candidate.field, corso)
+                    .maybeSingle();
+
+                if (error && error.code !== 'PGRST116') {
+                    console.warn('Lookup corso fallito per', candidate, error.message);
+                    continue;
+                }
+
+                if (data?.id) return data.id;
+            }
+
+            return null;
         }
 
         function verificaEta() {
@@ -303,15 +335,13 @@
 
                 const { data: existingRecord, error: existingError } = await supabaseClient
                     .from('soci')
-                    .select('id, corso_scelto')
+                    .select('id')
                     .eq('codice_fiscale', cf)
                     .maybeSingle();
 
                 if (existingError && existingError.code !== 'PGRST116') throw existingError;
 
                 const nuovoCorso = document.getElementById('corso').value;
-                const corsiUniti = mergeCorsiEsistenti(existingRecord?.corso_scelto, nuovoCorso);
-
                 const formData = {
                     nome: document.getElementById('nome').value.trim(),
                     cognome: document.getElementById('cognome').value.trim(),
@@ -323,7 +353,7 @@
                     residenza_citta: document.getElementById('residenza_città').value.trim(),
                     email: document.getElementById('email').value.trim(),
                     telefono: document.getElementById('telefono').value.trim(),
-                    corso_scelto: corsiUniti,
+                    corso_scelto: nuovoCorso,
                     privacy_accettata: document.getElementById('privacy').checked,
                     liberatoria_immagini: document.getElementById('immagini').checked,
                     nome_tutore: document.getElementById('nome_tutore').value.trim() || null,
@@ -333,16 +363,33 @@
                     certificato_medico_url: fileUrl
                 };
 
-                const { data: upsertedRecord, error: upsertError } = await supabaseClient
-                    .from('soci')
-                    .upsert(formData, { onConflict: 'codice_fiscale' })
-                    .select('id')
-                    .single();
+                let socioId = existingRecord?.id;
 
-                if (upsertError) throw upsertError;
-                if (!upsertedRecord || !upsertedRecord.id) {
-                    throw new Error('Impossibile salvare il profilo del tesserato.');
+                if (!socioId) {
+                    const { data: insertedRecord, error: insertError } = await supabaseClient
+                        .from('soci')
+                        .insert([formData])
+                        .select('id')
+                        .single();
+
+                    if (insertError) throw insertError;
+                    if (!insertedRecord?.id) {
+                        throw new Error('Impossibile creare il profilo del tesserato.');
+                    }
+                    socioId = insertedRecord.id;
                 }
+
+                const corsoId = await trovaCorsoIdPerNome(nuovoCorso);
+                if (!corsoId) {
+                    throw new Error('Corso non trovato: impossibile creare la relazione tra socio e corso.');
+                }
+
+                const tabellaRelazione = await trovaTabellaRelazione();
+                const { error: relazioneError } = await supabaseClient
+                    .from(tabellaRelazione)
+                    .insert([{ socio_id: socioId, corso_id: corsoId }]);
+
+                if (relazioneError) throw relazioneError;
 
                 const emailResponse = await fetch('/api/send-email', {
                     method: 'POST',
