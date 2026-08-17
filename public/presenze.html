@@ -103,8 +103,13 @@
             { val: "Shodo (Calligrafia)", lab: "Shodo (Calligrafia)" }
         ];
 
+        function corsoCorrisponde(a, b) {
+            return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+        }
+
         tuttiICorsi.forEach(c => {
-            if (sessionUser.ruolo === 'presidente' || (sessionUser.corsi_competenze || []).includes(c.val)) {
+            const haCompetenza = (sessionUser.corsi_competenze || []).some(comp => corsoCorrisponde(comp, c.val));
+            if (sessionUser.ruolo === 'presidente' || haCompetenza) {
                 const opt = document.createElement('option');
                 opt.value = c.val;
                 opt.textContent = c.lab;
@@ -133,18 +138,29 @@
                 // Controllo competenza corso per istruttori (non presidente)
                 if (sessionUser.ruolo !== 'presidente') {
                     const comp = sessionUser.corsi_competenze || [];
-                    if (!comp.includes(corso)) {
+                    if (!comp.some(c => corsoCorrisponde(c, corso))) {
                         alert("Non hai i permessi per gestire questo corso.");
                         return;
                     }
                 }
 
-                // 1. Carica Soci
-                const { data: soci, error: sociError } = await supabaseClient
-                    .from('soci')
-                    .select('id, nome, cognome, codice_fiscale')
-                    .eq('corso_scelto', corso)
-                    .order('cognome', { ascending: true });
+                // 1. Carica gli iscritti al corso dalla tabella canonica iscrizioni_corsi
+                const { data: iscrizioniCorso, error: iscrizioniError } = await supabaseClient
+                    .from('iscrizioni_corsi')
+                    .select('socio_id')
+                    .eq('nome_corso', corso);
+
+                if (iscrizioniError) throw iscrizioniError;
+
+                const socioIds = [...new Set((iscrizioniCorso || []).map(i => i.socio_id))];
+
+                const { data: soci, error: sociError } = socioIds.length > 0
+                    ? await supabaseClient
+                        .from('soci')
+                        .select('id, nome, cognome, codice_fiscale')
+                        .in('id', socioIds)
+                        .order('cognome', { ascending: true })
+                    : { data: [], error: null };
 
                 if (sociError) throw sociError;
 
