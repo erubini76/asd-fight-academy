@@ -261,12 +261,23 @@
             }));
 
             try {
-                // Se non ci sono presenti, non c'è nulla da inserire.
+                // Rimuove le presenze già registrate per questo corso/data prima di riscriverle,
+                // così non serve un vincolo univoco lato database per l'upsert.
+                const socioIdsCorso = allieviCaricati.map(a => a.id);
+                if (socioIdsCorso.length > 0) {
+                    const { error: deleteError } = await supabaseClient
+                        .from('presenze')
+                        .delete()
+                        .eq('corso', corso)
+                        .eq('data_presenza', dataLezione)
+                        .in('socio_id', socioIdsCorso);
+                    if (deleteError) throw deleteError;
+                }
+
                 if (records.length > 0) {
-                    // ✅ UPSERT: Se esiste, aggiorna; se no, crea
                     const { error } = await supabaseClient
                         .from('presenze')
-                        .upsert(records, { onConflict: 'socio_id,data_presenza,corso' });
+                        .insert(records);
                     if (error) throw error;
                 }
 
