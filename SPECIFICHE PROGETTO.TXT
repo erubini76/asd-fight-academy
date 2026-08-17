@@ -1,72 +1,257 @@
----
+------------------------------------------------------------------------------------------------
+DOCUMENTO DI SPECIFICA DEI REQUISITI DI PROGETTO (SRS)
+------------------------------------------------------------------------------------------------
 
-# DOCUMENTO DI SPECIFICA DEI REQUISITI DI PROGETTO (SRS)
+Progetto: Piattaforma Gestionale ASD
+Versione: 2.0
+Data ultima revisione: 17 Agosto 2026
+Stato: aggiornato in base ai requisiti implementati, ai vincoli di database e alle correzioni di integrità eseguite
 
-**Progetto:** Piattaforma Gestionale ASD (MVP Lean)
+------------------------------------------------------------------------------------------------
+1. PANORAMICA DEL PROGETTO
+------------------------------------------------------------------------------------------------
 
-**Data:** 8 Agosto 2026
+Obiettivo principale:
+La piattaforma ha lo scopo di supportare la gestione amministrativa, contabile e didattica di un'associazione sportiva dilettantistica, riducendo tempi di gestione, minimizzando errori manuali e centralizzando dati relativi a soci, iscrizioni, pagamenti, presenze, corsi e documentazione obbligatoria.
 
-**Target di Rilascio MVP:** Fine Agosto 2026
+Modello operativo:
+- Web app multi-dispositivo, accessibile tramite browser
+- PWA compatibile con desktop e mobile
+- Infrastruttura cloud basata su Supabase + Vercel
+- Gestione utenti e dati tramite PostgreSQL
+- Accesso con ruoli differenti e permessi mirati
 
-**Budget:** 0€ / Costo Minimo (Sfruttamento infrastruttura esistente)
+------------------------------------------------------------------------------------------------
+2. ARCHITETTURA TECNOLOGICA
+------------------------------------------------------------------------------------------------
 
----
+Stack tecnologico:
+- Database: PostgreSQL via Supabase
+- Autenticazione / gestione utenti: Supabase Auth
+- Hosting frontend: Vercel
+- Repository: GitHub
+- Invio email: Resend API
+- Frontend: HTML, JavaScript, pagina web statica + logica lato client
+- Backup e verifica: script SQL dedicati per bonifica e controllo integrità
 
-## 1. Panoramica del Progetto e Obiettivi
+Ambiente di riferimento:
+- Database inizialmente di test, successivamente pronto per transizione in ambiente di produzione
+- Struttura schema pensata per essere facilmente ri-creata da zero in caso di reset completo
 
-* **Obiettivo:** Ridurre i tempi di gestione amministrativa, contabile e legale dell'ASD, automatizzando conformità, pagamenti, presenze e monitoraggio degli allievi.
-* **Modello:** Piattaforma Web App (PWA) multi-dispositivo accessibile tramite URL e scorciatoia su home screen (senza pubblicazione su App/Play Store).
+------------------------------------------------------------------------------------------------
+3. RUOLI E PERMESSI (RBAC)
+------------------------------------------------------------------------------------------------
 
----
+Presidente / Amministratore:
+- Gestione completa del sistema
+- Gestione anagrafiche, soci, corsi, pagamenti e documenti
+- Controllo completo delle liste di morosità e delle scadenze
+- Visualizzazione contabilità e storico amministrativo
 
-## 2. Architettura Tecnologica e Infrastruttura (Stack)
+Istruttore:
+- Gestione dei propri corsi e studenti assegnati
+- Gestione presenze
+- Controllo percentuali di presenza
+- Monitoraggio stato delle iscrizioni e degli allievi assegnati
 
-Il sistema è già impostato e funzionante sui seguenti servizi cloud a costo zero:
+Super User / Tecnico:
+- Manutenzione sistema e struttura dati
+- Gestione script SQL, correzioni schema, verifiche di integrità
+- Accesso tecnico alle parti non finanziarie o non sensibili
 
-* **Database & Auth:** Supabase (PostgreSQL relazionale) – *Progetto: Fight-Academy-DB (`twiizsottstaacnvrxkg`)*.
-* **Hosting & Deployment:** Vercel – Collegato direttamente al repository GitHub.
-* **Version Control:** GitHub – Repository ufficiale (*erubini76*).
-* **Invio Email Transazionali:** Resend API.
+Nota di sicurezza:
+- Le informazioni finanziarie e di amministrazione devono rimanere accessibili solo ai ruoli autorizzati.
 
----
+------------------------------------------------------------------------------------------------
+4. REQUISITI FUNZIONALI CORE
+------------------------------------------------------------------------------------------------
 
-## 3. Architettura dei Ruoli (RBAC)
+FR-01 - Anagrafiche soci
+- Registro dei soci con dati anagrafici principali
+- Gestione di nuclei familiari e relazione tra genitore e figli
+- Possibilità di aggiornare dati anagrafici e stato iscrizione
 
-* **Presidente / Amministratore:** Controllo globale e totale dell'ASD, visibilità finanziaria completa, gestione anagrafiche, listini e corsi.
-* **Istruttore:** Gestione dei propri corsi, visualizzazione allievi assegnati, stato economico/morosità dei propri iscritti, esecuzione appello e controllo percentuali di presenza (soglia esami).
-* **Super User (Tecnico):** Manutenzione sistemistica e architetturale, strettamente escluso dai dati finanziari.
+FR-02 - Iscrizioni ai corsi
+- Un socio può iscriversi a uno o più corsi distinti
+- Ogni iscrizione deve essere univoca per socio e corso
+- Il sistema deve evitare duplicati di iscrizione per lo stesso corso
 
----
+FR-03 - Corsi
+- Gestione dei corsi disponibili
+- Normalizzazione nomi dei corsi per evitare duplicati dovuti a differenze di maiuscole/spazi
+- Consolidamento di varianti del nome corso tramite policy di normalizzazione
 
-## 4. Requisiti Funzionali - MVP (Rilascio Fine Agosto 2026)
+FR-04 - Pagamenti
+- Gestione pagamenti associati a socio, mese, anno e corso
+- Un pagamento mensile per lo stesso socio, corso e periodo deve essere univoco
+- Il sistema deve supportare la gestione di rate, bonifici e scan di ricevuta
+- Deve essere possibile marcare stato pagamento e morosità
 
-| ID | Modulo | Descrizione Funzionalità | Priorità |
-| --- | --- | --- | --- |
-| **FR-01** | Anagrafiche | Registrazione autonoma degli utenti e gestione dei nuclei familiari (genitore/figli). | Alta |
-| **FR-02** | Conformità Legale | Raccolta consensi digitali (Statuto, Privacy GDPR, Liberatoria foto, Tesseramento EPS) con tracciamento sicuro (timestamp e indirizzo IP) in sostituzione della firma cartacea. | Alta |
-| **FR-03** | Conformità Medica | Upload obbligatorio del file (PDF/foto) del certificato medico e tracciamento scadenze con alert via email e notifiche push in-app. | Alta |
-| **FR-04** | Economico | Gestione listini differenziati: <br>
+FR-05 - Presenze
+- Registrazione presenze per singolo socio in un dato giorno e corso
+- Una presenza duplicata per lo stesso socio, data e corso non deve essere consentita
+- Il sistema deve generare metriche di presenza e percentuali di idoneità
 
-<br>• **Adulti:** €50/mese (singolo) o €45/mese (plurimensile anticipato con split contabile mensile), €12/lezione singola.<br>
+FR-06 - Conformità legale / documenti obbligatori
+- Raccolta consensi digitali: statuto, privacy, liberatoria foto, tesseramento EPS
+- Tracciamento timestamp e IP per eventuale audit
+- Sostituzione della firma cartacea con firma digitale o consenso web
 
-<br>• **Bambini:** €40/mese (singolo) o €35/mese (plurimensile anticipato con split contabile mensile). | Alta |
-| **FR-05** | Economico | Upload dello screenshot del bonifico da parte dell'utente e invio automatico di sollecito/marcatura di "morosità" dopo 3 giorni dalla scadenza. | Alta |
-| **FR-06** | Presenze | Esecuzione dell'appello rapido delle presenze direttamente da parte dell'istruttore tramite app. | Alta |
-| **FR-07** | Presenze | Calcolo automatico della percentuale di presenza per allievo e indicatore visivo di idoneità (soglia minima del 70% per l'accesso agli esami) visibile all'istruttore. | Alta |
-| **FR-08** | Notifiche | Sistema di alert limitato esclusivamente a Email (tramite Resend) e Notifiche Push In-App. | Alta |
+FR-07 - Conformità medica
+- Upload obbligatorio del certificato medico in PDF o immagine
+- Monitoraggio delle scadenze mediche
+- Alert via email e notifiche push in-app
 
----
+FR-08 - Notifiche
+- Sistema di alert esclusivamente per email e notifiche push in-app
+- Gestione di avvisi per scadenze, pagamenti, documenti mancanti e morosità
 
-## 5. Roadmap Evolutiva (Rilasci Post-Agosto)
+FR-09 - Gestione delle scadenze
+- Monitoraggio delle date di scadenza dei documenti e delle rate
+- Possibilità di alert automatici prima o dopo la scadenza
 
-### 🔄 Evoluzione Gestione Pagamenti (3 Step)
+FR-10 - Admin e contabilità
+- Accesso ai dati economici per ruolo autorizzato
+- Gestione stato pagamento e registrazione manuale di approvazione
+- Supporto alla verifica dei pagamenti ricevuti e delle posizioni aperte
 
-* **Step 1 (MVP - Fine Agosto):** L'utente carica lo screenshot; il Presidente verifica e registra l'avvenuto pagamento manualmente.
-* **Step 2 (Post-Agosto):** Interfaccia dedicata con lista di riscontro rapido ("check-list") per spuntare i pagamenti verificati rispetto ai bonifici ricevuti.
-* **Step 3 (Evoluto):** Importazione automatica del file CSV della banca e riconciliazione automatica assistita dal sistema (matching tra importi/intestatari e posizioni aperte).
+------------------------------------------------------------------------------------------------
+5. REQUISITI DI BUSINESS AGGIUNTIVI E MODIFICATI
+------------------------------------------------------------------------------------------------
 
-### 🚀 Funzionalità di Fase 2
+BR-01 - Duplicati non ammessi a livello logico
+- Il sistema deve prevenire duplicati logici per chiavi funzionali critiche
+- Per le table principali sono stati introdotti vincoli di unicità per evitare inserimenti multipli accidentali
 
-* **Self Check-in QR Code:** Scansione autonoma all'ingresso della palestra per gli adulti.
-* **CRM & Storico Annuale:** Analisi statistica dei volumi per anno e campagne di re-engagement tramite mailing list per gli ex iscritti.
-* **Personalizzazioni Tariffarie Avanzate:** Gestione sconti familiari o tariffe personalizzate gestite direttamente dal Presidente.
+BR-02 - Controllo preventivo su schema
+- Il database deve essere progettato per evitare duplicazioni non intenzionali in base a regole di business
+- È previsto l'uso di unique index e unique constraints per garantire coerenza dei dati
+
+BR-03 - Pulizia e bonifica dati storici
+- Sono previsti script di bonifica per eliminare duplicati esistenti e consolidare dati incoerenti
+- Le correzioni vengono applicate in modo controllato e verificabile
+
+BR-04 - Governance dei dati e analisi
+- I record duplicati o incoerenti devono essere individuati tramite query di audit
+- È prevista una fase di verifica finale e di analisi delle tabelle critiche prima di chiudere un test o un rilascio
+
+BR-05 - Ambiente di test e reset finale
+- Il database di test può essere ripulito e ricreato da zero in una fase finale, una volta concluse le modifiche funzionali
+- Il reset del database è da considerarsi una procedura di validazione finale e non come routine operativa standard
+
+------------------------------------------------------------------------------------------------
+6. REQUISITI TECNICI DI INTEGRITÀ DATABASE
+------------------------------------------------------------------------------------------------
+
+I seguenti requisiti sono stati introdotti o rafforzati dopo il controllo della struttura dati:
+
+RT-01 - Vincolo unico per iscrizioni ai corsi
+- Regola: un socio non può avere più iscrizioni al medesimo corso
+- Implementazione: unique index su (socio_id, nome_corso)
+- Condizione: solo record con socio_id e nome_corso non nulli sono considerati
+
+RT-02 - Vincolo unico per pagamenti mensili
+- Regola: non possono esistere pagamenti duplicati per lo stesso socio, mese, anno e corso
+- Implementazione: unique index su (socio_id, mese_riferimento, anno_riferimento, corso)
+- Condizione: solo campi obbligatori non nulli sono considerati
+
+RT-03 - Vincolo unico per presenze
+- Regola: non possono esistere presenze duplicate per lo stesso socio, data e corso
+- Implementazione: unique index su (socio_id, DATE(data_presenza), corso)
+- Condizione: il controllo viene fatto con espressione su data per supportare PostgreSQL
+
+RT-04 - Indici supporto per query frequenti
+- Indice su socio_id per tabelle con filtri frequenti
+- Indice su nome_corso per ricerche e aggregazioni per corso
+- Indice su data_presenza per report e controllo presenze nel tempo
+
+RT-05 - Ridondanza indici da evitare
+- Gli indici duplicati o ridondanti devono essere rimossi per mantenere performance e qualità del database
+- In particolare, un indice il cui comportamento è sostanzialmente identico a un altro indice su stesso campo deve essere eliminato
+
+RT-06 - Audit e verifiche SQL
+- Devono essere disponibili script di controllo di duplicati e integrità
+- Le verifiche devono includere:
+  - controllo duplicati logici
+  - controllo record con chiave primaria critica null
+  - verifica set finale degli indici
+  - analisi delle statistiche del planner tramite ANALYZE
+
+------------------------------------------------------------------------------------------------
+7. STRUTTURA DATI ESSENZIALE (MODELLAZIONE)
+------------------------------------------------------------------------------------------------
+
+Tabelle critiche del dominio:
+- soci
+- corsi
+- iscrizioni_corsi
+- pagamenti
+- presenze
+- documenti_obbligatori
+- utenti
+
+Regole di dominio:
+- ogni record di pagamento, presenza e iscrizione deve riferirsi in modo coerente a un socio e a un corso quando disponibile
+- i dati storici legacy con valori null possono esistere in ambiente di test, ma vanno trattati come eccezioni storiche e non come regola di business attiva
+- in ambiente production o di test strutturato, la policy di nullability va stabilita in modo esplicito
+
+------------------------------------------------------------------------------------------------
+8. REGOLE DI QUALITÀ DEI DATI
+------------------------------------------------------------------------------------------------
+
+- Nessuna duplicazione logica sui campi chiave funzionali
+- Nessun index ridondante senza necessità
+- Nessuna modifica del database senza controllo di impatto
+- Qualsiasi script di bonifica deve essere documentato e verificabile
+- Il database deve essere sempre auditabile e ripristinabile tramite script SQL
+
+------------------------------------------------------------------------------------------------
+9. CRITERI DI ACCETTAZIONE
+------------------------------------------------------------------------------------------------
+
+Accettazione funzionale:
+- l'utente può registrare e gestire i propri soci
+- è possibile iscrivere un socio a un corso senza duplicate
+- i pagamenti sono tracciati senza duplicazioni per periodo
+- le presenze sono registrate senza doppie approssimazioni per lo stesso giorno
+- i documenti obbligatori sono monitorati e avvisati
+
+Accettazione tecnica:
+- gli indici critici sono presenti
+- i vincoli univoci sono rispettati
+- non ci sono duplicati logici rilevabili nei campi chiave
+- lo schema è verificabile tramite query SQL e script di controllo
+
+------------------------------------------------------------------------------------------------
+10. ROADMAP EVOLUTIVA
+------------------------------------------------------------------------------------------------
+
+Fase 1 - MVP gestione base
+- anagrafiche, iscrizioni, corsi, pagamenti, presenze
+- documenti obbligatori e notifiche
+- verifica duplicati e corretti vincoli di integrità
+
+Fase 2 - automazione amministrativa
+- checklist pagamenti e report di morosità
+- flussi di approvazione contabile più rapidi
+- gestione avanzata scadenze e alert
+
+Fase 3 - evoluzione avanzata
+- importazione CSV bancari
+- riconciliazione automatica pagamenti
+- analisi storiche e reporting annuale
+- integrazione smarter con workflow di gestione societaria
+
+------------------------------------------------------------------------------------------------
+11. NOTE FINALE
+------------------------------------------------------------------------------------------------
+
+Il progetto si trova in una fase di consolidamento e stabilizzazione del modello dati. I requisiti aggiornati riflettono il passaggio da una configurazione iniziale basata su logica applicativa a una soluzione più robusta, con garanzia di unicità, controllo qualità e maggiore stabilità del database.
+
+Il lavoro svolto ha portato a riconoscere la necessità di:
+- rimuovere indici ridondanti
+- mantenere vincoli univoci per dati critici
+- usare script di audit e bonifica
+- eseguire verifiche prima di un reset finale del database di test
+
+Questo approccio garantisce un ambiente di sviluppo più sano, più riutilizzabile e più vicino a un sistema produttivo, senza sacrificare la rapidità di test e cambiamento del progetto.

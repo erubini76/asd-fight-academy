@@ -49,10 +49,12 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let foundTesseratiList = [];
 
-        function getCorsoDisplay(socio) {
+        function getCorsiPerSocio(socio) {
             const iscrizioni = Array.isArray(socio?.iscrizioni_corsi) ? socio.iscrizioni_corsi : [];
-            const latest = iscrizioni.slice().sort((a, b) => new Date(b.data_iscrizione || 0) - new Date(a.data_iscrizione || 0))[0];
-            return latest?.nome_corso || 'N/D';
+            if (iscrizioni.length === 0) {
+                return [{ nome_corso: 'N/D', data_iscrizione: null, stato: null }];
+            }
+            return iscrizioni.slice().sort((a, b) => new Date(b.data_iscrizione || 0) - new Date(a.data_iscrizione || 0));
         }
 
         async function cercaTesserato() {
@@ -70,7 +72,7 @@
 
                 foundTesseratiList = data.map(s => ({
                     ...s,
-                    corso_scelto: getCorsoDisplay(s)
+                    corso_scelto: getCorsiPerSocio(s)[0]?.nome_corso || 'N/D'
                 }));
 
                 localStorage.setItem('foundTesseratiList', JSON.stringify(foundTesseratiList));
@@ -155,11 +157,11 @@
             document.getElementById(`container_file_paga_${id}`).classList.toggle('hidden', m === 'contanti');
         }
 
-        async function inviaPagamentoAvanzato(tesseratoId, corsoSocio) {
+        async function inviaPagamentoAvanzato(tesseratoId, corsoSocio, cardKey = tesseratoId) {
             const btn = event.target; // Prendi il bottone che ha scatenato l'evento
-            const tipo = document.getElementById(`tipo_paga_${tesseratoId}`).value;
-            const metodo = document.getElementById(`metodo_${tesseratoId}`).value;
-            const file = document.getElementById(`filePaga_${tesseratoId}`).files[0];
+            const tipo = document.getElementById(`tipo_paga_${cardKey}`).value;
+            const metodo = document.getElementById(`metodo_${cardKey}`).value;
+            const file = document.getElementById(`filePaga_${cardKey}`).files[0];
             let url = null;
             
             // Disabilita bottone durante l'invio
@@ -179,9 +181,9 @@
             const records = [];
 
             if (tipo === 'Mensilità' || tipo === 'Tranche') {
-                const startM = parseInt(document.getElementById(`mese_${tesseratoId}`).value);
-                const startA = parseInt(document.getElementById(`anno_${tesseratoId}`).value);
-                const num = tipo === 'Tranche' ? parseInt(document.getElementById(`num_mesi_${tesseratoId}`).value) : 1;
+                const startM = parseInt(document.getElementById(`mese_${cardKey}`).value);
+                const startA = parseInt(document.getElementById(`anno_${cardKey}`).value);
+                const num = tipo === 'Tranche' ? parseInt(document.getElementById(`num_mesi_${cardKey}`).value) : 1;
                 for(let i=0; i<num; i++) {
                     let m = startM + i, a = startA; if(m > 12) { m -= 12; a++; }
                     records.push({ ...baseRecord, mese_riferimento: m, anno_riferimento: a, tipo_pagamento: 'Mensilità', periodo_riferimento: `Mese ${m}/${a}` });
