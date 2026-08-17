@@ -240,6 +240,35 @@
             throw new Error('Tabella di relazione tra soci e corsi non trovata.');
         }
 
+        async function scaricaCorsiDisponibili() {
+            const candidateFields = ['nome', 'titolo', 'corso'];
+            const corsi = [];
+            const seen = new Set();
+
+            for (const field of candidateFields) {
+                const { data, error } = await supabaseClient
+                    .from('corsi')
+                    .select(`id, ${field}`)
+                    .limit(200);
+
+                if (error) {
+                    console.warn('Impossibile leggere i corsi dalla colonna', field, error.message);
+                    continue;
+                }
+
+                for (const row of data || []) {
+                    const valore = row?.[field];
+                    if (valore == null) continue;
+                    const testo = String(valore).trim();
+                    if (!testo || seen.has(testo)) continue;
+                    seen.add(testo);
+                    corsi.push(testo);
+                }
+            }
+
+            return corsi;
+        }
+
         async function trovaCorsoIdPerNome(nomeCorso) {
             const corso = String(nomeCorso || '').trim();
             if (!corso) return null;
@@ -250,19 +279,39 @@
                 { table: 'corsi', field: 'corso' }
             ];
 
+            const corsiDisponibili = await scaricaCorsiDisponibili();
+            console.log('DEBUG - valore corso ricevuto dal form:', corso);
+            console.log('DEBUG - corsi disponibili dal database:', corsiDisponibili);
+
             for (const candidate of candidateFields) {
                 const { data, error } = await supabaseClient
                     .from(candidate.table)
                     .select('id')
-                    .eq(candidate.field, corso)
+                    .ilike(candidate.field, corso)
                     .maybeSingle();
 
-                if (error && error.code !== 'PGRST116') {
+                if (error && error.code !== 'PGRST116' && error.code !== '42703') {
                     console.warn('Lookup corso fallito per', candidate, error.message);
                     continue;
                 }
 
                 if (data?.id) return data.id;
+            }
+
+            const matchInsensitive = corsiDisponibili.find((nome) => nome.toLowerCase() === corso.toLowerCase());
+            if (matchInsensitive) {
+                for (const candidate of candidateFields) {
+                    const { data, error } = await supabaseClient
+                        .from(candidate.table)
+                        .select('id')
+                        .ilike(candidate.field, matchInsensitive)
+                        .maybeSingle();
+
+                    if (data?.id) return data.id;
+                    if (error && error.code !== 'PGRST116' && error.code !== '42703') {
+                        console.warn('Fallback lookup corso fallito per', candidate, error.message);
+                    }
+                }
             }
 
             return null;
@@ -381,6 +430,9 @@
 
                 const corsoId = await trovaCorsoIdPerNome(nuovoCorso);
                 if (!corsoId) {
+                    const corsiDisponibili = await scaricaCorsiDisponibili();
+                    console.log('DEBUG - valore corso ricevuto dal form prima dell\'errore:', nuovoCorso);
+                    console.log('DEBUG - corsi disponibili dal database prima dell\'errore:', corsiDisponibili);
                     throw new Error('Corso non trovato: impossibile creare la relazione tra socio e corso.');
                 }
 
