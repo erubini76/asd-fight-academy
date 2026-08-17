@@ -84,6 +84,12 @@
             return latest?.nome_corso || 'GENERALE';
         }
 
+        function getCorsiNomiSocio(socio) {
+            const iscrizioni = Array.isArray(socio?.iscrizioni_corsi) ? socio.iscrizioni_corsi : [];
+            const nomi = iscrizioni.map(i => i.nome_corso).filter(Boolean);
+            return nomi.length > 0 ? [...new Set(nomi)] : ['GENERALE'];
+        }
+
         function giorniAllaScadenza(dataScadenza) {
             if (!dataScadenza) return null;
             const oggi = new Date();
@@ -129,11 +135,12 @@
                     return gm === null || gm <= 30 || ga === null || ga <= 30;
                 };
 
-                // Filtraggio per Istruttore (se non è presidente)
+                // Filtraggio per Istruttore (se non è presidente): deve vedere il tesserato
+                // se uno qualsiasi dei suoi corsi rientra tra le competenze dell'istruttore.
                 let sociFiltrati = data.filter(isCritico);
                 if (sessionUser.ruolo !== 'presidente') {
-                    const comp = sessionUser.corsi_competenze || [];
-                    sociFiltrati = sociFiltrati.filter(s => comp.some(c => getCorsoDisplayFromSocio(s).toLowerCase().includes(String(c).toLowerCase().trim())));
+                    const comp = (sessionUser.corsi_competenze || []).map(c => String(c).toLowerCase().trim());
+                    sociFiltrati = sociFiltrati.filter(s => getCorsiNomiSocio(s).some(nome => comp.some(c => nome.toLowerCase().includes(c))));
                 }
 
                 if (sociFiltrati.length === 0) {
@@ -162,14 +169,15 @@
                         ? 'DATA ASSENTE'
                         : (giorniAsi <= 0 ? `${Math.abs(giorniAsi)} GIORNI SCADUTI` : `${giorniAsi} GIORNI RIMANENTI`);
 
-                    const corsoDisplay = getCorsoDisplayFromSocio(tesserato);
+                    const corsiNomi = getCorsiNomiSocio(tesserato);
+                    const corsiBadge = corsiNomi.map(nome => `<span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 font-mono border border-slate-700 uppercase tracking-tighter">${nome}</span>`).join(' ');
                     return `
                         <tr class="hover:bg-slate-700/30 transition">
                             <td class="p-4">
                                 <p class="font-bold text-white text-sm uppercase">${tesserato.nome || ''} ${tesserato.cognome || ''}</p>
-                                <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 font-mono border border-slate-700 uppercase tracking-tighter">
-                                    ${corsoDisplay}
-                                </span>
+                                <div class="flex flex-wrap gap-1 mt-1">
+                                    ${corsiBadge}
+                                </div>
                             </td>
                             <td class="p-4">
                                 <p class="text-[10px] text-slate-400 tracking-tight"><i class="fa-solid fa-envelope mr-1 text-slate-600"></i>${tesserato.email || ''}</p>
