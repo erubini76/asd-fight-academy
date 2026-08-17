@@ -241,29 +241,26 @@
         }
 
         async function scaricaCorsiDisponibili() {
-            const candidateFields = ['nome_corso', 'nome', 'titolo', 'corso'];
+            const { data, error } = await supabaseClient
+                .from('corsi')
+                .select('id, nome_corso')
+                .limit(200);
+
+            if (error) {
+                console.warn('Impossibile leggere i corsi dalla tabella corsi:', error.message);
+                return [];
+            }
+
             const corsi = [];
             const seen = new Set();
 
-            for (const field of candidateFields) {
-                const { data, error } = await supabaseClient
-                    .from('corsi')
-                    .select(`id, ${field}`)
-                    .limit(200);
-
-                if (error) {
-                    console.warn('Impossibile leggere i corsi dalla colonna', field, error.message);
-                    continue;
-                }
-
-                for (const row of data || []) {
-                    const valore = row?.[field];
-                    if (valore == null) continue;
-                    const testo = String(valore).trim();
-                    if (!testo || seen.has(testo)) continue;
-                    seen.add(testo);
-                    corsi.push(testo);
-                }
+            for (const row of data || []) {
+                const valore = row?.nome_corso;
+                if (valore == null) continue;
+                const testo = String(valore).trim();
+                if (!testo || seen.has(testo)) continue;
+                seen.add(testo);
+                corsi.push(testo);
             }
 
             return corsi;
@@ -273,46 +270,60 @@
             const corso = String(nomeCorso || '').trim();
             if (!corso) return null;
 
-            const candidateFields = [
-                { table: 'corsi', field: 'nome_corso' },
-                { table: 'corsi', field: 'nome' },
-                { table: 'corsi', field: 'titolo' },
-                { table: 'corsi', field: 'corso' }
-            ];
-
             const corsiDisponibili = await scaricaCorsiDisponibili();
             console.log('DEBUG - valore corso ricevuto dal form:', corso);
             console.log('DEBUG - corsi disponibili dal database:', corsiDisponibili);
 
-            for (const candidate of candidateFields) {
-                const { data, error } = await supabaseClient
-                    .from(candidate.table)
-                    .select('id')
-                    .ilike(candidate.field, corso)
-                    .maybeSingle();
+            const { data, error } = await supabaseClient
+                .from('corsi')
+                .select('id')
+                .ilike('nome_corso', corso)
+                .maybeSingle();
 
-                if (error && error.code !== 'PGRST116' && error.code !== '42703') {
-                    console.warn('Lookup corso fallito per', candidate, error.message);
-                    continue;
-                }
-
-                if (data?.id) return data.id;
+            if (error && error.code !== 'PGRST116' && error.code !== '42703') {
+                console.warn('Lookup corso fallito per corsi.nome_corso:', error.message);
             }
+
+            if (data?.id) return data.id;
 
             const matchInsensitive = corsiDisponibili.find((nome) => nome.toLowerCase() === corso.toLowerCase());
             if (matchInsensitive) {
-                for (const candidate of candidateFields) {
-                    const { data, error } = await supabaseClient
-                        .from(candidate.table)
-                        .select('id')
-                        .ilike(candidate.field, matchInsensitive)
-                        .maybeSingle();
+                const { data: matchData, error: matchError } = await supabaseClient
+                    .from('corsi')
+                    .select('id')
+                    .ilike('nome_corso', matchInsensitive)
+                    .maybeSingle();
 
-                    if (data?.id) return data.id;
-                    if (error && error.code !== 'PGRST116' && error.code !== '42703') {
-                        console.warn('Fallback lookup corso fallito per', candidate, error.message);
-                    }
+                if (matchError && matchError.code !== 'PGRST116' && matchError.code !== '42703') {
+                    console.warn('Fallback lookup corso fallito per corsi.nome_corso:', matchError.message);
                 }
+
+                if (matchData?.id) return matchData.id;
+            }
+
+            console.warn('Corso non presente in tabella corsi, provo a crearlo automaticamente:', corso);
+            const { data: corsoCreato, error: insertError } = await supabaseClient
+                .from('corsi')
+                .insert([
+                    {
+                        nome_corso: corso,
+                        categoria: 'Generale',
+                        quota_mensile: 0,
+                        istruttore: 'N/D',
+                        orari: 'N/D'
+                    }
+                ])
+                .select('id')
+                .single();
+
+            if (insertError) {
+                console.error('Creazione automatica del corso fallita:', insertError);
+                return null;
+            }
+
+            if (corsoCreato?.id) {
+                console.log('DEBUG - corso creato automaticamente con id:', corsoCreato.id);
+                return corsoCreato.id;
             }
 
             return null;
