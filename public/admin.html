@@ -213,10 +213,22 @@
       try {
         const { data: soci, error } = await supabaseClient
           .from('soci')
-          .select('*, iscrizioni_corsi!socio_id(nome_corso, stato, data_iscrizione)')
+          .select('*')
           .order('cognome');
 
         if (error) throw error;
+
+        const socioIds = soci.map(s => s.id);
+        const { data: iscrizioni, error: iscrizioniError } = await supabaseClient
+          .from('iscrizioni_corsi')
+          .select('socio_id, nome_corso, stato, data_iscrizione')
+          .in('socio_id', socioIds);
+
+        if (iscrizioniError) throw iscrizioniError;
+
+        soci.forEach(s => {
+          s.iscrizioni_corsi = (iscrizioni || []).filter(i => i.socio_id === s.id);
+        });
 
         const tbody = document.getElementById('sociTableBody');
         tbody.innerHTML = '';

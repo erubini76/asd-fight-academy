@@ -63,17 +63,27 @@
             try {
                 const { data, error } = await supabaseClient
                     .from('soci')
-                    .select('*, iscrizioni_corsi!socio_id(nome_corso, stato, data_iscrizione)')
+                    .select('*')
                     .eq('email', email);
 
                 if (error) throw error;
                 if (!data || data.length === 0) { alert("Nessun tesserato trovato."); return; }
                 if (!data.some(s => (s.codice_fiscale || '').toUpperCase() === cf)) { alert("CF non corrispondente."); return; }
 
+                const socioIds = data.map(s => s.id);
+                const { data: iscrizioni, error: iscrizioniError } = await supabaseClient
+                    .from('iscrizioni_corsi')
+                    .select('socio_id, nome_corso, stato, data_iscrizione')
+                    .in('socio_id', socioIds);
+
+                if (iscrizioniError) throw iscrizioniError;
+
                 foundTesseratiList = data.map(s => ({
                     ...s,
-                    corso_scelto: getCorsiPerSocio(s)[0]?.nome_corso || 'N/D'
+                    iscrizioni_corsi: (iscrizioni || []).filter(i => i.socio_id === s.id),
+                    corso_scelto: getCorsiPerSocio({ ...s, iscrizioni_corsi: (iscrizioni || []).filter(i => i.socio_id === s.id) })[0]?.nome_corso || 'N/D'
                 }));
+
 
                 localStorage.setItem('foundTesseratiList', JSON.stringify(foundTesseratiList));
                 renderPortal();

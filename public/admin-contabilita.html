@@ -194,8 +194,14 @@
             try {
                 const { data: allSoci } = await supabaseClient
                     .from('soci')
-                    .select('*, iscrizioni_corsi!socio_id(nome_corso, stato, data_iscrizione)')
+                    .select('*')
                     .order('cognome');
+                const { data: allIscrizioni } = await supabaseClient
+                    .from('iscrizioni_corsi')
+                    .select('socio_id, nome_corso, stato, data_iscrizione');
+                (allSoci || []).forEach(s => {
+                    s.iscrizioni_corsi = (allIscrizioni || []).filter(i => i.socio_id === s.id);
+                });
                 const { data: allPags } = await supabaseClient.from('pagamenti').select('*');
                 const { data: allPres } = await supabaseClient.from('presenze').select('*');
 

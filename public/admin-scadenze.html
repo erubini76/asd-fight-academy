@@ -90,9 +90,21 @@
             try {
                 const { data, error } = await supabaseClient
                     .from('soci')
-                    .select('*, iscrizioni_corsi!socio_id(nome_corso, stato, data_iscrizione)');
+                    .select('*');
 
                 if (error) throw error;
+
+                const socioIds = (data || []).map(s => s.id);
+                const { data: iscrizioni, error: iscrizioniError } = await supabaseClient
+                    .from('iscrizioni_corsi')
+                    .select('socio_id, nome_corso, stato, data_iscrizione')
+                    .in('socio_id', socioIds);
+
+                if (iscrizioniError) throw iscrizioniError;
+
+                (data || []).forEach(s => {
+                    s.iscrizioni_corsi = (iscrizioni || []).filter(i => i.socio_id === s.id);
+                });
 
                 if (!data || data.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="4" class="p-12 text-center text-slate-500 italic font-medium">Nessuna scadenza critica rilevata al momento.</td></tr>';
