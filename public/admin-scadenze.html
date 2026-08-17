@@ -84,6 +84,15 @@
             return latest?.nome_corso || 'GENERALE';
         }
 
+        function giorniAllaScadenza(dataScadenza) {
+            if (!dataScadenza) return null;
+            const oggi = new Date();
+            oggi.setHours(0, 0, 0, 0);
+            const scadenza = new Date(dataScadenza);
+            scadenza.setHours(0, 0, 0, 0);
+            return Math.round((scadenza - oggi) / (1000 * 60 * 60 * 24));
+        }
+
         async function caricaScadenze() {
             const tbody = document.getElementById('scadenze-tbody');
             
@@ -104,6 +113,8 @@
 
                 (data || []).forEach(s => {
                     s.iscrizioni_corsi = (iscrizioni || []).filter(i => i.socio_id === s.id);
+                    s.giorni_alla_scadenza_medica = giorniAllaScadenza(s.scadenza_certificato_medico);
+                    s.giorni_alla_scadenza_asi = giorniAllaScadenza(s.scadenza_tessera_asi);
                 });
 
                 if (!data || data.length === 0) {
@@ -111,17 +122,25 @@
                     return;
                 }
 
+                // Solo scadenze critiche: assenti, in scadenza entro 30gg o già scadute.
+                const isCritico = (s) => {
+                    const gm = s.giorni_alla_scadenza_medica;
+                    const ga = s.giorni_alla_scadenza_asi;
+                    return gm === null || gm <= 30 || ga === null || ga <= 30;
+                };
+
                 // Filtraggio per Istruttore (se non è presidente)
-                let sociFiltrati = data;
+                let sociFiltrati = data.filter(isCritico);
                 if (sessionUser.ruolo !== 'presidente') {
                     const comp = sessionUser.corsi_competenze || [];
-                    sociFiltrati = data.filter(s => comp.some(c => getCorsoDisplayFromSocio(s).toLowerCase().includes(String(c).toLowerCase().trim())));
+                    sociFiltrati = sociFiltrati.filter(s => comp.some(c => getCorsoDisplayFromSocio(s).toLowerCase().includes(String(c).toLowerCase().trim())));
                 }
 
                 if (sociFiltrati.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="4" class="p-12 text-center text-slate-500 italic font-medium">Nessun allievo dei tuoi corsi ha scadenze imminenti.</td></tr>';
                     return;
                 }
+
 
                 tbody.innerHTML = sociFiltrati.map(tesserato => {
                     const giorniMed = tesserato.giorni_alla_scadenza_medica;
