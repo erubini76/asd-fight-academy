@@ -11,6 +11,27 @@
         .contab-table td:first-child p {
             font-size: 12px !important;
         }
+        .scroll-hint {
+            position: absolute;
+            right: 1rem;
+            top: -0.75rem;
+            transform: translateY(-100%);
+            display: none;
+            z-index: 10;
+        }
+
+        @media (min-width: 641px), (max-width: 640px) and (orientation: landscape) {
+            .scroll-hint {
+                display: inline-flex;
+            }
+        }
+
+        @media (max-width: 640px) and (orientation: portrait) {
+            .scroll-hint {
+                display: none;
+            }
+        }
+
         @media (max-width: 640px) {
             .contab-table th:first-child,
             .contab-table td:first-child {
@@ -102,7 +123,7 @@
             </p>
             
             <div class="overflow-x-auto relative">
-                <div class="absolute right-4 top-4 hidden sm:block rounded-full bg-slate-900/90 border border-slate-700 px-3 py-1 text-[10px] text-slate-300 shadow-lg">
+                <div class="scroll-hint rounded-full bg-slate-900/90 border border-slate-700 px-3 py-1 text-[10px] text-slate-300 shadow-lg">
                     Scorri orizzontalmente ↔
                 </div>
                 <div class="mb-3 block sm:hidden text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">
