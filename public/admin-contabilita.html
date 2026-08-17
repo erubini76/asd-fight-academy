@@ -285,11 +285,11 @@
             const met = document.getElementById('pay-method').value;
             if (!imp && !currentSelection.existingPagId) return;
             try {
-                if (currentSelection.existingPagId) {
-                    await supabaseClient.from('pagamenti').update({ stato: 'Approvato', importo: parseFloat(imp) || 0, importo_totale: parseFloat(imp) || 0, metodo: met }).eq('id', currentSelection.existingPagId);
-                } else {
-                    await supabaseClient.from('pagamenti').insert([{ socio_id: currentSelection.socioId, importo: parseFloat(imp), importo_totale: parseFloat(imp), mese_riferimento: currentSelection.mese, anno_riferimento: currentSelection.anno, data_pagamento: new Date().toISOString().split('T')[0], metodo: met, stato: 'Approvato', corso: currentSelection.tipo, tipo_pagamento: currentSelection.tipo, periodo_riferimento: currentSelection.mese === 0 ? 'Annuale' : `${currentSelection.mese}/${currentSelection.anno}` }]);
-                }
+                const paymentRecord = { socio_id: currentSelection.socioId, importo: parseFloat(imp) || 0, importo_totale: parseFloat(imp) || 0, mese_riferimento: currentSelection.mese, anno_riferimento: currentSelection.anno, data_pagamento: new Date().toISOString().split('T')[0], metodo: met, stato: 'Approvato', corso: currentSelection.tipo, tipo_pagamento: currentSelection.tipo, periodo_riferimento: currentSelection.mese === 0 ? 'Annuale' : `${currentSelection.mese}/${currentSelection.anno}` };
+                
+                // ✅ UPSERT: Se esiste, aggiorna; se no, crea
+                const { error } = await supabaseClient.from('pagamenti').upsert([paymentRecord], { onConflict: 'socio_id,mese_riferimento,anno_riferimento,corso' });
+                if (error) throw error;
                 closeModal(); caricaDatiContabili();
             } catch (err) { alert(err.message); }
         }

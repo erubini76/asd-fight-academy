@@ -156,10 +156,16 @@
         }
 
         async function inviaPagamentoAvanzato(tesseratoId, corsoSocio) {
+            const btn = event.target; // Prendi il bottone che ha scatenato l'evento
             const tipo = document.getElementById(`tipo_paga_${tesseratoId}`).value;
             const metodo = document.getElementById(`metodo_${tesseratoId}`).value;
             const file = document.getElementById(`filePaga_${tesseratoId}`).files[0];
             let url = null;
+            
+            // Disabilita bottone durante l'invio
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Elaborazione...';
+            const originalText = 'Conferma Operazione';
 
             if (metodo === 'bonifico') {
                 if (!file) { alert("Allega ricevuta."); return; }
@@ -185,10 +191,15 @@
             }
 
             try {
-                const { error } = await supabaseClient.from('pagamenti').insert(records);
+                const { error } = await supabaseClient.from('pagamenti').upsert(records, { onConflict: 'socio_id,mese_riferimento,anno_riferimento,corso' });
                 if (error) throw error;
                 alert("Richiesta inviata!"); location.reload();
             } catch (e) { alert(e.message); }
+            finally {
+                // Re-abilita bottone
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-credit-card"></i> Conferma Operazione';
+            }
         }
 
         async function uploadCertificato(tesseratoId) {

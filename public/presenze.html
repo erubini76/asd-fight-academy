@@ -247,9 +247,10 @@
             try {
                 // Se non ci sono presenti, non c'è nulla da inserire.
                 if (records.length > 0) {
+                    // ✅ UPSERT: Se esiste, aggiorna; se no, crea
                     const { error } = await supabaseClient
                         .from('presenze')
-                        .insert(records);
+                        .upsert(records, { onConflict: 'socio_id,data_presenza,corso' });
                     if (error) throw error;
                 }
 

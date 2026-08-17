@@ -186,6 +186,7 @@
 
     <script>
         const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
+        let isSubmitting = false; // Flag per protezione double-submit
 
         async function autocompilaDati() {
             const email = document.getElementById('autofill-email').value.trim().toLowerCase();
@@ -361,6 +362,14 @@
 
         async function inviaDomanda(e) {
             e.preventDefault();
+            
+            // Protezione double-submit
+            if (isSubmitting) {
+                alert('Invio già in corso. Per favore, attendi...');
+                return;
+            }
+            isSubmitting = true;
+            
             const btn = document.getElementById('submit-btn');
             btn.disabled = true;
             btn.textContent = "Invio in corso...";
@@ -457,9 +466,10 @@
                 };
 
                 if (tabellaRelazione === 'iscrizioni_corsi') {
+                    // ✅ UPSERT: Se esiste, aggiorna; se no, crea
                     const { error: relazioneError } = await supabaseClient
                         .from(tabellaRelazione)
-                        .insert([relazionePayload]);
+                        .upsert([relazionePayload], { onConflict: 'socio_id,nome_corso' });
 
                     if (relazioneError) throw relazioneError;
                 } else {
@@ -486,6 +496,7 @@
                 console.error(err);
                 alert("Errore durante la registrazione: " + (err.message || 'Errore sconosciuto'));
             } finally {
+                isSubmitting = false; // Reset flag
                 btn.disabled = false;
                 btn.textContent = "Invia Domanda di Ammissione";
             }
