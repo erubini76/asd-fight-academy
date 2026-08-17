@@ -96,10 +96,10 @@
                     <span class="flex items-center gap-1.5 text-amber-400 bg-amber-400/10 px-2 py-1 rounded-lg border border-amber-400/20 animate-pulse"><i class="fa-solid fa-clock text-[7px]"></i> In Verifica</span>
                     <span class="flex items-center gap-1.5 text-slate-500 bg-slate-500/10 px-2 py-1 rounded-lg border border-slate-500/20"><i class="fa-solid fa-user-slash text-[7px]"></i> Non Prat.</span>
                 </div>
-                <p class="w-full text-[9px] text-slate-400 uppercase tracking-tight text-center md:text-right">
-                    Verde = pagamento approvato | Giallo = pagamento da verificare | Rosso = presenza senza pagamento | Grigio con omino barrato = non praticante | Cella vuota = nessuna presenza e nessun pagamento
-                </p>
             </div>
+            <p class="px-6 py-2 border-b border-slate-700 bg-slate-900/40 text-[9px] text-slate-400 uppercase tracking-tight text-center">
+                Verde = pagamento approvato | Giallo = pagamento da verificare | Rosso = presenza senza pagamento | Grigio con omino barrato = non praticante | Cella vuota = nessuna presenza e nessun pagamento
+            </p>
             
             <div class="overflow-x-auto relative">
                 <div class="absolute right-4 top-4 hidden sm:block rounded-full bg-slate-900/90 border border-slate-700 px-3 py-1 text-[10px] text-slate-300 shadow-lg">
@@ -169,7 +169,7 @@
 
         function renderHeader() {
             const row = document.getElementById('table-header-row');
-            row.innerHTML = '<th class="p-4 sticky left-0 bg-slate-900 z-10 min-w-[180px] sm:min-w-[220px] text-left">Tesserato / Corso</th><th class="p-4 text-center border-l border-slate-800 bg-slate-900/80">Tesseramento</th>';
+            row.innerHTML = '<th class="p-4 sticky left-0 bg-slate-900 z-10 min-w-[180px] sm:min-w-[220px] text-left whitespace-normal leading-tight">Tesserato / Corso</th><th class="p-4 text-center border-l border-slate-800 bg-slate-900/80 whitespace-normal break-words leading-tight">Tesseramento</th>';
             const mesi = document.getElementById('filter-year-type').value === 'accademico' ? mesiAccademici : mesiSolari;
             mesi.forEach(m => row.innerHTML += `<th class="p-4 text-center border-l border-slate-800">${m.nome}</th>`);
         }
