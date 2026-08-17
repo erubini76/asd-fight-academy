@@ -266,13 +266,9 @@
                         });
                         const nonPrat = s.mesi_non_praticante && s.mesi_non_praticante.includes(`${m.id}-${anno}`);
 
-                        const oggi = new Date();
-                        const meseCorrente = oggi.getMonth() + 1 === m.id
-                            && anniPresenza.includes(oggi.getFullYear());
                         let style = 'bg-slate-900/30', content = '<i class="fa-solid fa-plus opacity-5"></i>';
                         if (p) { style = 'bg-green-600/20 text-green-400 font-bold'; content = '€' + parseFloat(p.importo).toFixed(0); }
                         else if (pPend) { style = 'bg-amber-400/20 text-amber-400 animate-pulse'; content = '<i class="fa-solid fa-clock text-[8px]"></i>'; }
-                        else if (eraPres && meseCorrente) { style = 'bg-amber-400/20 text-amber-400 animate-pulse'; content = '<i class="fa-solid fa-clock text-[8px]"></i>'; }
                         else if (eraPres) { style = 'bg-red-600/20 text-red-500 animate-pulse'; content = '<i class="fa-solid fa-triangle-exclamation text-[8px]"></i>'; }
                         else if (nonPrat) { style = 'bg-slate-700/50 text-slate-500'; content = '<i class="fa-solid fa-user-slash text-[8px]"></i>'; }
 
