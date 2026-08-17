@@ -78,13 +78,19 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        function getCorsoDisplayFromSocio(socio) {
+            const iscrizioni = Array.isArray(socio?.iscrizioni_corsi) ? socio.iscrizioni_corsi : [];
+            const latest = iscrizioni.slice().sort((a, b) => new Date(b.data_iscrizione || 0) - new Date(a.data_iscrizione || 0))[0];
+            return latest?.nome_corso || 'GENERALE';
+        }
+
         async function caricaScadenze() {
             const tbody = document.getElementById('scadenze-tbody');
             
             try {
                 const { data, error } = await supabaseClient
-                    .from('v_scadenze_soci')
-                    .select('*');
+                    .from('soci')
+                    .select('*, iscrizioni_corsi!socio_id(nome_corso, stato, data_iscrizione)');
 
                 if (error) throw error;
 
@@ -97,7 +103,7 @@
                 let sociFiltrati = data;
                 if (sessionUser.ruolo !== 'presidente') {
                     const comp = sessionUser.corsi_competenze || [];
-                    sociFiltrati = data.filter(s => comp.includes(s.corso) || comp.includes(s.corso_scelto));
+                    sociFiltrati = data.filter(s => comp.some(c => getCorsoDisplayFromSocio(s).toLowerCase().includes(String(c).toLowerCase().trim())));
                 }
 
                 if (sociFiltrati.length === 0) {
@@ -125,12 +131,13 @@
                         ? 'DATA ASSENTE'
                         : (giorniAsi <= 0 ? `${Math.abs(giorniAsi)} GIORNI SCADUTI` : `${giorniAsi} GIORNI RIMANENTI`);
 
+                    const corsoDisplay = getCorsoDisplayFromSocio(tesserato);
                     return `
                         <tr class="hover:bg-slate-700/30 transition">
                             <td class="p-4">
                                 <p class="font-bold text-white text-sm uppercase">${tesserato.nome || ''} ${tesserato.cognome || ''}</p>
                                 <span class="text-[9px] px-1.5 py-0.5 rounded bg-slate-900 text-slate-400 font-mono border border-slate-700 uppercase tracking-tighter">
-                                    ${tesserato.corso || tesserato.corso_scelto || 'GENERALE'}
+                                    ${corsoDisplay}
                                 </span>
                             </td>
                             <td class="p-4">

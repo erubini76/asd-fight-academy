@@ -171,6 +171,12 @@
             mesi.forEach(m => row.innerHTML += `<th class="p-4 text-center border-l border-slate-800">${m.nome}</th>`);
         }
 
+        function getCorsoDisplayFromSocio(socio) {
+            const iscrizioni = Array.isArray(socio?.iscrizioni_corsi) ? socio.iscrizioni_corsi : [];
+            const latest = iscrizioni.slice().sort((a, b) => new Date(b.data_iscrizione || 0) - new Date(a.data_iscrizione || 0))[0];
+            return latest?.nome_corso || 'N/D';
+        }
+
         async function caricaDatiContabili() {
             const tbody = document.getElementById('contabilita-tbody');
             const typeYear = document.getElementById('filter-year-type').value;
@@ -186,7 +192,10 @@
             }
 
             try {
-                const { data: allSoci } = await supabaseClient.from('soci').select('*').order('cognome');
+                const { data: allSoci } = await supabaseClient
+                    .from('soci')
+                    .select('*, iscrizioni_corsi!socio_id(nome_corso, stato, data_iscrizione)')
+                    .order('cognome');
                 const { data: allPags } = await supabaseClient.from('pagamenti').select('*');
                 const { data: allPres } = await supabaseClient.from('presenze').select('*');
 
@@ -194,10 +203,13 @@
                 let sociFiltrati = allSoci;
                 if (sessionUser.ruolo !== 'presidente') {
                     const comp = sessionUser.corsi_competenze.map(c => c.toLowerCase().trim());
-                    sociFiltrati = allSoci.filter(s => comp.some(c => (s.corso_scelto || '').toLowerCase().includes(c)));
+                    sociFiltrati = allSoci.filter(s => {
+                        const corsoDisplay = getCorsoDisplayFromSocio(s).toLowerCase();
+                        return comp.some(c => corsoDisplay.includes(c));
+                    });
                 }
                 if (corsoFiltro !== 'tutti') {
-                    sociFiltrati = sociFiltrati.filter(s => (s.corso_scelto || '').includes(corsoFiltro));
+                    sociFiltrati = sociFiltrati.filter(s => getCorsoDisplayFromSocio(s).includes(corsoFiltro));
                 }
 
                 renderHeader();
@@ -208,7 +220,8 @@
                 sociFiltrati.forEach(s => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-700/20 transition";
-                    let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[180px] sm:min-w-[220px] break-words"><p class="font-bold text-white text-[12px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase max-w-[140px] sm:max-w-[200px] truncate">${s.corso_scelto || 'N/D'}</span></td>`;
+                    const corsoDisplay = getCorsoDisplayFromSocio(s);
+                    let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[180px] sm:min-w-[220px] break-words"><p class="font-bold text-white text-[12px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase max-w-[140px] sm:max-w-[200px] truncate">${corsoDisplay}</span></td>`;
 
                     const pIsc = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'Approvato');
                     const pIscPending = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'In attesa di verifica');

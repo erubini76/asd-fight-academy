@@ -224,7 +224,7 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         async function trovaTabellaRelazione() {
-            const tabelleCandidate = ['soci_corsi', 'iscrizioni_corsi', 'socio_corsi'];
+            const tabelleCandidate = ['iscrizioni_corsi', 'soci_corsi', 'socio_corsi'];
             for (const tabella of tabelleCandidate) {
                 const { error } = await supabaseClient
                     .from(tabella)
@@ -449,11 +449,26 @@
                 }
 
                 const tabellaRelazione = await trovaTabellaRelazione();
-                const { error: relazioneError } = await supabaseClient
-                    .from(tabellaRelazione)
-                    .insert([{ socio_id: socioId, corso_id: corsoId }]);
+                const relazionePayload = {
+                    socio_id: socioId,
+                    nome_corso: nuovoCorso,
+                    data_iscrizione: new Date().toISOString().slice(0, 10),
+                    stato: 'attiva'
+                };
 
-                if (relazioneError) throw relazioneError;
+                if (tabellaRelazione === 'iscrizioni_corsi') {
+                    const { error: relazioneError } = await supabaseClient
+                        .from(tabellaRelazione)
+                        .insert([relazionePayload]);
+
+                    if (relazioneError) throw relazioneError;
+                } else {
+                    const { error: relazioneError } = await supabaseClient
+                        .from(tabellaRelazione)
+                        .insert([{ socio_id: socioId, corso_id: corsoId }]);
+
+                    if (relazioneError) throw relazioneError;
+                }
 
                 const emailResponse = await fetch('/api/send-email', {
                     method: 'POST',
