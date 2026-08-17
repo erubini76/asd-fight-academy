@@ -98,7 +98,7 @@
             const container = document.getElementById('profiliContainer');
             container.innerHTML = '';
             foundTesseratiList.forEach(s => {
-                const corsoDisplay = getCorsoDisplay(s);
+                const corsoDisplay = getCorsiPerSocio(s)[0]?.nome_corso || 'N/D';
                 const medScad = !s.scadenza_certificato_medico || new Date(s.scadenza_certificato_medico) < new Date();
                 const tr = document.createElement('div');
                 tr.className = "bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl";
