@@ -248,7 +248,22 @@
                         const pPend = allPags.find(pag => pag.socio_id === s.id && pag.mese_riferimento === m.id && pag.anno_riferimento === anno && pag.stato === 'In attesa di verifica');
                         if (p) totaliMese[m.id] += (parseFloat(p.importo) || 0);
 
-                        const eraPres = allPres.some(pr => { const d = new Date(pr.data_presenza); return pr.socio_id === s.id && (d.getMonth()+1) === m.id && d.getFullYear() === anno; });
+                        const anniPresenza = [anno];
+                        const annoCorrente = new Date().getFullYear();
+                        if (typeYear === 'accademico' && m.id === 8 && anno === annoCorrente + 1) {
+                            anniPresenza.push(annoCorrente);
+                        }
+                        const corsiPresenza = corsoFiltro === 'tutti'
+                            ? getCorsiNomiSocio(s)
+                            : [corsoFiltro];
+                        const eraPres = allPres.some(pr => {
+                            const d = new Date(pr.data_presenza);
+                            const corsoPresenza = String(pr.corso || '').trim().toLowerCase();
+                            return pr.socio_id === s.id
+                                && corsiPresenza.some(c => corsoPresenza === String(c).trim().toLowerCase())
+                                && (d.getMonth() + 1) === m.id
+                                && anniPresenza.includes(d.getFullYear());
+                        });
                         const nonPrat = s.mesi_non_praticante && s.mesi_non_praticante.includes(`${m.id}-${anno}`);
 
                         let style = 'bg-slate-900/30', content = '<i class="fa-solid fa-plus opacity-5"></i>';
