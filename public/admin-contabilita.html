@@ -167,6 +167,10 @@
 
         let currentSelection = { socioId: null, mese: null, anno: null, tipo: '', existingPagId: null };
 
+        function buildOpenPayAction(socioId, nome, mese, anno, tipo, pagId, url, imp) {
+            return `openPayModal(${JSON.stringify(String(socioId))}, ${JSON.stringify(String(nome))}, ${JSON.stringify(Number(mese))}, ${JSON.stringify(Number(anno))}, ${JSON.stringify(String(tipo))}, ${pagId ?? 'null'}, ${JSON.stringify(String(url || ''))}, ${Number(imp || 0)})`;
+        }
+
         function renderHeader() {
             const row = document.getElementById('table-header-row');
             row.innerHTML = '<th class="p-4 sticky left-0 bg-slate-900 z-10 min-w-[180px] sm:min-w-[220px] text-left whitespace-normal leading-tight">Tesserato / Corso</th><th class="p-4 text-center border-l border-slate-800 bg-slate-900/80 whitespace-normal break-words leading-tight">Tesseramento</th>';
@@ -239,11 +243,12 @@
                     const corsoDisplay = getCorsoDisplayFromSocio(s);
                     let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[180px] sm:min-w-[220px] break-words"><p class="font-bold text-white text-[12px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase max-w-[140px] sm:max-w-[200px] truncate">${corsoDisplay}</span></td>`;
 
-                    const pIsc = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'Approvato');
-                    const pIscPending = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'In attesa di verifica');
+                    const pIsc = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'Approvato' && p.anno_riferimento === yearVal);
+                    const pIscPending = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'In attesa di verifica' && p.anno_riferimento === yearVal);
                     if (pIsc) totaliMese.iscrizione += (parseFloat(pIsc.importo) || 0);
 
-                    html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer ${pIsc ? 'bg-cyan-600/20 text-cyan-400 font-bold' : (pIscPending ? 'bg-amber-400/20 text-amber-400 animate-pulse' : 'bg-slate-900/30')}" onclick="openPayModal('${s.id}', '${s.nome} ${s.cognome}', 0, ${yearVal}, 'Iscrizione Annuale', ${pIsc ? pIsc.id : (pIscPending ? pIscPending.id : null)}, '${pIsc ? pIsc.ricevuta_url : (pIscPending ? pIscPending.ricevuta_url : '')}', ${pIsc ? pIsc.importo : 0})">${pIsc ? '€'+parseFloat(pIsc.importo).toFixed(0) : (pIscPending ? '<i class="fa-solid fa-clock text-[8px]"></i>' : '<i class="fa-solid fa-plus opacity-5"></i>')}</td>`;
+                    const actionIsc = buildOpenPayAction(s.id, `${s.nome} ${s.cognome}`, 0, yearVal, 'Iscrizione Annuale', pIsc ? pIsc.id : (pIscPending ? pIscPending.id : null), pIsc ? pIsc.ricevuta_url : (pIscPending ? pIscPending.ricevuta_url : ''), pIsc ? pIsc.importo : 0);
+                    html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer ${pIsc ? 'bg-cyan-600/20 text-cyan-400 font-bold' : (pIscPending ? 'bg-amber-400/20 text-amber-400 animate-pulse' : 'bg-slate-900/30')}" onclick="${actionIsc}">${pIsc ? '€'+parseFloat(pIsc.importo).toFixed(0) : (pIscPending ? '<i class="fa-solid fa-clock text-[8px]"></i>' : '<i class="fa-solid fa-plus opacity-5"></i>')}</td>`;
 
                     mesiCur.forEach(m => {
                         const anno = typeYear === 'solare' ? yearVal : (m.id >= 9 ? yearVal : yearVal + 1);
@@ -275,7 +280,8 @@
                         else if (eraPres) { style = 'bg-red-600/20 text-red-500 animate-pulse'; content = '<i class="fa-solid fa-triangle-exclamation text-[8px]"></i>'; }
                         else if (nonPrat) { style = 'bg-slate-700/50 text-slate-500'; content = '<i class="fa-solid fa-user-slash text-[8px]"></i>'; }
 
-                        html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer hover:bg-slate-700/50 transition-all ${style}" onclick="openPayModal('${s.id}', '${s.nome} ${s.cognome}', ${m.id}, ${anno}, 'Mensilità', ${p ? p.id : (pPend ? pPend.id : null)}, '${p ? p.ricevuta_url : (pPend ? pPend.ricevuta_url : '')}', ${p ? p.importo : 0})">${content}</td>`;
+                        const actionMensile = buildOpenPayAction(s.id, `${s.nome} ${s.cognome}`, m.id, anno, 'Mensilità', p ? p.id : (pPend ? pPend.id : null), p ? p.ricevuta_url : (pPend ? pPend.ricevuta_url : ''), p ? p.importo : 0);
+                        html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer hover:bg-slate-700/50 transition-all ${style}" onclick="${actionMensile}">${content}</td>`;
                     });
                     tr.innerHTML = html; tbody.appendChild(tr);
                 });
@@ -316,11 +322,41 @@
             const met = document.getElementById('pay-method').value;
             if (!imp && !currentSelection.existingPagId) return;
             try {
-                const paymentRecord = { socio_id: currentSelection.socioId, importo: parseFloat(imp) || 0, importo_totale: parseFloat(imp) || 0, mese_riferimento: currentSelection.mese, anno_riferimento: currentSelection.anno, data_pagamento: new Date().toISOString().split('T')[0], metodo: met, stato: 'Approvato', corso: currentSelection.tipo, tipo_pagamento: currentSelection.tipo, periodo_riferimento: currentSelection.mese === 0 ? 'Annuale' : `${currentSelection.mese}/${currentSelection.anno}` };
-                
-                // ✅ UPSERT: Se esiste, aggiorna; se no, crea
-                const { error } = await supabaseClient.from('pagamenti').upsert([paymentRecord], { onConflict: 'socio_id,mese_riferimento,anno_riferimento,corso' });
-                if (error) throw error;
+                const paymentRecord = {
+                    socio_id: currentSelection.socioId,
+                    importo: parseFloat(imp) || 0,
+                    importo_totale: parseFloat(imp) || 0,
+                    data_pagamento: new Date().toISOString().split('T')[0],
+                    metodo: met,
+                    stato: 'Approvato',
+                    corso: currentSelection.tipo,
+                    tipo_pagamento: currentSelection.tipo,
+                    periodo_riferimento: currentSelection.mese === 0 ? 'Annuale' : `${currentSelection.mese}/${currentSelection.anno}`
+                };
+
+                let query = supabaseClient.from('pagamenti').select('id').eq('socio_id', currentSelection.socioId).eq('corso', currentSelection.tipo);
+                if (currentSelection.mese === 0) {
+                    query = query.is('mese_riferimento', null).is('anno_riferimento', null);
+                } else {
+                    query = query.eq('mese_riferimento', currentSelection.mese).eq('anno_riferimento', currentSelection.anno);
+                }
+
+                const { data: existingRecords, error: findErr } = await query;
+                if (findErr) throw findErr;
+
+                const recordToSave = {
+                    ...paymentRecord,
+                    mese_riferimento: currentSelection.mese === 0 ? null : currentSelection.mese,
+                    anno_riferimento: currentSelection.mese === 0 ? null : currentSelection.anno
+                };
+
+                if (existingRecords && existingRecords.length > 0) {
+                    const { error } = await supabaseClient.from('pagamenti').update(recordToSave).eq('id', existingRecords[0].id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabaseClient.from('pagamenti').insert([recordToSave]);
+                    if (error) throw error;
+                }
                 closeModal(); caricaDatiContabili();
             } catch (err) { alert(err.message); }
         }
