@@ -241,7 +241,7 @@
         }
 
         async function scaricaCorsiDisponibili() {
-            const candidateFields = ['nome', 'titolo', 'corso'];
+            const candidateFields = ['nome_corso', 'nome', 'titolo', 'corso'];
             const corsi = [];
             const seen = new Set();
 
@@ -274,6 +274,7 @@
             if (!corso) return null;
 
             const candidateFields = [
+                { table: 'corsi', field: 'nome_corso' },
                 { table: 'corsi', field: 'nome' },
                 { table: 'corsi', field: 'titolo' },
                 { table: 'corsi', field: 'corso' }
