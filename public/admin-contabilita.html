@@ -12,23 +12,48 @@
             font-size: 12px !important;
         }
         .scroll-hint {
-            position: absolute;
-            right: 1rem;
-            top: -0.75rem;
-            transform: translateY(-100%);
             display: none;
-            z-index: 10;
+            width: 100%;
+            text-align: center;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: rgb(148 163 184);
+            border-top: 1px solid rgba(51, 65, 85, 0.8);
+            background: rgba(15, 23, 42, 0.45);
+            padding: 0.7rem 1rem 0.2rem;
         }
 
-        @media (min-width: 641px), (max-width: 640px) and (orientation: landscape) {
+        .scroll-hint .desktop-text,
+        .scroll-hint .mobile-text {
+            display: none;
+        }
+
+        @media (min-width: 641px) {
             .scroll-hint {
-                display: inline-flex;
+                display: block;
+            }
+            .scroll-hint .desktop-text {
+                display: inline;
+            }
+        }
+
+        @media (max-width: 640px) and (orientation: landscape) {
+            .scroll-hint {
+                display: block;
+            }
+            .scroll-hint .desktop-text {
+                display: inline;
             }
         }
 
         @media (max-width: 640px) and (orientation: portrait) {
             .scroll-hint {
-                display: none;
+                display: block;
+            }
+            .scroll-hint .mobile-text {
+                display: inline;
             }
         }
 
@@ -121,14 +146,12 @@
             <p class="px-6 py-2 border-b border-slate-700 bg-slate-900/40 text-[9px] text-slate-400 uppercase tracking-tight text-center">
                 Verde = pagamento approvato | Giallo = pagamento da verificare | Rosso = presenza senza pagamento | Grigio con omino barrato = non praticante | Cella vuota = nessuna presenza e nessun pagamento
             </p>
+            <div class="scroll-hint">
+                <span class="desktop-text">Scorri orizzontalmente ↔</span>
+                <span class="mobile-text">Scorri la tabella a sinistra/destra</span>
+            </div>
             
             <div class="overflow-x-auto relative">
-                <div class="scroll-hint rounded-full bg-slate-900/90 border border-slate-700 px-3 py-1 text-[10px] text-slate-300 shadow-lg">
-                    Scorri orizzontalmente ↔
-                </div>
-                <div class="mb-3 block sm:hidden text-[10px] text-slate-400 uppercase tracking-[0.2em] font-bold">
-                    Scorri la tabella a sinistra/destra
-                </div>
                 <table class="contab-table w-full text-left text-[10px] border-collapse min-w-[1000px] table-fixed">
                     <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700">
                         <tr id="table-header-row"></tr>
