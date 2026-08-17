@@ -177,6 +177,12 @@
             return latest?.nome_corso || 'N/D';
         }
 
+        function getCorsiNomiSocio(socio) {
+            const iscrizioni = Array.isArray(socio?.iscrizioni_corsi) ? socio.iscrizioni_corsi : [];
+            const nomi = iscrizioni.map(i => i.nome_corso).filter(Boolean);
+            return nomi.length > 0 ? [...new Set(nomi)] : ['N/D'];
+        }
+
         async function caricaDatiContabili() {
             const tbody = document.getElementById('contabilita-tbody');
             const typeYear = document.getElementById('filter-year-type').value;
@@ -210,12 +216,13 @@
                 if (sessionUser.ruolo !== 'presidente') {
                     const comp = sessionUser.corsi_competenze.map(c => c.toLowerCase().trim());
                     sociFiltrati = allSoci.filter(s => {
-                        const corsoDisplay = getCorsoDisplayFromSocio(s).toLowerCase();
-                        return comp.some(c => corsoDisplay.includes(c));
+                        const corsiSocio = getCorsiNomiSocio(s).map(n => n.toLowerCase());
+                        return comp.some(c => corsiSocio.some(nome => nome.includes(c)));
                     });
                 }
                 if (corsoFiltro !== 'tutti') {
-                    sociFiltrati = sociFiltrati.filter(s => getCorsoDisplayFromSocio(s).includes(corsoFiltro));
+                    const filtroLower = corsoFiltro.toLowerCase().trim();
+                    sociFiltrati = sociFiltrati.filter(s => getCorsiNomiSocio(s).some(nome => nome.toLowerCase().includes(filtroLower)));
                 }
 
                 renderHeader();
@@ -247,7 +254,7 @@
                         let style = 'bg-slate-900/30', content = '<i class="fa-solid fa-plus opacity-5"></i>';
                         if (p) { style = 'bg-green-600/20 text-green-400 font-bold'; content = '€' + parseFloat(p.importo).toFixed(0); }
                         else if (pPend) { style = 'bg-amber-400/20 text-amber-400 animate-pulse'; content = '<i class="fa-solid fa-clock text-[8px]"></i>'; }
-                        else if (eraPres && !nonPrat) { style = 'bg-red-600/20 text-red-500 animate-pulse'; content = '<i class="fa-solid fa-triangle-exclamation text-[8px]"></i>'; }
+                        else if (eraPres) { style = 'bg-red-600/20 text-red-500 animate-pulse'; content = '<i class="fa-solid fa-triangle-exclamation text-[8px]"></i>'; }
                         else if (nonPrat) { style = 'bg-slate-700/50 text-slate-500'; content = '<i class="fa-solid fa-user-slash text-[8px]"></i>'; }
 
                         html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer hover:bg-slate-700/50 transition-all ${style}" onclick="openPayModal('${s.id}', '${s.nome} ${s.cognome}', ${m.id}, ${anno}, 'Mensilità', ${p ? p.id : (pPend ? pPend.id : null)}, '${p ? p.ricevuta_url : (pPend ? pPend.ricevuta_url : '')}', ${p ? p.importo : 0})">${content}</td>`;
