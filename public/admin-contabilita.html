@@ -211,8 +211,26 @@
 
         let currentSelection = { socioId: null, mese: null, anno: null, tipo: '', existingPagId: null };
 
-        function buildOpenPayAction(socioId, nome, mese, anno, tipo, pagId, url, imp) {
-            return `openPayModal(${JSON.stringify(String(socioId))}, ${JSON.stringify(String(nome))}, ${JSON.stringify(Number(mese))}, ${JSON.stringify(Number(anno))}, ${JSON.stringify(String(tipo))}, ${pagId ?? 'null'}, ${JSON.stringify(String(url || ''))}, ${Number(imp || 0)})`;
+        function buildPayPayload(socioId, nome, mese, anno, tipo, pagId, url, imp) {
+            return {
+                socioId: String(socioId),
+                nome: String(nome),
+                mese: Number(mese),
+                anno: Number(anno),
+                tipo: String(tipo),
+                pagId: pagId ?? null,
+                url: String(url || ''),
+                imp: Number(imp || 0)
+            };
+        }
+
+        function bindPayCellEvents(tr) {
+            tr.querySelectorAll('[data-pay-action]').forEach(cell => {
+                cell.addEventListener('click', () => {
+                    const payload = JSON.parse(cell.dataset.payAction);
+                    openPayModal(payload.socioId, payload.nome, payload.mese, payload.anno, payload.tipo, payload.pagId, payload.url, payload.imp);
+                });
+            });
         }
 
         function renderHeader() {
@@ -291,8 +309,8 @@
                     const pIscPending = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'In attesa di verifica' && p.anno_riferimento === yearVal);
                     if (pIsc) totaliMese.iscrizione += (parseFloat(pIsc.importo) || 0);
 
-                    const actionIsc = buildOpenPayAction(s.id, `${s.nome} ${s.cognome}`, 0, yearVal, 'Iscrizione Annuale', pIsc ? pIsc.id : (pIscPending ? pIscPending.id : null), pIsc ? pIsc.ricevuta_url : (pIscPending ? pIscPending.ricevuta_url : ''), pIsc ? pIsc.importo : 0);
-                    html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer ${pIsc ? 'bg-cyan-600/20 text-cyan-400 font-bold' : (pIscPending ? 'bg-amber-400/20 text-amber-400 animate-pulse' : 'bg-slate-900/30')}" onclick="${actionIsc}">${pIsc ? '€'+parseFloat(pIsc.importo).toFixed(0) : (pIscPending ? '<i class="fa-solid fa-clock text-[8px]"></i>' : '<i class="fa-solid fa-plus opacity-5"></i>')}</td>`;
+                    const actionIsc = buildPayPayload(s.id, `${s.nome} ${s.cognome}`, 0, yearVal, 'Iscrizione Annuale', pIsc ? pIsc.id : (pIscPending ? pIscPending.id : null), pIsc ? pIsc.ricevuta_url : (pIscPending ? pIscPending.ricevuta_url : ''), pIsc ? pIsc.importo : 0);
+                    html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer ${pIsc ? 'bg-cyan-600/20 text-cyan-400 font-bold' : (pIscPending ? 'bg-amber-400/20 text-amber-400 animate-pulse' : 'bg-slate-900/30')}" data-pay-action='${JSON.stringify(actionIsc).replace(/'/g, '&apos;')}'>${pIsc ? '€'+parseFloat(pIsc.importo).toFixed(0) : (pIscPending ? '<i class="fa-solid fa-clock text-[8px]"></i>' : '<i class="fa-solid fa-plus opacity-5"></i>')}</td>`;
 
                     mesiCur.forEach(m => {
                         const anno = typeYear === 'solare' ? yearVal : (m.id >= 9 ? yearVal : yearVal + 1);
@@ -324,10 +342,12 @@
                         else if (eraPres) { style = 'bg-red-600/20 text-red-500 animate-pulse'; content = '<i class="fa-solid fa-triangle-exclamation text-[8px]"></i>'; }
                         else if (nonPrat) { style = 'bg-slate-700/50 text-slate-500'; content = '<i class="fa-solid fa-user-slash text-[8px]"></i>'; }
 
-                        const actionMensile = buildOpenPayAction(s.id, `${s.nome} ${s.cognome}`, m.id, anno, 'Mensilità', p ? p.id : (pPend ? pPend.id : null), p ? p.ricevuta_url : (pPend ? pPend.ricevuta_url : ''), p ? p.importo : 0);
-                        html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer hover:bg-slate-700/50 transition-all ${style}" onclick="${actionMensile}">${content}</td>`;
+                        const actionMensile = buildPayPayload(s.id, `${s.nome} ${s.cognome}`, m.id, anno, 'Mensilità', p ? p.id : (pPend ? pPend.id : null), p ? p.ricevuta_url : (pPend ? pPend.ricevuta_url : ''), p ? p.importo : 0);
+                        html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer hover:bg-slate-700/50 transition-all ${style}" data-pay-action='${JSON.stringify(actionMensile).replace(/'/g, '&apos;')}'>${content}</td>`;
                     });
-                    tr.innerHTML = html; tbody.appendChild(tr);
+                    tr.innerHTML = html;
+                    bindPayCellEvents(tr);
+                    tbody.appendChild(tr);
                 });
 
                 const trTot = document.createElement('tr');
