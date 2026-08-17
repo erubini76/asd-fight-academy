@@ -154,11 +154,11 @@
                     const giorniAsi = tesserato.giorni_alla_scadenza_asi;
 
                     const medColor = (giorniMed === null || giorniMed === undefined)
-                        ? 'text-slate-300'
+                        ? 'text-red-500'
                         : (giorniMed <= 0 ? 'text-red-500' : (giorniMed <= 30 ? 'text-amber-400' : 'text-slate-300'));
 
                     const asiColor = (giorniAsi === null || giorniAsi === undefined)
-                        ? 'text-slate-300'
+                        ? 'text-red-500'
                         : (giorniAsi <= 0 ? 'text-red-500' : (giorniAsi <= 30 ? 'text-amber-400' : 'text-slate-300'));
 
                     const medLabel = (giorniMed === null || giorniMed === undefined)
