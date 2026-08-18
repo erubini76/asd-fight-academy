@@ -228,6 +228,19 @@
       return latest?.nome_corso || 'N/D';
     }
 
+    function getQuotaAnnuale(pagamenti, socioId, anno = 2026) {
+      return pagamenti
+        .filter(p => p.socio_id === socioId
+          && (p.corso === 'Iscrizione Annuale' || p.tipo_pagamento === 'Iscrizione Annuale')
+          && (p.anno_riferimento === null || p.anno_riferimento === anno))
+        .sort((a, b) => {
+          const statoA = a.stato === 'Approvato' ? 1 : 0;
+          const statoB = b.stato === 'Approvato' ? 1 : 0;
+          if (statoA !== statoB) return statoB - statoA;
+          return new Date(b.data_inserimento || b.data_pagamento || 0) - new Date(a.data_inserimento || a.data_pagamento || 0);
+        })[0] || null;
+    }
+
     function renderDashboard() {
         document.getElementById('loginSection').classList.add('hidden');
         document.getElementById('dashboardSection').classList.remove('hidden');
@@ -272,9 +285,7 @@
 
         soci.forEach(s => {
           s.iscrizioni_corsi = (iscrizioni || []).filter(i => i.socio_id === s.id);
-          s.quota_annuale = (pagamenti || [])
-            .filter(p => p.socio_id === s.id && (p.corso === 'Iscrizione Annuale' || p.tipo_pagamento === 'Iscrizione Annuale'))
-            .sort((a, b) => new Date(b.data_inserimento || b.data_pagamento || 0) - new Date(a.data_inserimento || a.data_pagamento || 0))[0] || null;
+          s.quota_annuale = getQuotaAnnuale(pagamenti || [], s.id);
         });
 
         const tbody = document.getElementById('sociTableBody');

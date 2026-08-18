@@ -370,6 +370,19 @@
             return nomi.length > 0 ? [...new Set(nomi)] : ['N/D'];
         }
 
+        function getQuotaAnnuale(pagamenti, socioId, anno) {
+            return pagamenti
+                .filter(p => p.socio_id === socioId
+                    && (p.corso === 'Iscrizione Annuale' || p.tipo_pagamento === 'Iscrizione Annuale')
+                    && (p.anno_riferimento === null || p.anno_riferimento === anno))
+                .sort((a, b) => {
+                    const statoA = a.stato === 'Approvato' ? 1 : 0;
+                    const statoB = b.stato === 'Approvato' ? 1 : 0;
+                    if (statoA !== statoB) return statoB - statoA;
+                    return new Date(b.data_inserimento || b.data_pagamento || 0) - new Date(a.data_inserimento || a.data_pagamento || 0);
+                })[0] || null;
+        }
+
         async function caricaDatiContabili() {
             const tbody = document.getElementById('contabilita-tbody');
             const typeYear = document.getElementById('filter-year-type').value;
@@ -422,11 +435,9 @@
                     const corsoDisplay = getCorsoDisplayFromSocio(s);
                     let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[180px] sm:min-w-[220px] break-words"><p class="font-bold text-white text-[12px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase truncate">${corsoDisplay}</span></td>`;
 
-                    const isQuotaAnnuale = p => p.socio_id === s.id
-                        && (p.corso === 'Iscrizione Annuale' || p.tipo_pagamento === 'Iscrizione Annuale')
-                        && (p.anno_riferimento === null || p.anno_riferimento === yearVal);
-                    const pIsc = allPags.find(p => isQuotaAnnuale(p) && p.stato === 'Approvato');
-                    const pIscPending = allPags.find(p => isQuotaAnnuale(p) && p.stato === 'In attesa di verifica');
+                    const quotaAnnuale = getQuotaAnnuale(allPags, s.id, yearVal);
+                    const pIsc = quotaAnnuale?.stato === 'Approvato' ? quotaAnnuale : null;
+                    const pIscPending = quotaAnnuale?.stato === 'In attesa di verifica' ? quotaAnnuale : null;
                     if (pIsc) totaliMese.iscrizione += (parseFloat(pIsc.importo) || 0);
 
                     const actionIsc = buildPayPayload(s.id, `${s.nome} ${s.cognome}`, 0, yearVal, 'Iscrizione Annuale', pIsc ? pIsc.id : (pIscPending ? pIscPending.id : null), pIsc ? pIsc.ricevuta_url : (pIscPending ? pIscPending.ricevuta_url : ''), pIsc ? pIsc.importo : (pIscPending ? pIscPending.importo : 0), pIsc ? pIsc.metodo : (pIscPending ? pIscPending.metodo : ''));
