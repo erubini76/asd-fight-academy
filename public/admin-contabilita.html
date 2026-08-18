@@ -60,7 +60,7 @@
         @media (max-width: 640px) {
             .contab-table th:first-child,
             .contab-table td:first-child {
-                min-width: 250px !important;
+                min-width: 190px !important;
             }
             .contab-table td:first-child p {
                 font-size: 12px !important;
@@ -75,6 +75,20 @@
             }
             .contab-table {
                 min-width: 900px !important;
+            }
+        }
+
+        @media (max-width: 360px) and (orientation: portrait) {
+            .contab-table th:first-child,
+            .contab-table td:first-child {
+                min-width: 175px !important;
+            }
+        }
+
+        @media (max-width: 640px) and (orientation: landscape) {
+            .contab-table th:first-child,
+            .contab-table td:first-child {
+                min-width: 300px !important;
             }
         }
     </style>
@@ -235,7 +249,7 @@
 
         function renderHeader() {
             const row = document.getElementById('table-header-row');
-            row.innerHTML = '<th class="p-4 sticky left-0 bg-slate-900 z-10 min-w-[180px] sm:min-w-[250px] text-left whitespace-normal leading-tight">Tesserato / Corso</th><th class="p-4 text-center border-l border-slate-800 bg-slate-900/80 whitespace-normal break-words leading-tight">Tesseramento</th>';
+            row.innerHTML = '<th class="p-4 sticky left-0 bg-slate-900 z-10 min-w-[180px] sm:min-w-[300px] text-left whitespace-normal leading-tight">Tesserato / Corso</th><th class="p-4 text-center border-l border-slate-800 bg-slate-900/80 whitespace-normal break-words leading-tight">Tesseramento</th>';
             const mesi = document.getElementById('filter-year-type').value === 'accademico' ? mesiAccademici : mesiSolari;
             mesi.forEach(m => row.innerHTML += `<th class="p-4 text-center border-l border-slate-800">${m.nome}</th>`);
         }
@@ -303,7 +317,7 @@
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-700/20 transition";
                     const corsoDisplay = getCorsoDisplayFromSocio(s);
-                    let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[180px] sm:min-w-[250px] break-words"><p class="font-bold text-white text-[12px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase max-w-[140px] sm:max-w-[200px] truncate">${corsoDisplay}</span></td>`;
+                    let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[180px] sm:min-w-[300px] break-words"><p class="font-bold text-white text-[12px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase max-w-[140px] sm:max-w-[280px] truncate">${corsoDisplay}</span></td>`;
 
                     const pIsc = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'Approvato' && p.anno_riferimento === yearVal);
                     const pIscPending = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'In attesa di verifica' && p.anno_riferimento === yearVal);
