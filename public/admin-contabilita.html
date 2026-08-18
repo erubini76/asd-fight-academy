@@ -510,11 +510,39 @@
                 };
 
                 if (currentSelection.existingPagId) {
-                    const { error } = await supabaseClient.from('pagamenti').update(recordToSave).eq('id', currentSelection.existingPagId);
+                    const updateRecord = {
+                        importo: recordToSave.importo,
+                        importo_totale: recordToSave.importo_totale,
+                        data_pagamento: recordToSave.data_pagamento,
+                        metodo: recordToSave.metodo,
+                        stato: recordToSave.stato
+                    };
+                    const { data: updatedRecords, error } = await supabaseClient
+                        .from('pagamenti')
+                        .update(updateRecord)
+                        .eq('id', currentSelection.existingPagId)
+                        .select('id');
                     if (error) throw error;
+                    if (!updatedRecords || updatedRecords.length === 0) {
+                        throw new Error('Pagamento non aggiornato: il record non e accessibile.');
+                    }
                 } else if (existingRecords && existingRecords.length > 0) {
-                    const { error } = await supabaseClient.from('pagamenti').update(recordToSave).eq('id', existingRecords[0].id);
+                    const updateRecord = {
+                        importo: recordToSave.importo,
+                        importo_totale: recordToSave.importo_totale,
+                        data_pagamento: recordToSave.data_pagamento,
+                        metodo: recordToSave.metodo,
+                        stato: recordToSave.stato
+                    };
+                    const { data: updatedRecords, error } = await supabaseClient
+                        .from('pagamenti')
+                        .update(updateRecord)
+                        .eq('id', existingRecords[0].id)
+                        .select('id');
                     if (error) throw error;
+                    if (!updatedRecords || updatedRecords.length === 0) {
+                        throw new Error('Pagamento non aggiornato: il record non e accessibile.');
+                    }
                 } else {
                     const { error } = await supabaseClient.from('pagamenti').insert([recordToSave]);
                     if (error) throw error;
@@ -527,8 +555,15 @@
             if (!confirm("Sei sicuro di voler eliminare questo pagamento?")) return;
             try {
                 if (!currentSelection.existingPagId) throw new Error('Pagamento non identificato. Ricarica la tabella e riprova.');
-                const { error } = await supabaseClient.from('pagamenti').delete().eq('id', currentSelection.existingPagId);
+                const { data: deletedRecords, error } = await supabaseClient
+                    .from('pagamenti')
+                    .delete()
+                    .eq('id', currentSelection.existingPagId)
+                    .select('id');
                 if (error) throw error;
+                if (!deletedRecords || deletedRecords.length === 0) {
+                    throw new Error('Pagamento non eliminato: il database non ha restituito il record selezionato. Verifica le policy DELETE di Supabase.');
+                }
                 closeModal(); caricaDatiContabili();
             } catch (err) { alert(err.message); }
         }
