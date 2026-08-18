@@ -518,7 +518,8 @@
                 mesiCur.forEach(m => tHtml += `<td class="p-2 text-center border-l border-slate-800">€${totaliMese[m.id].toFixed(0)}</td>`);
                 trTot.innerHTML = tHtml; tbody.appendChild(trTot);
 
-                renderKPI(allPags.filter(p => sociFiltrati.some(s => s.id === p.socio_id) && pagamentoAppartieneAlCorso(p, sociFiltrati.find(s => s.id === p.socio_id), corsoFiltro)), sociFiltrati);
+                renderKPI(allPags.filter(p => sociFiltrati.some(s => s.id === p.socio_id)
+                    && pagamentoAppartieneAlCorso(p, sociFiltrati.find(s => s.id === p.socio_id), corsoFiltro)), sociFiltrati);
             } catch (err) { console.error(err); }
         }
 
