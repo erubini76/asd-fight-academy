@@ -90,6 +90,10 @@ BEGIN
       'CREATE POLICY %I ON %I FOR UPDATE TO anon, authenticated USING (true) WITH CHECK (true)',
       tbl || '_anon_update', tbl
     );
+    EXECUTE format(
+      'CREATE POLICY %I ON %I FOR DELETE TO anon, authenticated USING (true)',
+      tbl || '_anon_delete', tbl
+    );
 
     RAISE NOTICE 'Policy anon applicate su tabella: %', tbl;
   END LOOP;
