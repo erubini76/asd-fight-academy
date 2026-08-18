@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
     return res.status(405).json({ error: 'Metodo non consentito' });
   }
 
-  const { nome, cognome, email, telefono, codice_fiscale, corso } = req.body;
+  const { tipo, nome, cognome, email, telefono, codice_fiscale, corso } = req.body;
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
   if (!RESEND_API_KEY) {
@@ -26,6 +26,35 @@ module.exports = async (req, res) => {
   const targetEmail = 'erubini@gmail.com';
 
   try {
+    if (tipo === 'approvazione') {
+      const resendApproval = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${RESEND_API_KEY}`
+        },
+        body: JSON.stringify({
+          from: 'A.S.D. Fight Academy <onboarding@resend.dev>',
+          to: [email],
+          subject: 'Iscrizione approvata - A.S.D. Fight Academy',
+          html: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+              <h2 style="color: #15803d;">A.S.D. FIGHT ACADEMY</h2>
+              <p>Ciao <strong>${nome} ${cognome}</strong>,</p>
+              <p>la tua iscrizione al corso <strong>${corso || 'selezionato'}</strong> è stata approvata.</p>
+              <p>Puoi accedere all'Area Tesserati per consultare i tuoi dati.</p>
+            </div>
+          `
+        })
+      });
+      const approvalResult = await resendApproval.json();
+      if (!resendApproval.ok) {
+        console.error('Errore Resend approvazione:', approvalResult);
+        return res.status(500).json({ error: 'Errore invio email approvazione: ' + JSON.stringify(approvalResult) });
+      }
+      return res.status(200).json({ success: true, message: 'Email di approvazione inviata' });
+    }
+
     // 1. Email di conferma simulata al Tesserato
     const resendUser = await fetch('https://api.resend.com/emails', {
       method: 'POST',

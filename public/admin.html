@@ -134,7 +134,6 @@
                 <th class="p-4 text-center">Quota Iscrizione</th>
                 <th class="p-4 text-center">Certificato</th>
                 <th class="p-4 text-center">Tessera ASI</th>
-                <th class="p-4 text-right">Azioni</th>
               </tr>
             </thead>
             <tbody id="sociTableBody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
@@ -336,7 +335,7 @@
                 <span class="text-[8px] px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase tracking-widest">${corsoDisplay}</span>
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
-                <button onclick="toggleStato('${s.id}', 'stato_approvazione', '${s.stato_approvazione}')" class="px-2 py-1 rounded border ${s.stato_approvazione === 'Approvato' ? 'bg-green-600/10 text-green-500 border-green-500/30' : 'bg-amber-600/10 text-amber-500 border-amber-500/30'} font-bold uppercase text-[8px]">
+              <button onclick="gestisciStatoIscrizione('${s.id}', '${s.stato_approvazione || 'In Attesa'}')" class="px-2 py-1 rounded border ${s.stato_approvazione === 'Approvato' ? 'bg-green-600/10 text-green-500 border-green-500/30' : 'bg-amber-600/10 text-amber-500 border-amber-500/30'} font-bold uppercase text-[8px]">
                     ${s.stato_approvazione || 'In Attesa'}
                 </button>
             </td>
@@ -363,31 +362,74 @@
                     <button onclick="modificaScadenza('${s.id}', 'scadenza_tessera_asi', 'Tessera ASI', '${s.scadenza_tessera_asi || ''}')" class="text-slate-500 hover:text-white" title="Modifica scadenza tessera ASI"><i class="fa-solid fa-pen-to-square"></i></button>
                 </div>
             </td>
-            <td class="p-4 text-right border-b border-slate-700/50">
-                <div class="flex justify-end gap-2">
-                </div>
-            </td>
           `;
           tbody.appendChild(tr);
         });
       } catch (err) { console.error(err.message); }
     }
 
-    async function toggleStato(id, campo, valoreAttuale) {
-        let nuovoValore;
-        if (typeof valoreAttuale === 'boolean') nuovoValore = !valoreAttuale;
-        else nuovoValore = (valoreAttuale === 'Approvato' ? 'In Attesa' : 'Approvato');
-
+    async function gestisciStatoIscrizione(id, statoAttuale) {
+      const staApprovando = statoAttuale !== 'Approvato';
         try {
-            const { error } = await supabaseClient.from('soci').update({ [campo]: nuovoValore }).eq('id', id);
-            if (error) throw error;
-            
-            // Se approvato iscrizione, invia email
-            if (campo === 'stato_approvazione' && nuovoValore === 'Approvato') {
-                alert("Iscrizione approvata! Email di conferma in fase di invio...");
-                // Logica email qui se necessaria
-            }
+        const { data: socio, error: fetchError } = await supabaseClient
+          .from('soci')
+                .select('id, nome, cognome, email, telefono, codice_fiscale, stato_approvazione, scadenza_tessera_asi')
+          .eq('id', id)
+          .single();
+        if (fetchError) throw fetchError;
 
+        if (!staApprovando) {
+          if (!confirm(`Confermi di riportare l'iscrizione di ${socio.nome} ${socio.cognome} in attesa?`)) return;
+          const { error } = await supabaseClient.from('soci').update({ stato_approvazione: 'In Attesa' }).eq('id', id);
+          if (error) throw error;
+          caricaSociEVerifiche();
+          return;
+        }
+
+        const { data: pagamenti, error: pagamentiError } = await supabaseClient
+          .from('pagamenti')
+          .select('stato, corso, tipo_pagamento, importo')
+          .eq('socio_id', id);
+        if (pagamentiError) throw pagamentiError;
+
+        const quotaPagata = (pagamenti || []).some(p =>
+          p.stato === 'Approvato'
+          && (p.corso === 'Iscrizione Annuale' || p.tipo_pagamento === 'Iscrizione Annuale')
+        );
+        const asiValida = socio.scadenza_tessera_asi && new Date(socio.scadenza_tessera_asi) >= new Date();
+        const motivi = [];
+        if (!quotaPagata) motivi.push('la Quota Iscrizione non risulta PAGATA');
+        if (!asiValida) motivi.push('la data della Tessera ASI manca oppure è scaduta');
+        if (motivi.length > 0) {
+          alert(`Non è possibile approvare l'iscrizione perché ${motivi.join(' e ')}.`);
+          return;
+        }
+
+        const conferma = confirm(`Confermi di approvare l'iscrizione di ${socio.nome} ${socio.cognome} e inviare la mail di conferma all'associato?`);
+        if (!conferma) return;
+
+        const { error } = await supabaseClient.from('soci').update({ stato_approvazione: 'Approvato' }).eq('id', id);
+            if (error) throw error;
+
+        const corso = getCorsoDisplay(socio);
+        const emailResponse = await fetch('/api/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            tipo: 'approvazione',
+            nome: socio.nome,
+            cognome: socio.cognome,
+            email: socio.email,
+            telefono: socio.telefono,
+            codice_fiscale: socio.codice_fiscale,
+            corso
+          })
+        });
+        if (!emailResponse.ok) {
+          const dettaglio = await emailResponse.json().catch(() => ({}));
+          throw new Error(dettaglio.error || 'Iscrizione approvata, ma invio email non riuscito.');
+            }
+        alert('Iscrizione approvata e mail di conferma inviata.');
             caricaSociEVerifiche();
         } catch (err) { alert(err.message); }
     }
