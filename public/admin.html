@@ -134,6 +134,8 @@
                 <th class="p-4 text-center">Quota Iscrizione</th>
                 <th class="p-4 text-center">Certificato</th>
                 <th class="p-4 text-center">Tessera ASI</th>
+                <th class="p-4 text-center">Privacy</th>
+                <th class="p-4 text-center">Foto</th>
               </tr>
             </thead>
             <tbody id="sociTableBody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
@@ -308,6 +310,8 @@
           const corsoDisplay = getCorsoDisplay(s);
           const medScaduto = !s.scadenza_certificato_medico || new Date(s.scadenza_certificato_medico) < new Date();
           const quota = s.quota_annuale;
+          const privacyAccettata = s.privacy_accettata === true;
+          const fotoAutorizzata = s.liberatoria_immagini === true;
           const quotaApprovata = quota?.stato === 'Approvato';
           const quotaInVerifica = quota?.stato === 'In attesa di verifica';
           const quotaMetodo = quota?.metodo === 'bonifico' ? 'Bonifico' : (quota?.metodo === 'contanti' ? 'Contanti' : 'Metodo n/d');
@@ -361,6 +365,16 @@
                     <p class="${asiClass}">${s.scadenza_tessera_asi || '---'}</p>
                     <button onclick="modificaScadenza('${s.id}', 'scadenza_tessera_asi', 'Tessera ASI', '${s.scadenza_tessera_asi || ''}')" class="text-slate-500 hover:text-white" title="Modifica scadenza tessera ASI"><i class="fa-solid fa-pen-to-square"></i></button>
                 </div>
+            </td>
+            <td class="p-4 text-center border-b border-slate-700/50">
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded border ${privacyAccettata ? 'bg-green-600/10 text-green-500 border-green-500/30' : 'bg-amber-600/10 text-amber-400 border-amber-500/30'} font-bold uppercase text-[8px]" title="${privacyAccettata ? 'Privacy accettata' : 'Privacy non registrata'}">
+                <i class="fa-solid ${privacyAccettata ? 'fa-check' : 'fa-triangle-exclamation'}"></i> ${privacyAccettata ? 'OK' : 'Manca'}
+              </span>
+            </td>
+            <td class="p-4 text-center border-b border-slate-700/50">
+              <span class="inline-flex items-center gap-1 px-2 py-1 rounded border ${fotoAutorizzata ? 'bg-green-600/10 text-green-500 border-green-500/30' : 'bg-amber-600/10 text-amber-400 border-amber-500/30'} font-bold uppercase text-[8px]" title="${fotoAutorizzata ? 'Liberatoria immagini accettata' : 'Liberatoria immagini non accettata'}">
+                <i class="fa-solid ${fotoAutorizzata ? 'fa-check' : 'fa-minus'}"></i> ${fotoAutorizzata ? 'SI' : 'NO'}
+              </span>
             </td>
           `;
           tbody.appendChild(tr);
