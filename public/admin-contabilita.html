@@ -220,6 +220,8 @@
                 </h2>
                 <div class="flex gap-4 font-bold uppercase tracking-tighter">
                     <span class="flex items-center gap-1.5 text-green-400 bg-green-400/10 px-2 py-1 rounded-lg border border-green-400/20"><i class="fa-solid fa-square text-[7px]"></i> Pagato</span>
+                    <span class="flex items-center gap-1.5 text-amber-300 bg-green-400/10 px-2 py-1 rounded-lg border border-green-400/20"><i class="fa-solid fa-money-bill-wave text-[8px]"></i> Contanti</span>
+                    <span class="flex items-center gap-1.5 text-cyan-300 bg-green-400/10 px-2 py-1 rounded-lg border border-green-400/20"><i class="fa-solid fa-building-columns text-[8px]"></i> Bonifico</span>
                     <span class="flex items-center gap-1.5 text-red-500 bg-red-500/10 px-2 py-1 rounded-lg border border-red-500/20"><i class="fa-solid fa-triangle-exclamation text-[7px]"></i> Moroso</span>
                     <span class="flex items-center gap-1.5 text-amber-400 bg-amber-400/10 px-2 py-1 rounded-lg border border-amber-400/20 animate-pulse"><i class="fa-solid fa-clock text-[7px]"></i> In Verifica</span>
                     <span class="flex items-center gap-1.5 text-slate-500 bg-slate-500/10 px-2 py-1 rounded-lg border border-slate-500/20"><i class="fa-solid fa-user-slash text-[7px]"></i> Non Prat.</span>
@@ -268,7 +270,7 @@
                 <button id="btn-delete-paga" onclick="eliminaPagamento()" class="hidden flex-1 bg-red-900 hover:bg-red-800 text-white font-bold py-3 rounded-xl text-xs uppercase">Elimina</button>
                 <button id="btn-non-prat" onclick="toggleMorositaConvalidata()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-xs uppercase">Non Prat.</button>
             </div>
-            <button onclick="closeModal()" class="payment-modal-close w-full bg-slate-700 hover:bg-slate-600 border border-slate-600 text-white text-sm font-bold uppercase rounded-xl transition">Chiudi</button>
+            <button onclick="closeModal()" class="payment-modal-close w-full bg-slate-700 hover:bg-slate-600 active:bg-slate-800 border border-slate-500 text-white text-sm font-bold uppercase tracking-wide rounded-xl shadow-lg hover:shadow-xl transition-all">Chiudi</button>
         </div>
     </div>
 
@@ -313,6 +315,12 @@
                     openPayModal(payload.socioId, payload.nome, payload.mese, payload.anno, payload.tipo, payload.pagId, payload.url, payload.imp);
                 });
             });
+        }
+
+        function getPaymentTextClass(payment) {
+            if (payment?.metodo === 'contanti') return 'text-amber-300';
+            if (payment?.metodo === 'bonifico') return 'text-cyan-300';
+            return 'text-green-400';
         }
 
         function renderHeader() {
@@ -392,7 +400,10 @@
                     if (pIsc) totaliMese.iscrizione += (parseFloat(pIsc.importo) || 0);
 
                     const actionIsc = buildPayPayload(s.id, `${s.nome} ${s.cognome}`, 0, yearVal, 'Iscrizione Annuale', pIsc ? pIsc.id : (pIscPending ? pIscPending.id : null), pIsc ? pIsc.ricevuta_url : (pIscPending ? pIscPending.ricevuta_url : ''), pIsc ? pIsc.importo : 0);
-                    html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer ${pIsc ? 'bg-cyan-600/20 text-cyan-400 font-bold' : (pIscPending ? 'bg-amber-400/20 text-amber-400 animate-pulse' : 'bg-slate-900/30')}" data-pay-action='${JSON.stringify(actionIsc).replace(/'/g, '&apos;')}'>${pIsc ? '€'+parseFloat(pIsc.importo).toFixed(0) : (pIscPending ? '<i class="fa-solid fa-clock text-[8px]"></i>' : '<i class="fa-solid fa-plus opacity-5"></i>')}</td>`;
+                    const annualStyle = pIsc
+                        ? `bg-green-600/20 ${getPaymentTextClass(pIsc)} font-bold`
+                        : (pIscPending ? 'bg-amber-400/20 text-amber-400 animate-pulse' : 'bg-slate-900/30');
+                    html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer ${annualStyle}" data-pay-action='${JSON.stringify(actionIsc).replace(/'/g, '&apos;')}'>${pIsc ? '€'+parseFloat(pIsc.importo).toFixed(0) : (pIscPending ? '<i class="fa-solid fa-clock text-[8px]"></i>' : '<i class="fa-solid fa-plus opacity-5"></i>')}</td>`;
 
                     mesiCur.forEach(m => {
                         const anno = typeYear === 'solare' ? yearVal : (m.id >= 9 ? yearVal : yearVal + 1);
@@ -419,7 +430,7 @@
                         const nonPrat = s.mesi_non_praticante && s.mesi_non_praticante.includes(`${m.id}-${anno}`);
 
                         let style = 'bg-slate-900/30', content = '<i class="fa-solid fa-plus opacity-5"></i>';
-                        if (p) { style = 'bg-green-600/20 text-green-400 font-bold'; content = '€' + parseFloat(p.importo).toFixed(0); }
+                        if (p) { style = `bg-green-600/20 ${getPaymentTextClass(p)} font-bold`; content = '€' + parseFloat(p.importo).toFixed(0); }
                         else if (pPend) { style = 'bg-amber-400/20 text-amber-400 animate-pulse'; content = '<i class="fa-solid fa-clock text-[8px]"></i>'; }
                         else if (eraPres) { style = 'bg-red-600/20 text-red-500 animate-pulse'; content = '<i class="fa-solid fa-triangle-exclamation text-[8px]"></i>'; }
                         else if (nonPrat) { style = 'bg-slate-700/50 text-slate-500'; content = '<i class="fa-solid fa-user-slash text-[8px]"></i>'; }
