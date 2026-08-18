@@ -331,6 +331,33 @@
             mesi.forEach(m => row.innerHTML += `<th class="p-4 text-center border-l border-slate-800">${m.nome}</th>`);
         }
 
+        function normalizeCorsoNome(value) {
+            if (!value) return '';
+            return String(value)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[\/\-_]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase()
+                .replace(/\badulti(?:ma|m[a])?\b/g, 'adulti');
+        }
+
+        function corsiCompatibili(a, b) {
+            const nomeA = normalizeCorsoNome(a);
+            const nomeB = normalizeCorsoNome(b);
+            if (!nomeA || !nomeB) return false;
+            if (nomeA === nomeB) return true;
+            if (nomeA.includes('vietvodao') && nomeB.includes('vietvodao')) {
+                const aAdulti = nomeA.includes('adulti');
+                const aRagazzi = nomeA.includes('ragazzi');
+                const bAdulti = nomeB.includes('adulti');
+                const bRagazzi = nomeB.includes('ragazzi');
+                return (aAdulti || aRagazzi) && (bAdulti || bRagazzi);
+            }
+            return nomeA.includes(nomeB) || nomeB.includes(nomeA);
+        }
+
         function getCorsoDisplayFromSocio(socio) {
             const iscrizioni = Array.isArray(socio?.iscrizioni_corsi) ? socio.iscrizioni_corsi : [];
             const latest = iscrizioni.slice().sort((a, b) => new Date(b.data_iscrizione || 0) - new Date(a.data_iscrizione || 0))[0];
@@ -374,15 +401,14 @@
                 const corsoFiltro = selectCorso.value;
                 let sociFiltrati = allSoci;
                 if (sessionUser.ruolo !== 'presidente') {
-                    const comp = sessionUser.corsi_competenze.map(c => c.toLowerCase().trim());
+                    const comp = sessionUser.corsi_competenze || [];
                     sociFiltrati = allSoci.filter(s => {
-                        const corsiSocio = getCorsiNomiSocio(s).map(n => n.toLowerCase());
-                        return comp.some(c => corsiSocio.some(nome => nome.includes(c)));
+                        const corsiSocio = getCorsiNomiSocio(s);
+                        return comp.some(c => corsiSocio.some(nome => corsiCompatibili(nome, c)));
                     });
                 }
                 if (corsoFiltro !== 'tutti') {
-                    const filtroLower = corsoFiltro.toLowerCase().trim();
-                    sociFiltrati = sociFiltrati.filter(s => getCorsiNomiSocio(s).some(nome => nome.toLowerCase().includes(filtroLower)));
+                    sociFiltrati = sociFiltrati.filter(s => getCorsiNomiSocio(s).some(nome => corsiCompatibili(nome, corsoFiltro)));
                 }
 
                 renderHeader();

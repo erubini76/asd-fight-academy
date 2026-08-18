@@ -360,6 +360,34 @@
             }
         }
 
+        function normalizzaNomeCorso(nomeCorso) {
+            if (!nomeCorso) return '';
+            const valore = String(nomeCorso)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[\/\-_]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            const lower = valore.toLowerCase();
+            if (lower.includes('vietvodao') && (lower.includes('adulti') || lower.includes('ragazzi'))) {
+                return 'Vietvodao Adulti/Ragazzi';
+            }
+            if (lower.includes('vietvodao') && lower.includes('bambini')) {
+                return 'Vietvodao Bambini';
+            }
+            if (lower.includes('ninjutsu') && lower.includes('bambini')) {
+                return 'Ninjutsu Bambini';
+            }
+            if (lower.includes('ninjutsu') && (lower.includes('adulti') || lower.includes('ragazzi'))) {
+                return 'Ninjutsu Adulti/Ragazzi';
+            }
+            if (lower.includes('shodo')) {
+                return 'Shodo (Calligrafia)';
+            }
+            return valore;
+        }
+
         async function inviaDomanda(e) {
             e.preventDefault();
             
@@ -411,7 +439,7 @@
 
                 if (existingError && existingError.code !== 'PGRST116') throw existingError;
 
-                const nuovoCorso = document.getElementById('corso').value;
+                const nuovoCorso = normalizzaNomeCorso(document.getElementById('corso').value);
                 const formData = {
                     nome: document.getElementById('nome').value.trim(),
                     cognome: document.getElementById('cognome').value.trim(),

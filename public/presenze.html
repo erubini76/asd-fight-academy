@@ -103,8 +103,31 @@
             { val: "Shodo (Calligrafia)", lab: "Shodo (Calligrafia)" }
         ];
 
+        function normalizeCorsoNome(value) {
+            if (!value) return '';
+            return String(value)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[\/\-_]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase()
+                .replace(/\badulti(?:ma|m[a])?\b/g, 'adulti');
+        }
+
         function corsoCorrisponde(a, b) {
-            return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+            const nomeA = normalizeCorsoNome(a);
+            const nomeB = normalizeCorsoNome(b);
+            if (!nomeA || !nomeB) return false;
+            if (nomeA === nomeB) return true;
+            if (nomeA.includes('vietvodao') && nomeB.includes('vietvodao')) {
+                const aAdulti = nomeA.includes('adulti');
+                const aRagazzi = nomeA.includes('ragazzi');
+                const bAdulti = nomeB.includes('adulti');
+                const bRagazzi = nomeB.includes('ragazzi');
+                return (aAdulti || aRagazzi) && (bAdulti || bRagazzi);
+            }
+            return nomeA.includes(nomeB) || nomeB.includes(nomeA);
         }
 
         tuttiICorsi.forEach(c => {

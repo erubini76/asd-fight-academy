@@ -90,6 +90,33 @@
             return nomi.length > 0 ? [...new Set(nomi)] : ['GENERALE'];
         }
 
+        function normalizeCorsoNome(value) {
+            if (!value) return '';
+            return String(value)
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[\/\-_]+/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim()
+                .toLowerCase()
+                .replace(/\badulti(?:ma|m[a])?\b/g, 'adulti');
+        }
+
+        function corsiCompatibili(a, b) {
+            const nomeA = normalizeCorsoNome(a);
+            const nomeB = normalizeCorsoNome(b);
+            if (!nomeA || !nomeB) return false;
+            if (nomeA === nomeB) return true;
+            if (nomeA.includes('vietvodao') && nomeB.includes('vietvodao')) {
+                const aAdulti = nomeA.includes('adulti');
+                const aRagazzi = nomeA.includes('ragazzi');
+                const bAdulti = nomeB.includes('adulti');
+                const bRagazzi = nomeB.includes('ragazzi');
+                return (aAdulti || aRagazzi) && (bAdulti || bRagazzi);
+            }
+            return nomeA.includes(nomeB) || nomeB.includes(nomeA);
+        }
+
         function giorniAllaScadenza(dataScadenza) {
             if (!dataScadenza) return null;
             const oggi = new Date();
@@ -139,8 +166,8 @@
                 // se uno qualsiasi dei suoi corsi rientra tra le competenze dell'istruttore.
                 let sociFiltrati = data.filter(isCritico);
                 if (sessionUser.ruolo !== 'presidente') {
-                    const comp = (sessionUser.corsi_competenze || []).map(c => String(c).toLowerCase().trim());
-                    sociFiltrati = sociFiltrati.filter(s => getCorsiNomiSocio(s).some(nome => comp.some(c => nome.toLowerCase().includes(c))));
+                    const comp = sessionUser.corsi_competenze || [];
+                    sociFiltrati = sociFiltrati.filter(s => getCorsiNomiSocio(s).some(nome => comp.some(c => corsiCompatibili(nome, c))));
                 }
 
                 if (sociFiltrati.length === 0) {

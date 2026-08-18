@@ -185,6 +185,37 @@
       } catch (err) { alert(err.message); }
     }
 
+    function normalizeCorsoNome(value) {
+      if (!value) return '';
+      return String(value)
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[\/\-_]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .toLowerCase()
+        .replace(/\badulti(?:ma|m[a])?\b/g, 'adulti')
+        .replace(/\bvietvodao\s+adulti\s+ragazzi\b/g, 'vietvodao adulti ragazzi')
+        .replace(/\bvietvodao\s+adulti\b/g, 'vietvodao adulti');
+    }
+
+    function corsiCompatibili(a, b) {
+      const nomeA = normalizeCorsoNome(a);
+      const nomeB = normalizeCorsoNome(b);
+      if (!nomeA || !nomeB) return false;
+      if (nomeA === nomeB) return true;
+
+      const sameBase = nomeA.includes('vietvodao') && nomeB.includes('vietvodao');
+      if (!sameBase) return nomeA.includes(nomeB) || nomeB.includes(nomeA);
+
+      const aAdulti = nomeA.includes('adulti');
+      const aRagazzi = nomeA.includes('ragazzi');
+      const bAdulti = nomeB.includes('adulti');
+      const bRagazzi = nomeB.includes('ragazzi');
+
+      return (aAdulti || aRagazzi) && (bAdulti || bRagazzi);
+    }
+
     function getCorsoDisplay(socio) {
       const iscrizioni = Array.isArray(socio?.iscrizioni_corsi) ? socio.iscrizioni_corsi : [];
       const latest = iscrizioni.slice().sort((a, b) => new Date(b.data_iscrizione || 0) - new Date(a.data_iscrizione || 0))[0];
@@ -236,9 +267,9 @@
         const sociFiltrati = currentUser.ruolo === 'presidente'
           ? soci
           : soci.filter(s => {
-              const corsoDisplay = getCorsoDisplay(s).toLowerCase();
-              const comp = (currentUser.corsi_competenze || []).map(c => String(c).toLowerCase().trim());
-              return comp.some(c => corsoDisplay.includes(c));
+              const corsoDisplay = getCorsoDisplay(s);
+              const comp = currentUser.corsi_competenze || [];
+              return comp.some(c => corsiCompatibili(corsoDisplay, c));
             });
 
         sociFiltrati.forEach(s => {
