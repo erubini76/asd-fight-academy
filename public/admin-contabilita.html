@@ -83,42 +83,44 @@
         @media (max-width: 640px) {
             .contab-table th:first-child,
             .contab-table td:first-child {
-                width: 190px !important;
-                min-width: 190px !important;
+                width: 180px !important;
+                min-width: 180px !important;
             }
             .contab-table th:not(:first-child),
             .contab-table td:not(:first-child) {
-                width: 56px !important;
-                min-width: 56px !important;
+                width: 60px !important;
+                min-width: 60px !important;
             }
             .contab-table td:first-child p {
                 font-size: 12px !important;
             }
             .contab-table td:first-child span {
-                width: 100% !important;
-                max-width: 185px !important;
+                display: inline !important;
+                width: auto !important;
+                max-width: none !important;
                 white-space: normal;
-                overflow-wrap: anywhere;
-                overflow: hidden;
+                overflow-wrap: normal;
+                overflow: visible;
+                text-overflow: clip;
             }
             .contab-table th,
             .contab-table td {
                 padding: 0.65rem !important;
             }
             .contab-table {
-                min-width: 918px !important;
+                min-width: 960px !important;
             }
         }
 
         @media (max-width: 360px) and (orientation: portrait) {
             .contab-table th:first-child,
             .contab-table td:first-child {
-                width: 175px !important;
-                min-width: 175px !important;
+                width: 165px !important;
+                min-width: 165px !important;
             }
 
             .contab-table {
-                min-width: 885px !important;
+                min-width: 880px !important;
             }
 
             .contab-table td:first-child span {
