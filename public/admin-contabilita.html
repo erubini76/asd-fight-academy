@@ -42,8 +42,8 @@
         @media (min-width: 641px) {
             .contab-table th:first-child,
             .contab-table td:first-child {
-                width: 300px;
-                min-width: 300px;
+                width: 250px;
+                min-width: 250px;
             }
             .scroll-hint {
                 display: block;
@@ -74,13 +74,13 @@
         @media (max-width: 640px) {
             .contab-table th:first-child,
             .contab-table td:first-child {
-                width: 205px !important;
-                min-width: 205px !important;
+                width: 190px !important;
+                min-width: 190px !important;
             }
             .contab-table th:not(:first-child),
             .contab-table td:not(:first-child) {
-                width: 50px !important;
-                min-width: 50px !important;
+                width: 56px !important;
+                min-width: 56px !important;
             }
             .contab-table td:first-child p {
                 font-size: 12px !important;
@@ -97,7 +97,7 @@
                 padding: 0.65rem !important;
             }
             .contab-table {
-                min-width: 855px !important;
+                min-width: 918px !important;
             }
         }
 
@@ -109,7 +109,7 @@
             }
 
             .contab-table {
-                min-width: 825px !important;
+                min-width: 885px !important;
             }
 
             .contab-table td:first-child span {
@@ -120,12 +120,12 @@
         @media (max-width: 640px) and (orientation: landscape) {
             .contab-table th:first-child,
             .contab-table td:first-child {
-                width: 300px !important;
-                min-width: 300px !important;
+                width: 250px !important;
+                min-width: 250px !important;
             }
 
             .contab-table {
-                min-width: 950px !important;
+                min-width: 900px !important;
             }
 
             .contab-table td:first-child span {
@@ -291,7 +291,7 @@
 
         function renderHeader() {
             const row = document.getElementById('table-header-row');
-            row.innerHTML = '<th class="p-4 sticky left-0 bg-slate-900 z-10 min-w-[180px] sm:min-w-[300px] text-left whitespace-normal leading-tight">Tesserato / Corso</th><th class="p-4 text-center border-l border-slate-800 bg-slate-900/80 whitespace-normal break-words leading-tight">Tesseramento</th>';
+            row.innerHTML = '<th class="p-4 sticky left-0 bg-slate-900 z-10 min-w-[180px] sm:min-w-[250px] text-left whitespace-normal leading-tight">Tesserato / Corso</th><th class="p-4 text-center border-l border-slate-800 bg-slate-900/80 whitespace-normal break-words leading-tight">Tesseramento</th>';
             const mesi = document.getElementById('filter-year-type').value === 'accademico' ? mesiAccademici : mesiSolari;
             mesi.forEach(m => row.innerHTML += `<th class="p-4 text-center border-l border-slate-800">${m.nome}</th>`);
         }
@@ -359,7 +359,7 @@
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-700/20 transition";
                     const corsoDisplay = getCorsoDisplayFromSocio(s);
-                    let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[180px] sm:min-w-[300px] break-words"><p class="font-bold text-white text-[12px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase w-full max-w-[280px] truncate">${corsoDisplay}</span></td>`;
+                    let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[180px] sm:min-w-[250px] break-words"><p class="font-bold text-white text-[12px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase w-full max-w-[280px] truncate">${corsoDisplay}</span></td>`;
 
                     const pIsc = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'Approvato' && p.anno_riferimento === yearVal);
                     const pIscPending = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'In attesa di verifica' && p.anno_riferimento === yearVal);
