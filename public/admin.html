@@ -341,20 +341,30 @@
                 </button>
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
-              <span class="px-2 py-1 rounded border ${quotaApprovata ? 'bg-green-600/10 text-green-500 border-green-500/30' : (quotaInVerifica ? 'bg-amber-600/10 text-amber-400 border-amber-500/30' : 'bg-red-600/10 text-red-500 border-red-500/30')} font-bold uppercase text-[8px]" title="${quota?.ricevuta_url || ''}">
-                ${quotaDescrizione}
-              </span>
+              <div class="flex flex-col items-center gap-1">
+                <span class="px-2 py-1 rounded border ${quotaApprovata ? 'bg-green-600/10 text-green-500 border-green-500/30' : (quotaInVerifica ? 'bg-amber-600/10 text-amber-400 border-amber-500/30' : 'bg-red-600/10 text-red-500 border-red-500/30')} font-bold uppercase text-[8px]">
+                  ${quotaDescrizione}
+                </span>
+                ${quota?.ricevuta_url ? `<a href="${quota.ricevuta_url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-white text-[9px] font-bold uppercase" title="Visualizza ricevuta bonifico"><i class="fa-solid fa-file-invoice mr-1"></i>Ricevuta</a>` : ''}
+              </div>
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
-                <p class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">${s.scadenza_certificato_medico || '---'}</p>
+                <div class="flex flex-col items-center gap-1">
+                    <p class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">${s.scadenza_certificato_medico || '---'}</p>
+                    <div class="flex items-center gap-2">
+                        ${s.certificato_medico_url ? `<a href="${s.certificato_medico_url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-white" title="Visualizza certificato medico"><i class="fa-solid fa-file-medical"></i></a>` : ''}
+                        <button onclick="modificaScadenza('${s.id}', 'scadenza_certificato_medico', 'Certificato Medico', '${s.scadenza_certificato_medico || ''}')" class="text-slate-500 hover:text-white" title="Modifica scadenza certificato medico"><i class="fa-solid fa-pen-to-square"></i></button>
+                    </div>
+                </div>
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
-                <p class="${asiClass}">${s.scadenza_tessera_asi || '---'}</p>
+                <div class="flex flex-col items-center gap-1">
+                    <p class="${asiClass}">${s.scadenza_tessera_asi || '---'}</p>
+                    <button onclick="modificaScadenza('${s.id}', 'scadenza_tessera_asi', 'Tessera ASI', '${s.scadenza_tessera_asi || ''}')" class="text-slate-500 hover:text-white" title="Modifica scadenza tessera ASI"><i class="fa-solid fa-pen-to-square"></i></button>
+                </div>
             </td>
             <td class="p-4 text-right border-b border-slate-700/50">
                 <div class="flex justify-end gap-2">
-                    ${s.certificato_medico_url ? `<a href="${s.certificato_medico_url}" target="_blank" class="text-blue-400 hover:text-white" title="Visualizza Certificato"><i class="fa-solid fa-file-medical"></i></a>` : ''}
-                    <button onclick="editTesserato('${s.id}', '${s.nome} ${s.cognome}', '${s.scadenza_certificato_medico || ''}', '${s.scadenza_tessera_asi || ''}')" class="text-slate-500 hover:text-white" title="Modifica Scadenze"><i class="fa-solid fa-pen-to-square"></i></button>
                 </div>
             </td>
           `;
@@ -398,18 +408,12 @@
       } catch (err) {}
     }
 
-    async function editTesserato(id, nominativo, med, asi) {
-        const nuovaMed = prompt(`Modifica scadenza Certificato Medico per ${nominativo} (AAAA-MM-DD):`, med);
-        const nuovaAsi = prompt(`Modifica scadenza Tessera ASI per ${nominativo} (AAAA-MM-DD):`, asi);
-        
-        if (nuovaMed === null && nuovaAsi === null) return;
-
-        const updates = {};
-        if (nuovaMed !== null) updates.scadenza_certificato_medico = nuovaMed || null;
-        if (nuovaAsi !== null) updates.scadenza_tessera_asi = nuovaAsi || null;
+    async function modificaScadenza(id, campo, descrizione, valoreAttuale) {
+      const nuovaData = prompt(`Modifica scadenza ${descrizione} (AAAA-MM-DD):`, valoreAttuale);
+      if (nuovaData === null) return;
 
         try {
-            const { error } = await supabaseClient.from('soci').update(updates).eq('id', id);
+        const { error } = await supabaseClient.from('soci').update({ [campo]: nuovaData || null }).eq('id', id);
             if (error) throw error;
             alert("Dati aggiornati!");
             caricaSociEVerifiche();
