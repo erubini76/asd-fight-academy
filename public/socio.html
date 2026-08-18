@@ -135,6 +135,17 @@
                                 <span class="text-[9px] font-black ${s.liberatoria_immagini === true ? 'text-green-400' : 'text-amber-400'} uppercase"><i class="fa-solid ${s.liberatoria_immagini === true ? 'fa-check' : 'fa-minus'} mr-1"></i>${s.liberatoria_immagini === true ? 'Consenso dato' : 'Consenso non dato'}</span>
                             </div>
                         </div>
+                        <div class="mx-5 mt-5 bg-slate-900/30 p-4 rounded-xl border border-slate-700/50">
+                            <h5 class="text-[10px] font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-3"><i class="fa-solid fa-address-card text-cyan-400"></i> Dati anagrafici</h5>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-[10px]">
+                                <div><span class="text-[8px] font-bold text-slate-500 uppercase block">Data di nascita</span><span class="text-slate-200">${s.data_nascita || 'Non indicata'}</span></div>
+                                <div><span class="text-[8px] font-bold text-slate-500 uppercase block">Luogo di nascita</span><span class="text-slate-200">${s.luogo_nascita || 'Non indicato'}</span></div>
+                                <div><span class="text-[8px] font-bold text-slate-500 uppercase block">Email</span><span class="text-slate-200 break-all">${s.email || 'Non indicata'}</span></div>
+                                <div><span class="text-[8px] font-bold text-slate-500 uppercase block">Telefono</span><span class="text-slate-200">${s.telefono || 'Non indicato'}</span></div>
+                                <div class="sm:col-span-2"><span class="text-[8px] font-bold text-slate-500 uppercase block">Residenza</span><span class="text-slate-200">${[s.residenza_indirizzo, s.residenza_cap, s.residenza_citta].filter(Boolean).join(', ') || 'Non indicata'}</span></div>
+                                ${(s.nome_tutore || s.cognome_tutore || s.cf_tutore) ? `<div class="sm:col-span-2"><span class="text-[8px] font-bold text-slate-500 uppercase block">Genitore / Tutore</span><span class="text-slate-200">${[s.nome_tutore, s.cognome_tutore].filter(Boolean).join(' ')}${s.cf_tutore ? ` · CF ${s.cf_tutore}` : ''}</span></div>` : ''}
+                            </div>
+                        </div>
                         <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 text-center"><span class="text-[7px] font-bold text-slate-500 uppercase block mb-1">Tesseramento</span><span class="text-[9px] font-black ${s.stato_approvazione === 'Approvato' ? 'text-green-400' : 'text-amber-400'} uppercase">${s.stato_approvazione || 'In Approvazione'}</span></div>
                             <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 text-center"><span class="text-[7px] font-bold text-slate-500 uppercase block mb-1">Quota Tesseramento</span><span class="text-[9px] font-black ${quotaApprovata ? 'text-green-400' : (quotaInVerifica ? 'text-amber-400' : 'text-red-400')} uppercase">${quotaApprovata ? 'Pagata' : (quotaInVerifica ? 'In verifica' : 'Da versare')}</span></div>

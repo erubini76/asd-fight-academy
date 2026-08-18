@@ -1,0 +1,5 @@
+[{"id":"1c40414a-d640-4253-befa-cb0363fa2f1f","nome_corso":"Ninjutsu Adulti/Ragazzi","categoria":"Adulti","quota_mensile":50.00,"istruttore":"Enrico Rubini","orari":"Martedì - Giovedì 19:30 - 21:00"}, 
+ {"id":"e9602f05-3174-4bc5-8ddb-6520758015af","nome_corso":"Ninjutsu Bambini","categoria":"Bambini","quota_mensile":40.00,"istruttore":"Saverio Zanco","orari":"Martedì - Giovedì 18:30 - 19:30"}, 
+ {"id":"46f5c96a-fd4d-4d7f-beb7-097c250c3d19","nome_corso":"Vietvodao Adulti/Ragazzi","categoria":"Adulti","quota_mensile":50.00,"istruttore":"Pierpaolo Fusaro","orari":"Lunedì - Mercoledì 19:30 - 21:00"}, 
+ {"id":"32f6e35f-f679-4ff1-8d6d-76e371ff67f4","nome_corso":"Vietvodao Bambini","categoria":"Bambini","quota_mensile":40.00,"istruttore":"Pierpaolo Fusaro","orari":"Lunedì - Mercoledì 18:30 - 19:30"}, 
+ {"id":"1e4a43b3-d251-4287-bb49-e2a9233a7dbc","nome_corso":"Shodo (Calligrafia Giapponese)","categoria":null,"quota_mensile":30.00,"istruttore":"Docente Shodo","orari":"2 Venerdì al mese 20:00 - 21:30"}]

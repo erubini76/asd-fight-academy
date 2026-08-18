@@ -1,0 +1,4 @@
+[{"id":1,"socio_id":null,"email":"kawasemidojo@gmail.com","nome":"Enrico Rubini (Presidente)","corsi_competenze":["TUTTI"],"ruolo":"presidente","password_accesso":"admin2026"}, 
+ {"id":4,"socio_id":"78ce9369-cf72-4353-9adc-ef90d40347ef","email":"rikytres@gmail.com","nome":"Tresoldi Riccardo","corsi_competenze":["Ninjutsu Bambini","Vietvodao Bambini"],"ruolo":"istruttore","password_accesso":"riky"}, 
+ {"id":2,"socio_id":"9ecb4c5f-0ee0-4351-8fe4-754e620d7740","email":"erubini@gmail.com","nome":"Rubini Enrico","corsi_competenze":["Ninjutsu Adulti/Ragazzi","Ninjutsu Bambini","Shodo (Calligrafia)"],"ruolo":"istruttore","password_accesso":"istruttore2026"}, 
+ {"id":3,"socio_id":"b488d4f8-9b95-4574-b8e4-b201502a85b6","email":"fusaro.pierpaolo@gmail.com","nome":"Pierpaolo Fusaro","corsi_competenze":["Vietvodao Adulti/Ragazzi"],"ruolo":"istruttore","password_accesso":"123456"}]
