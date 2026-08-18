@@ -574,6 +574,15 @@
                     const { error } = await supabaseClient.from('pagamenti').insert([recordToSave]);
                     if (error) throw error;
                 }
+
+                if (currentSelection.tipo === 'Iscrizione Annuale') {
+                    const { error: socioError } = await supabaseClient
+                        .from('soci')
+                        .update({ pagamento_iscrizione_2627: true })
+                        .eq('id', currentSelection.socioId);
+                    if (socioError) throw socioError;
+                }
+
                 closeModal(); caricaDatiContabili();
             } catch (err) { alert(err.message); }
         }

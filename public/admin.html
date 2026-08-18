@@ -216,6 +216,12 @@
       return (aAdulti || aRagazzi) && (bAdulti || bRagazzi);
     }
 
+    function getCorsiNomiSocio(socio) {
+      const iscrizioni = Array.isArray(socio?.iscrizioni_corsi) ? socio.iscrizioni_corsi : [];
+      const nomi = iscrizioni.map(i => i.nome_corso).filter(Boolean);
+      return nomi.length > 0 ? [...new Set(nomi)] : ['N/D'];
+    }
+
     function getCorsoDisplay(socio) {
       const iscrizioni = Array.isArray(socio?.iscrizioni_corsi) ? socio.iscrizioni_corsi : [];
       const latest = iscrizioni.slice().sort((a, b) => new Date(b.data_iscrizione || 0) - new Date(a.data_iscrizione || 0))[0];
@@ -267,9 +273,9 @@
         const sociFiltrati = currentUser.ruolo === 'presidente'
           ? soci
           : soci.filter(s => {
-              const corsoDisplay = getCorsoDisplay(s);
               const comp = currentUser.corsi_competenze || [];
-              return comp.some(c => corsiCompatibili(corsoDisplay, c));
+              const corsiSocio = getCorsiNomiSocio(s);
+              return corsiSocio.some(corsoNome => comp.some(c => corsiCompatibili(corsoNome, c)));
             });
 
         sociFiltrati.forEach(s => {
