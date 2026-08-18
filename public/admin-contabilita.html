@@ -293,15 +293,16 @@
             { id: 9, nome: 'Set' }, { id: 10, nome: 'Ott' }, { id: 11, nome: 'Nov' }, { id: 12, nome: 'Dic' }
         ];
 
-        let currentSelection = { socioId: null, mese: null, anno: null, tipo: '', existingPagId: null };
+        let currentSelection = { socioId: null, mese: null, anno: null, tipo: '', corso: '', existingPagId: null };
 
-        function buildPayPayload(socioId, nome, mese, anno, tipo, pagId, url, imp, metodo) {
+        function buildPayPayload(socioId, nome, mese, anno, tipo, corso, pagId, url, imp, metodo) {
             return {
                 socioId: String(socioId),
                 nome: String(nome),
                 mese: Number(mese),
                 anno: Number(anno),
                 tipo: String(tipo),
+            corso: String(corso || ''),
                 pagId: pagId ?? null,
                 url: String(url || ''),
                 imp: Number(imp || 0),
@@ -313,7 +314,7 @@
             tr.querySelectorAll('[data-pay-action]').forEach(cell => {
                 cell.addEventListener('click', () => {
                     const payload = JSON.parse(cell.dataset.payAction);
-                    openPayModal(payload.socioId, payload.nome, payload.mese, payload.anno, payload.tipo, payload.pagId, payload.url, payload.imp, payload.metodo);
+                    openPayModal(payload.socioId, payload.nome, payload.mese, payload.anno, payload.tipo, payload.corso, payload.pagId, payload.url, payload.imp, payload.metodo);
                 });
             });
         }
@@ -370,6 +371,28 @@
             return nomi.length > 0 ? [...new Set(nomi)] : ['N/D'];
         }
 
+        function corsoIstruttoreCompatibile(corso) {
+            if (sessionUser.ruolo === 'presidente') return true;
+            return (sessionUser.corsi_competenze || []).some(comp => corsiCompatibili(corso, comp));
+        }
+
+        function socioAppartieneAlCorso(socio, corsoFiltro) {
+            const corsiSocio = getCorsiNomiSocio(socio);
+            if (corsoFiltro !== 'tutti') return corsiSocio.some(corso => corsiCompatibili(corso, corsoFiltro));
+            return corsiSocio.some(corso => corsoIstruttoreCompatibile(corso));
+        }
+
+        function pagamentoAppartieneAlCorso(pagamento, socio, corsoFiltro) {
+            if (pagamento.corso === 'Iscrizione Annuale' || pagamento.tipo_pagamento === 'Iscrizione Annuale') {
+                return socioAppartieneAlCorso(socio, corsoFiltro);
+            }
+            if (!pagamento.corso || pagamento.corso === 'Mensilità') {
+                return socioAppartieneAlCorso(socio, corsoFiltro);
+            }
+            if (corsoFiltro !== 'tutti') return corsiCompatibili(pagamento.corso, corsoFiltro);
+            return corsoIstruttoreCompatibile(pagamento.corso);
+        }
+
         function getQuotaAnnuale(pagamenti, socioId, anno) {
             return pagamenti
                 .filter(p => p.socio_id === socioId
@@ -413,16 +436,7 @@
 
                 const corsoFiltro = selectCorso.value;
                 let sociFiltrati = allSoci;
-                if (sessionUser.ruolo !== 'presidente') {
-                    const comp = sessionUser.corsi_competenze || [];
-                    sociFiltrati = allSoci.filter(s => {
-                        const corsiSocio = getCorsiNomiSocio(s);
-                        return comp.some(c => corsiSocio.some(nome => corsiCompatibili(nome, c)));
-                    });
-                }
-                if (corsoFiltro !== 'tutti') {
-                    sociFiltrati = sociFiltrati.filter(s => getCorsiNomiSocio(s).some(nome => corsiCompatibili(nome, corsoFiltro)));
-                }
+                sociFiltrati = allSoci.filter(s => socioAppartieneAlCorso(s, corsoFiltro));
 
                 renderHeader();
                 tbody.innerHTML = '';
@@ -440,22 +454,30 @@
                     const pIscPending = quotaAnnuale?.stato === 'In attesa di verifica' ? quotaAnnuale : null;
                     if (pIsc) totaliMese.iscrizione += (parseFloat(pIsc.importo) || 0);
 
-                    const actionIsc = buildPayPayload(s.id, `${s.nome} ${s.cognome}`, 0, yearVal, 'Iscrizione Annuale', pIsc ? pIsc.id : (pIscPending ? pIscPending.id : null), pIsc ? pIsc.ricevuta_url : (pIscPending ? pIscPending.ricevuta_url : ''), pIsc ? pIsc.importo : (pIscPending ? pIscPending.importo : 0), pIsc ? pIsc.metodo : (pIscPending ? pIscPending.metodo : ''));
+                    const corsoPagamento = corsoFiltro !== 'tutti' ? corsoFiltro : (getCorsiNomiSocio(s).find(corsoIstruttoreCompatibile) || corsoDisplay);
+                    const actionIsc = buildPayPayload(s.id, `${s.nome} ${s.cognome}`, 0, yearVal, 'Iscrizione Annuale', corsoPagamento, pIsc ? pIsc.id : (pIscPending ? pIscPending.id : null), pIsc ? pIsc.ricevuta_url : (pIscPending ? pIscPending.ricevuta_url : ''), pIsc ? pIsc.importo : (pIscPending ? pIscPending.importo : 0), pIsc ? pIsc.metodo : (pIscPending ? pIscPending.metodo : ''));
                     const annualStyle = pIsc
                         ? `bg-green-600/20 ${getPaymentTextClass(pIsc)} font-bold`
                         : (pIscPending ? 'bg-amber-400/20 text-amber-400 animate-pulse' : 'bg-slate-900/30');
                     const quota = pIsc || pIscPending;
                     const quotaMetodo = quota?.metodo === 'bonifico' ? 'Bonifico' : (quota?.metodo === 'contanti' ? 'Contanti' : 'Metodo n/d');
                     const quotaDocumento = quota?.ricevuta_url ? 'Ricevuta allegata' : (quota?.metodo === 'contanti' ? 'Pagato in contanti' : 'Ricevuta assente');
+                    const validataDaAltro = pIsc?.validato_da_nome
+                        && pIsc.validato_da_email !== sessionUser.email
+                        && pIsc.validato_da_nome !== sessionUser.nome;
                     const quotaDettaglio = quota
-                        ? `<span class="block">€${parseFloat(quota.importo || 0).toFixed(0)} · ${quotaMetodo}</span><span class="block text-[8px]">${quotaDocumento}</span>${pIsc?.validato_da_nome ? `<span class="block text-[8px] text-white">Validato da: ${pIsc.validato_da_nome}</span>` : ''}`
+                        ? (validataDaAltro
+                            ? `<span class="block text-[8px] text-white">Validata da: ${pIsc.validato_da_nome}</span>`
+                            : `<span class="block">€${parseFloat(quota.importo || 0).toFixed(0)} · ${quotaMetodo}</span><span class="block text-[8px]">${quotaDocumento}</span>${pIsc?.validato_da_nome ? `<span class="block text-[8px] text-white">Validata da: ${pIsc.validato_da_nome}</span>` : ''}`)
                         : '<i class="fa-solid fa-plus opacity-5"></i>';
-                    html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer ${annualStyle}" data-pay-action='${JSON.stringify(actionIsc).replace(/'/g, '&apos;')}'>${pIsc ? quotaDettaglio : (pIscPending ? `<span class="block"><i class="fa-solid fa-clock text-[8px]"></i> In verifica</span>${quotaDettaglio}` : quotaDettaglio)}</td>`;
+                    const annualAction = validataDaAltro ? '' : `data-pay-action='${JSON.stringify(actionIsc).replace(/'/g, '&apos;')}'`;
+                    const annualCursor = validataDaAltro ? '' : 'cursor-pointer';
+                    html += `<td class="p-2 text-center border-l border-slate-800 ${annualCursor} ${annualStyle}" ${annualAction}>${pIsc ? quotaDettaglio : (pIscPending ? `<span class="block"><i class="fa-solid fa-clock text-[8px]"></i> In verifica</span>${quotaDettaglio}` : quotaDettaglio)}</td>`;
 
                     mesiCur.forEach(m => {
                         const anno = typeYear === 'solare' ? yearVal : (m.id >= 9 ? yearVal : yearVal + 1);
-                        const p = allPags.find(pag => pag.socio_id === s.id && pag.mese_riferimento === m.id && pag.anno_riferimento === anno && pag.stato === 'Approvato');
-                        const pPend = allPags.find(pag => pag.socio_id === s.id && pag.mese_riferimento === m.id && pag.anno_riferimento === anno && pag.stato === 'In attesa di verifica');
+                        const p = allPags.find(pag => pag.socio_id === s.id && pag.mese_riferimento === m.id && pag.anno_riferimento === anno && pag.stato === 'Approvato' && pagamentoAppartieneAlCorso(pag, s, corsoFiltro));
+                        const pPend = allPags.find(pag => pag.socio_id === s.id && pag.mese_riferimento === m.id && pag.anno_riferimento === anno && pag.stato === 'In attesa di verifica' && pagamentoAppartieneAlCorso(pag, s, corsoFiltro));
                         if (p) totaliMese[m.id] += (parseFloat(p.importo) || 0);
 
                         const anniPresenza = [anno];
@@ -482,7 +504,7 @@
                         else if (eraPres) { style = 'bg-red-600/20 text-red-500 animate-pulse'; content = '<i class="fa-solid fa-triangle-exclamation text-[8px]"></i>'; }
                         else if (nonPrat) { style = 'bg-slate-700/50 text-slate-500'; content = '<i class="fa-solid fa-user-slash text-[8px]"></i>'; }
 
-                        const actionMensile = buildPayPayload(s.id, `${s.nome} ${s.cognome}`, m.id, anno, 'Mensilità', p ? p.id : (pPend ? pPend.id : null), p ? p.ricevuta_url : (pPend ? pPend.ricevuta_url : ''), p ? p.importo : (pPend ? pPend.importo : 0), p ? p.metodo : (pPend ? pPend.metodo : ''));
+                        const actionMensile = buildPayPayload(s.id, `${s.nome} ${s.cognome}`, m.id, anno, 'Mensilità', corsoPagamento, p ? p.id : (pPend ? pPend.id : null), p ? p.ricevuta_url : (pPend ? pPend.ricevuta_url : ''), p ? p.importo : (pPend ? pPend.importo : 0), p ? p.metodo : (pPend ? pPend.metodo : ''));
                         html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer hover:bg-slate-700/50 transition-all ${style}" data-pay-action='${JSON.stringify(actionMensile).replace(/'/g, '&apos;')}'>${content}</td>`;
                     });
                     tr.innerHTML = html;
@@ -496,7 +518,7 @@
                 mesiCur.forEach(m => tHtml += `<td class="p-2 text-center border-l border-slate-800">€${totaliMese[m.id].toFixed(0)}</td>`);
                 trTot.innerHTML = tHtml; tbody.appendChild(trTot);
 
-                renderKPI(allPags, sociFiltrati);
+                renderKPI(allPags.filter(p => sociFiltrati.some(s => s.id === p.socio_id) && pagamentoAppartieneAlCorso(p, sociFiltrati.find(s => s.id === p.socio_id), corsoFiltro)), sociFiltrati);
             } catch (err) { console.error(err); }
         }
 
@@ -508,8 +530,8 @@
             document.getElementById('kpi-section').innerHTML = `<div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg text-center"><p class="text-[8px] font-bold text-slate-500 uppercase mb-1 tracking-widest leading-none">Entrate Mese</p><p class="text-2xl font-black text-emerald-400 leading-none">€${totMese.toFixed(0)}</p></div><div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg text-center"><p class="text-[8px] font-bold text-slate-500 uppercase mb-1 tracking-widest leading-none">Totale Visibile</p><p class="text-2xl font-black text-white leading-none">€${totVis.toFixed(0)}</p></div><div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg col-span-2 flex flex-col justify-center text-center"><p class="text-[8px] font-bold text-slate-500 uppercase mb-1 tracking-widest leading-none">Istruttore Attivo</p><p class="text-xs font-black text-cyan-400 uppercase tracking-widest leading-none truncate">${sessionUser.nome}</p></div>`;
         }
 
-        function openPayModal(socId, nome, mese, anno, tipo, pagId, url, imp, metodo) {
-            currentSelection = { socioId: socId, mese, anno, tipo, existingPagId: pagId };
+        function openPayModal(socId, nome, mese, anno, tipo, corso, pagId, url, imp, metodo) {
+            currentSelection = { socioId: socId, mese, anno, tipo, corso, existingPagId: pagId };
             const label = (mese === 0) ? 'Iscrizione' : (mesiAccademici.find(m => m.id === mese) || mesiSolari.find(m => m.id === mese)).nome;
             document.getElementById('modal-title').textContent = `${label} ${anno} - ${nome}`;
             const contRic = document.getElementById('container-ricevuta');
@@ -535,7 +557,7 @@
                     data_pagamento: new Date().toISOString().split('T')[0],
                     metodo: met,
                     stato: 'Approvato',
-                    corso: currentSelection.tipo,
+                    corso: currentSelection.mese === 0 ? 'Iscrizione Annuale' : currentSelection.corso,
                     tipo_pagamento: currentSelection.tipo,
                     periodo_riferimento: currentSelection.mese === 0 ? 'Annuale' : `${currentSelection.mese}/${currentSelection.anno}`
                 };
