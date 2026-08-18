@@ -361,7 +361,8 @@
 
         function getCorsoDisplayFromSocio(socio, corsoFiltro) {
             if (corsoFiltro !== 'tutti') return corsoFiltro;
-            return getCorsiNomiSocio(socio).join(' / ');
+            const corsoCompatibile = getCorsiNomiSocio(socio).find(corsoIstruttoreCompatibile);
+            return corsoCompatibile || getCorsiNomiSocio(socio)[0] || 'N/D';
         }
 
         function getCorsiNomiSocio(socio) {

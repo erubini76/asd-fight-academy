@@ -224,6 +224,12 @@
 
     function getCorsoDisplay(socio) {
       const iscrizioni = Array.isArray(socio?.iscrizioni_corsi) ? socio.iscrizioni_corsi : [];
+      if (currentUser?.ruolo !== 'presidente') {
+        const corsoCompatibile = iscrizioni.find(iscrizione =>
+          (currentUser?.corsi_competenze || []).some(corso => corsiCompatibili(iscrizione.nome_corso, corso))
+        );
+        return corsoCompatibile?.nome_corso || 'N/D';
+      }
       const latest = iscrizioni.slice().sort((a, b) => new Date(b.data_iscrizione || 0) - new Date(a.data_iscrizione || 0))[0];
       return latest?.nome_corso || 'N/D';
     }
