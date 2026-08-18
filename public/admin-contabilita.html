@@ -11,6 +11,15 @@
         .contab-table td:first-child p {
             font-size: 12px !important;
         }
+        .contab-table td:first-child span {
+            display: block;
+            width: 100%;
+            max-width: 280px;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            overflow: hidden;
+            text-overflow: clip;
+        }
         .scroll-hint {
             display: none;
             width: 100%;
@@ -31,6 +40,11 @@
         }
 
         @media (min-width: 641px) {
+            .contab-table th:first-child,
+            .contab-table td:first-child {
+                width: 300px;
+                min-width: 300px;
+            }
             .scroll-hint {
                 display: block;
             }
@@ -60,7 +74,13 @@
         @media (max-width: 640px) {
             .contab-table th:first-child,
             .contab-table td:first-child {
+                width: 205px !important;
                 min-width: 205px !important;
+            }
+            .contab-table th:not(:first-child),
+            .contab-table td:not(:first-child) {
+                width: 50px !important;
+                min-width: 50px !important;
             }
             .contab-table td:first-child p {
                 font-size: 12px !important;
@@ -84,7 +104,12 @@
         @media (max-width: 360px) and (orientation: portrait) {
             .contab-table th:first-child,
             .contab-table td:first-child {
+                width: 175px !important;
                 min-width: 175px !important;
+            }
+
+            .contab-table {
+                min-width: 825px !important;
             }
 
             .contab-table td:first-child span {
@@ -95,7 +120,12 @@
         @media (max-width: 640px) and (orientation: landscape) {
             .contab-table th:first-child,
             .contab-table td:first-child {
+                width: 300px !important;
                 min-width: 300px !important;
+            }
+
+            .contab-table {
+                min-width: 950px !important;
             }
 
             .contab-table td:first-child span {
