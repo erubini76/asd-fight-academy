@@ -359,10 +359,9 @@
             return nomeA.includes(nomeB) || nomeB.includes(nomeA);
         }
 
-        function getCorsoDisplayFromSocio(socio) {
-            const iscrizioni = Array.isArray(socio?.iscrizioni_corsi) ? socio.iscrizioni_corsi : [];
-            const latest = iscrizioni.slice().sort((a, b) => new Date(b.data_iscrizione || 0) - new Date(a.data_iscrizione || 0))[0];
-            return latest?.nome_corso || 'N/D';
+        function getCorsoDisplayFromSocio(socio, corsoFiltro) {
+            if (corsoFiltro !== 'tutti') return corsoFiltro;
+            return getCorsiNomiSocio(socio).join(' / ');
         }
 
         function getCorsiNomiSocio(socio) {
@@ -446,7 +445,7 @@
                 sociFiltrati.forEach(s => {
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-slate-700/20 transition";
-                    const corsoDisplay = getCorsoDisplayFromSocio(s);
+                    const corsoDisplay = getCorsoDisplayFromSocio(s, corsoFiltro);
                     let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[180px] sm:min-w-[220px] break-words"><p class="font-bold text-white text-[12px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase truncate">${corsoDisplay}</span></td>`;
 
                     const quotaAnnuale = getQuotaAnnuale(allPags, s.id, yearVal);
