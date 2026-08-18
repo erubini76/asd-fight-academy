@@ -422,15 +422,24 @@
                     const corsoDisplay = getCorsoDisplayFromSocio(s);
                     let html = `<td class="p-3 sticky left-0 bg-slate-800 z-10 border-r border-slate-700 text-left leading-tight min-w-[180px] sm:min-w-[220px] break-words"><p class="font-bold text-white text-[12px]">${s.cognome} ${s.nome}</p><span class="text-[7px] inline-block px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase truncate">${corsoDisplay}</span></td>`;
 
-                    const pIsc = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'Approvato' && p.anno_riferimento === yearVal);
-                    const pIscPending = allPags.find(p => p.socio_id === s.id && p.corso === 'Iscrizione Annuale' && p.stato === 'In attesa di verifica' && p.anno_riferimento === yearVal);
+                    const isQuotaAnnuale = p => p.socio_id === s.id
+                        && (p.corso === 'Iscrizione Annuale' || p.tipo_pagamento === 'Iscrizione Annuale')
+                        && (p.anno_riferimento === null || p.anno_riferimento === yearVal);
+                    const pIsc = allPags.find(p => isQuotaAnnuale(p) && p.stato === 'Approvato');
+                    const pIscPending = allPags.find(p => isQuotaAnnuale(p) && p.stato === 'In attesa di verifica');
                     if (pIsc) totaliMese.iscrizione += (parseFloat(pIsc.importo) || 0);
 
                     const actionIsc = buildPayPayload(s.id, `${s.nome} ${s.cognome}`, 0, yearVal, 'Iscrizione Annuale', pIsc ? pIsc.id : (pIscPending ? pIscPending.id : null), pIsc ? pIsc.ricevuta_url : (pIscPending ? pIscPending.ricevuta_url : ''), pIsc ? pIsc.importo : (pIscPending ? pIscPending.importo : 0), pIsc ? pIsc.metodo : (pIscPending ? pIscPending.metodo : ''));
                     const annualStyle = pIsc
                         ? `bg-green-600/20 ${getPaymentTextClass(pIsc)} font-bold`
                         : (pIscPending ? 'bg-amber-400/20 text-amber-400 animate-pulse' : 'bg-slate-900/30');
-                    html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer ${annualStyle}" data-pay-action='${JSON.stringify(actionIsc).replace(/'/g, '&apos;')}'>${pIsc ? '€'+parseFloat(pIsc.importo).toFixed(0) : (pIscPending ? '<i class="fa-solid fa-clock text-[8px]"></i>' : '<i class="fa-solid fa-plus opacity-5"></i>')}</td>`;
+                    const quota = pIsc || pIscPending;
+                    const quotaMetodo = quota?.metodo === 'bonifico' ? 'Bonifico' : (quota?.metodo === 'contanti' ? 'Contanti' : 'Metodo n/d');
+                    const quotaDocumento = quota?.ricevuta_url ? 'Ricevuta allegata' : (quota?.metodo === 'contanti' ? 'Pagato in contanti' : 'Ricevuta assente');
+                    const quotaDettaglio = quota
+                        ? `<span class="block">€${parseFloat(quota.importo || 0).toFixed(0)} · ${quotaMetodo}</span><span class="block text-[8px]">${quotaDocumento}</span>${pIsc?.validato_da_nome ? `<span class="block text-[8px] text-white">Validato da: ${pIsc.validato_da_nome}</span>` : ''}`
+                        : '<i class="fa-solid fa-plus opacity-5"></i>';
+                    html += `<td class="p-2 text-center border-l border-slate-800 cursor-pointer ${annualStyle}" data-pay-action='${JSON.stringify(actionIsc).replace(/'/g, '&apos;')}'>${pIsc ? quotaDettaglio : (pIscPending ? `<span class="block"><i class="fa-solid fa-clock text-[8px]"></i> In verifica</span>${quotaDettaglio}` : quotaDettaglio)}</td>`;
 
                     mesiCur.forEach(m => {
                         const anno = typeYear === 'solare' ? yearVal : (m.id >= 9 ? yearVal : yearVal + 1);
@@ -576,6 +585,18 @@
                 }
 
                 if (currentSelection.tipo === 'Iscrizione Annuale') {
+                    const { error: validatoreError } = await supabaseClient
+                        .from('pagamenti')
+                        .update({
+                            validato_da_email: sessionUser.email || null,
+                            validato_da_nome: sessionUser.nome || sessionUser.email || 'Utente autorizzato',
+                            validato_il: new Date().toISOString()
+                        })
+                        .eq('socio_id', currentSelection.socioId)
+                        .eq('tipo_pagamento', 'Iscrizione Annuale')
+                        .eq('stato', 'Approvato');
+                    if (validatoreError) throw validatoreError;
+
                     const { error: socioError } = await supabaseClient
                         .from('soci')
                         .update({ pagamento_iscrizione_2627: true })
@@ -603,6 +624,13 @@
                 if (error) throw error;
                 if (!deletedRecords || deletedRecords.length === 0) {
                     throw new Error('Pagamento non eliminato: il database non ha restituito il record selezionato. Verifica le policy DELETE di Supabase.');
+                }
+                if (currentSelection.tipo === 'Iscrizione Annuale' && sessionUser.ruolo === 'presidente') {
+                    const { error: socioError } = await supabaseClient
+                        .from('soci')
+                        .update({ pagamento_iscrizione_2627: false })
+                        .eq('id', currentSelection.socioId);
+                    if (socioError) throw socioError;
                 }
                 closeModal(); caricaDatiContabili();
             } catch (err) { alert(err.message); }

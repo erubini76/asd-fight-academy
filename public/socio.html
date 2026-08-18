@@ -78,9 +78,20 @@
 
                 if (iscrizioniError) throw iscrizioniError;
 
+                const { data: pagamenti, error: pagamentiError } = await supabaseClient
+                    .from('pagamenti')
+                    .select('*')
+                    .in('socio_id', socioIds)
+                    .in('tipo_pagamento', ['Iscrizione Annuale']);
+
+                if (pagamentiError) throw pagamentiError;
+
                 foundTesseratiList = data.map(s => ({
                     ...s,
                     iscrizioni_corsi: (iscrizioni || []).filter(i => i.socio_id === s.id),
+                    quota_annuale: (pagamenti || [])
+                        .filter(p => p.socio_id === s.id)
+                        .sort((a, b) => new Date(b.data_inserimento || b.data_pagamento || 0) - new Date(a.data_inserimento || a.data_pagamento || 0))[0] || null,
                     corso_scelto: getCorsiPerSocio({ ...s, iscrizioni_corsi: (iscrizioni || []).filter(i => i.socio_id === s.id) })[0]?.nome_corso || 'N/D'
                 }));
 
@@ -99,6 +110,9 @@
             container.innerHTML = '';
             foundTesseratiList.forEach(s => {
                 const medScad = !s.scadenza_certificato_medico || new Date(s.scadenza_certificato_medico) < new Date();
+                const quota = s.quota_annuale;
+                const quotaApprovata = quota?.stato === 'Approvato';
+                const quotaInVerifica = quota?.stato === 'In attesa di verifica';
                 const corsi = getCorsiPerSocio(s);
                 // Una scheda per ogni corso: i pagamenti vanno divisi per corso, non per tesserato.
                 corsi.forEach((corsoObj, idx) => {
@@ -113,7 +127,7 @@
                         </div>
                         <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 text-center"><span class="text-[7px] font-bold text-slate-500 uppercase block mb-1">Tesseramento</span><span class="text-[9px] font-black ${s.stato_approvazione === 'Approvato' ? 'text-green-400' : 'text-amber-400'} uppercase">${s.stato_approvazione || 'In Approvazione'}</span></div>
-                            <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 text-center"><span class="text-[7px] font-bold text-slate-500 uppercase block mb-1">Quota Tesseramento</span><span class="text-[9px] font-black ${s.pagamento_iscrizione_2627 ? 'text-green-400' : 'text-red-400'} uppercase">${s.pagamento_iscrizione_2627 ? 'Pagata' : 'Da Versare'}</span></div>
+                            <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 text-center"><span class="text-[7px] font-bold text-slate-500 uppercase block mb-1">Quota Tesseramento</span><span class="text-[9px] font-black ${quotaApprovata ? 'text-green-400' : (quotaInVerifica ? 'text-amber-400' : 'text-red-400')} uppercase">${quotaApprovata ? 'Pagata' : (quotaInVerifica ? 'In verifica' : 'Da versare')}</span></div>
                             <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 text-center"><span class="text-[7px] font-bold text-slate-500 uppercase block mb-1">Certificato</span><span class="text-[9px] font-black ${medScad ? 'text-red-400' : 'text-green-400'} uppercase">${medScad ? 'Scaduto' : 'In Regola'}</span></div>
                         </div>
                         <div class="p-5 border-t border-slate-700/50 space-y-6">
@@ -214,7 +228,7 @@
                     records.push({ ...baseRecord, mese_riferimento: m, anno_riferimento: a, tipo_pagamento: 'Mensilità', periodo_riferimento: `Mese ${m}/${a}` });
                 }
             } else {
-                records.push({ ...baseRecord, corso: tipo === 'Iscrizione Annuale' ? 'Iscrizione Annuale' : corsoSocio, tipo_pagamento: tipo, periodo_riferimento: tipo === 'Iscrizione Annuale' ? 'A.A. 2026/2027' : 'Ingresso' });
+                records.push({ ...baseRecord, corso: tipo === 'Iscrizione Annuale' ? 'Iscrizione Annuale' : corsoSocio, tipo_pagamento: tipo, periodo_riferimento: tipo === 'Iscrizione Annuale' ? 'A.A. 2026/2027' : 'Ingresso', anno_riferimento: tipo === 'Iscrizione Annuale' ? 2026 : null });
             }
 
             try {

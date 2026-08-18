@@ -263,8 +263,18 @@
 
         if (iscrizioniError) throw iscrizioniError;
 
+        const { data: pagamenti, error: pagamentiError } = await supabaseClient
+          .from('pagamenti')
+          .select('*')
+          .in('socio_id', socioIds);
+
+        if (pagamentiError) throw pagamentiError;
+
         soci.forEach(s => {
           s.iscrizioni_corsi = (iscrizioni || []).filter(i => i.socio_id === s.id);
+          s.quota_annuale = (pagamenti || [])
+            .filter(p => p.socio_id === s.id && (p.corso === 'Iscrizione Annuale' || p.tipo_pagamento === 'Iscrizione Annuale'))
+            .sort((a, b) => new Date(b.data_inserimento || b.data_pagamento || 0) - new Date(a.data_inserimento || a.data_pagamento || 0))[0] || null;
         });
 
         const tbody = document.getElementById('sociTableBody');
@@ -281,6 +291,16 @@
         sociFiltrati.forEach(s => {
           const corsoDisplay = getCorsoDisplay(s);
           const medScaduto = !s.scadenza_certificato_medico || new Date(s.scadenza_certificato_medico) < new Date();
+          const quota = s.quota_annuale;
+          const quotaApprovata = quota?.stato === 'Approvato';
+          const quotaInVerifica = quota?.stato === 'In attesa di verifica';
+          const quotaMetodo = quota?.metodo === 'bonifico' ? 'Bonifico' : (quota?.metodo === 'contanti' ? 'Contanti' : 'Metodo n/d');
+          const quotaDocumento = quota?.ricevuta_url ? 'Ricevuta' : (quota?.metodo === 'contanti' ? 'Contanti' : 'Ricevuta assente');
+          const quotaDescrizione = quotaApprovata
+            ? `PAGATA · €${Number(quota.importo || 0).toFixed(0)} · ${quotaMetodo} · ${quotaDocumento}${quota.validato_da_nome ? ` · Validata da ${quota.validato_da_nome}` : ''}`
+            : (quotaInVerifica
+              ? `IN VERIFICA · €${Number(quota.importo || 0).toFixed(0)} · ${quotaMetodo} · ${quotaDocumento}`
+              : 'DA PAGARE');
           
           // Logica Scadenza ASI
           let asiClass = 'text-slate-300';
@@ -304,9 +324,9 @@
                 </button>
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
-                <button onclick="toggleStato('${s.id}', 'pagamento_iscrizione_2627', ${s.pagamento_iscrizione_2627})" class="px-2 py-1 rounded border ${s.pagamento_iscrizione_2627 ? 'bg-green-600/10 text-green-500 border-green-500/30' : 'bg-red-600/10 text-red-500 border-red-500/30'} font-bold uppercase text-[8px]">
-                    ${s.pagamento_iscrizione_2627 ? 'PAGATA' : 'DA PAGARE'}
-                </button>
+              <span class="px-2 py-1 rounded border ${quotaApprovata ? 'bg-green-600/10 text-green-500 border-green-500/30' : (quotaInVerifica ? 'bg-amber-600/10 text-amber-400 border-amber-500/30' : 'bg-red-600/10 text-red-500 border-red-500/30')} font-bold uppercase text-[8px]" title="${quota?.ricevuta_url || ''}">
+                ${quotaDescrizione}
+              </span>
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
                 <p class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">${s.scadenza_certificato_medico || '---'}</p>
