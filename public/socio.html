@@ -125,6 +125,16 @@
                             <div><h4 class="font-bold text-white text-lg">${s.nome} ${s.cognome}</h4><span class="text-[9px] px-2 py-0.5 bg-cyan-600/20 text-cyan-400 rounded-full font-bold uppercase border border-cyan-600/30">${corsoDisplay}</span></div>
                             <span class="text-[9px] text-slate-500 font-mono">${s.codice_fiscale || ''}</span>
                         </div>
+                        <div class="px-5 pt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div class="bg-slate-900/50 p-3 rounded-xl border ${s.privacy_accettata === true ? 'border-green-500/30' : 'border-amber-500/30'} text-center">
+                                <span class="text-[7px] font-bold text-slate-500 uppercase block mb-1">Privacy</span>
+                                <span class="text-[9px] font-black ${s.privacy_accettata === true ? 'text-green-400' : 'text-amber-400'} uppercase"><i class="fa-solid ${s.privacy_accettata === true ? 'fa-check' : 'fa-triangle-exclamation'} mr-1"></i>${s.privacy_accettata === true ? 'Accettata' : 'Non registrata'}</span>
+                            </div>
+                            <div class="bg-slate-900/50 p-3 rounded-xl border ${s.liberatoria_immagini === true ? 'border-green-500/30' : 'border-amber-500/30'} text-center">
+                                <span class="text-[7px] font-bold text-slate-500 uppercase block mb-1">Foto / Immagini</span>
+                                <span class="text-[9px] font-black ${s.liberatoria_immagini === true ? 'text-green-400' : 'text-amber-400'} uppercase"><i class="fa-solid ${s.liberatoria_immagini === true ? 'fa-check' : 'fa-minus'} mr-1"></i>${s.liberatoria_immagini === true ? 'Consenso dato' : 'Consenso non dato'}</span>
+                            </div>
+                        </div>
                         <div class="p-5 grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 text-center"><span class="text-[7px] font-bold text-slate-500 uppercase block mb-1">Tesseramento</span><span class="text-[9px] font-black ${s.stato_approvazione === 'Approvato' ? 'text-green-400' : 'text-amber-400'} uppercase">${s.stato_approvazione || 'In Approvazione'}</span></div>
                             <div class="bg-slate-900/50 p-3 rounded-xl border border-slate-700 text-center"><span class="text-[7px] font-bold text-slate-500 uppercase block mb-1">Quota Tesseramento</span><span class="text-[9px] font-black ${quotaApprovata ? 'text-green-400' : (quotaInVerifica ? 'text-amber-400' : 'text-red-400')} uppercase">${quotaApprovata ? 'Pagata' : (quotaInVerifica ? 'In verifica' : 'Da versare')}</span></div>
