@@ -394,10 +394,11 @@
         }
 
         function getQuotaAnnuale(pagamenti, socioId, anno) {
+            const annoAccademico = `${anno}/${anno + 1}`;
             return pagamenti
                 .filter(p => p.socio_id === socioId
                     && (p.corso === 'Iscrizione Annuale' || p.tipo_pagamento === 'Iscrizione Annuale')
-                    && (p.anno_riferimento === null || p.anno_riferimento === anno))
+                    && p.anno_accademico === annoAccademico)
                 .sort((a, b) => {
                     const statoA = a.stato === 'Approvato' ? 1 : 0;
                     const statoB = b.stato === 'Approvato' ? 1 : 0;
@@ -406,12 +407,18 @@
                 })[0] || null;
         }
 
+            function getAnnoAccademicoDaMese(mese, anno) {
+                const annoInizio = mese >= 8 ? anno : anno - 1;
+                return `${annoInizio}/${annoInizio + 1}`;
+            }
+
         async function caricaDatiContabili() {
             const tbody = document.getElementById('contabilita-tbody');
             const typeYear = document.getElementById('filter-year-type').value;
             const yearVal = parseInt(document.getElementById('filter-year-val').value);
             const selectCorso = document.getElementById('filter-corso');
             const mesiCur = typeYear === 'accademico' ? mesiAccademici : mesiSolari;
+            const annoAccademico = `${yearVal}/${yearVal + 1}`;
 
             if (selectCorso.options.length <= 1) {
                 const corsi = sessionUser.ruolo === 'presidente' ? 
@@ -428,8 +435,13 @@
                 const { data: allIscrizioni } = await supabaseClient
                     .from('iscrizioni_corsi')
                     .select('socio_id, nome_corso, stato, data_iscrizione');
+                const { data: annualita, error: annualitaError } = await supabaseClient
+                    .from('iscrizioni_annuali')
+                    .select('socio_id, nome_corso, stato, data_invio')
+                    .eq('anno_accademico', annoAccademico);
+                if (annualitaError) throw annualitaError;
                 (allSoci || []).forEach(s => {
-                    s.iscrizioni_corsi = (allIscrizioni || []).filter(i => i.socio_id === s.id);
+                    s.iscrizioni_corsi = (annualita || []).filter(i => i.socio_id === s.id);
                 });
                 const { data: allPags } = await supabaseClient.from('pagamenti').select('*');
                 const { data: allPres } = await supabaseClient.from('presenze').select('*');
@@ -556,12 +568,17 @@
                     stato: 'Approvato',
                     corso: currentSelection.mese === 0 ? 'Iscrizione Annuale' : currentSelection.corso,
                     tipo_pagamento: currentSelection.tipo,
+                    anno_accademico: currentSelection.mese === 0
+                        ? `${currentSelection.anno}/${currentSelection.anno + 1}`
+                        : getAnnoAccademicoDaMese(currentSelection.mese, currentSelection.anno),
                     periodo_riferimento: currentSelection.mese === 0 ? 'Annuale' : `${currentSelection.mese}/${currentSelection.anno}`
                 };
 
                 let query = supabaseClient.from('pagamenti').select('id').eq('socio_id', currentSelection.socioId);
                 if (currentSelection.mese === 0) {
-                    query = query.is('mese_riferimento', null).is('anno_riferimento', null);
+                    query = query
+                        .eq('anno_accademico', paymentRecord.anno_accademico)
+                        .eq('tipo_pagamento', 'Iscrizione Annuale');
                 } else {
                     query = query.eq('mese_riferimento', currentSelection.mese).eq('anno_riferimento', currentSelection.anno);
                 }
@@ -581,7 +598,8 @@
                         importo_totale: recordToSave.importo_totale,
                         data_pagamento: recordToSave.data_pagamento,
                         metodo: recordToSave.metodo,
-                        stato: recordToSave.stato
+                        stato: recordToSave.stato,
+                        anno_accademico: recordToSave.anno_accademico
                     };
                     const { data: updatedRecords, error } = await supabaseClient
                         .from('pagamenti')
@@ -598,7 +616,8 @@
                         importo_totale: recordToSave.importo_totale,
                         data_pagamento: recordToSave.data_pagamento,
                         metodo: recordToSave.metodo,
-                        stato: recordToSave.stato
+                        stato: recordToSave.stato,
+                        anno_accademico: recordToSave.anno_accademico
                     };
                     const { data: updatedRecords, error } = await supabaseClient
                         .from('pagamenti')
@@ -624,6 +643,7 @@
                         })
                         .eq('socio_id', currentSelection.socioId)
                         .eq('tipo_pagamento', 'Iscrizione Annuale')
+                        .eq('anno_accademico', recordToSave.anno_accademico)
                         .eq('stato', 'Approvato');
                     if (validatoreError) throw validatoreError;
 
@@ -640,7 +660,7 @@
 
         async function eliminaPagamento() {
             if (sessionUser.ruolo !== 'presidente') {
-                alert('Solo il presidente puo eliminare i pagamenti.');
+                alert('Solo l amministratore puo eliminare i pagamenti.');
                 return;
             }
             if (!confirm("Sei sicuro di voler eliminare questo pagamento?")) return;

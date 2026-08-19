@@ -4,7 +4,7 @@ DOCUMENTO DI SPECIFICA DEI REQUISITI DI PROGETTO (SRS)
 
 Progetto: Piattaforma Gestionale ASD
 Versione: 2.0
-Data ultima revisione: 17 Agosto 2026
+Data ultima revisione: 19 Agosto 2026
 Stato: aggiornato in base ai requisiti implementati, ai vincoli di database e alle correzioni di integrità eseguite
 
 ------------------------------------------------------------------------------------------------
@@ -12,7 +12,7 @@ Stato: aggiornato in base ai requisiti implementati, ai vincoli di database e al
 ------------------------------------------------------------------------------------------------
 
 Obiettivo principale:
-La piattaforma ha lo scopo di supportare la gestione amministrativa, contabile e didattica di un'associazione sportiva dilettantistica, riducendo tempi di gestione, minimizzando errori manuali e centralizzando dati relativi a soci, iscrizioni, pagamenti, presenze, corsi e documentazione obbligatoria.
+La piattaforma ha lo scopo di supportare la gestione amministrativa, contabile e didattica dell'attività sportiva di un'associazione sportiva dilettantistica, riducendo tempi di gestione, minimizzando errori manuali e centralizzando dati relativi a tesserati, iscrizioni ai corsi, pagamenti, presenze, corsi e documentazione obbligatoria.
 
 Modello operativo:
 - Web app multi-dispositivo, accessibile tramite browser
@@ -21,13 +21,21 @@ Modello operativo:
 - Gestione utenti e dati tramite PostgreSQL
 - Accesso con ruoli differenti e permessi mirati
 
+Perimetro funzionale deliberato - gestione dei soli tesserati:
+- L'app gestisce esclusivamente i tesserati e l'attività sportiva: corsi, presenze, pagamenti, tessere, certificati medici, scadenze e consensi collegati al tesseramento.
+- La vita associativa resta fuori perimetro: domanda e ammissione a socio, libro degli associati, quote associative, diritto di voto, assemblee, verbali e decadenza dalla qualifica di socio sono gestiti separatamente dall'ASD.
+- La tabella tecnica denominata `soci` e le etichette legacy presenti nell'app rappresentano il profilo del tesserato; non costituiscono né sostituiscono il libro degli associati previsto dallo statuto.
+- Le future annualità dovranno storicizzare il tesseramento sportivo per anno accademico settembre-agosto, senza modellare lo status di socio dell'associazione.
+- La nuova stagione accademica è proposta automaticamente dal 1 agosto di ogni anno; l'amministratore può selezionare manualmente una stagione diversa per i casi eccezionali.
+- Nell'app il ruolo con visione completa è denominato Amministratore. L'Amministratore gestisce tutti i tesserati, corsi, pagamenti, scadenze, consensi e documenti necessari all'attività sportiva; la gestione di eventuali deleghe resta esterna al perimetro applicativo.
+
 ------------------------------------------------------------------------------------------------
 2. ARCHITETTURA TECNOLOGICA
 ------------------------------------------------------------------------------------------------
 
 Stack tecnologico:
 - Database: PostgreSQL via Supabase
-- Autenticazione / gestione utenti: Supabase Auth
+- Autenticazione / gestione utenti: credenziali applicative legacy lato client; migrazione a sessioni verificate lato server pianificata dopo il go-live
 - Hosting frontend: Vercel
 - Repository: GitHub
 - Invio email: Resend API
@@ -38,15 +46,26 @@ Ambiente di riferimento:
 - Database inizialmente di test, successivamente pronto per transizione in ambiente di produzione
 - Struttura schema pensata per essere facilmente ri-creata da zero in caso di reset completo
 
+Decisione di rilascio - go-live in due fasi:
+- Priorità immediata: completare entro 15 giorni le funzioni operative per tesserati, corsi, presenze, pagamenti, scadenze e annualità.
+- Il modello dati del go-live deve essere predisposto per tesseramento annuale, documenti medici e consensi storicizzati senza sovrascrivere i dati esistenti.
+- La sicurezza server-side non è bloccante per il go-live, ma costituisce debito tecnico esplicito: l'attuale accesso usa credenziali e chiave anon nel frontend, mentre gli URL dei documenti possono essere pubblici.
+- La fase successiva deve introdurre sessioni verificate lato server, bucket Storage privati, URL firmati temporanei e controlli di autorizzazione server-side per i documenti medici.
+- Fino al completamento della fase successiva, l'uso dell'app e l'accesso ai documenti devono restare limitati al contesto operativo interno definito dall'ASD.
+
 ------------------------------------------------------------------------------------------------
 3. RUOLI E PERMESSI (RBAC)
 ------------------------------------------------------------------------------------------------
 
-Presidente / Amministratore:
+Amministratore:
 - Gestione completa del sistema
-- Gestione anagrafiche, soci, corsi, pagamenti e documenti
+- Gestione anagrafiche tesserati, corsi, pagamenti e documenti
 - Controllo completo delle liste di morosità e delle scadenze
 - Visualizzazione contabilità e storico amministrativo
+
+Accesso ai documenti medici:
+- L'istruttore vede per i tesserati dei propri corsi solo lo stato operativo e la scadenza del certificato medico corrente.
+- L'Amministratore ha visione del documento medico corrente e dello storico soggetto alla politica di conservazione definita dall'ASD.
 
 Istruttore:
 - Gestione dei propri corsi e studenti assegnati
@@ -66,15 +85,15 @@ Nota di sicurezza:
 4. REQUISITI FUNZIONALI CORE
 ------------------------------------------------------------------------------------------------
 
-FR-01 - Anagrafiche soci
-- Registro dei soci con dati anagrafici principali
+FR-01 - Anagrafiche tesserati
+- Registro dei tesserati con dati anagrafici principali
 - Gestione di nuclei familiari e relazione tra genitore e figli
-- Possibilità di aggiornare dati anagrafici e stato iscrizione
+- Possibilità di aggiornare dati anagrafici e stato del tesseramento sportivo
 
 FR-02 - Iscrizioni ai corsi
-- Un socio può iscriversi a uno o più corsi distinti
-- Ogni iscrizione deve essere univoca per socio e corso
-- Il sistema deve evitare duplicati di iscrizione per lo stesso corso
+- Un tesserato può iscriversi a uno o più corsi distinti
+- Ogni iscrizione deve essere univoca per tesserato e corso
+- Il sistema deve evitare duplicati di iscrizione al medesimo corso
 
 FR-03 - Corsi
 - Gestione dei corsi disponibili
@@ -210,8 +229,8 @@ Regole di dominio:
 ------------------------------------------------------------------------------------------------
 
 Accettazione funzionale:
-- l'utente può registrare e gestire i propri soci
-- è possibile iscrivere un socio a un corso senza duplicate
+- l'utente può registrare e gestire i propri tesserati
+- è possibile iscrivere un tesserato a un corso senza duplicati
 - i pagamenti sono tracciati senza duplicazioni per periodo
 - le presenze sono registrate senza doppie approssimazioni per lo stesso giorno
 - i documenti obbligatori sono monitorati e avvisati
@@ -223,13 +242,54 @@ Accettazione tecnica:
 - lo schema è verificabile tramite query SQL e script di controllo
 
 ------------------------------------------------------------------------------------------------
-10. ROADMAP EVOLUTIVA
+10. PROCEDURA DI SVILUPPO E RILASCIO
+------------------------------------------------------------------------------------------------
+
+Regola generale:
+- Ogni modifica che coinvolge dati, schema, pagamenti, certificati o consensi deve essere sviluppata e verificata prima sul database di test.
+- Non sono ammessi comandi distruttivi, reset o bonifiche sui dati senza backup verificato e script documentato.
+- Le modifiche non correlate al requisito corrente non devono essere incluse nel rilascio.
+
+Sequenza obbligatoria per modifiche a schema e dati:
+1. Aggiornare le specifiche e definire la regola di business da implementare.
+2. Creare un backup locale del codice e un export dei dati di test accessibili.
+3. Eseguire lo script di verifica integrità in sola lettura e analizzare eventuali anomalie prima della migrazione.
+4. Applicare una migrazione SQL transazionale, idempotente e non distruttiva sul database di test.
+5. Eseguire nuovamente la verifica integrità e confrontare numero di record, vincoli e indici.
+6. Aggiornare il frontend e le API necessarie mantenendo compatibilità con i dati legacy fino al completamento della migrazione.
+7. Validare sintassi, controlli statici e flussi operativi con dati di prova.
+8. Creare un nuovo backup prima della pubblicazione.
+9. Pubblicare il rilascio e verificare in produzione i flussi essenziali: login, tesseramento, pagamento, presenza, scadenza e consultazione documenti.
+10. Conservare il riepilogo del rilascio, gli script eseguiti e l'esito delle verifiche.
+
+Procedura specifica per la Fase 1.1 - annualita e storico:
+1. Eseguire prima le sezioni pre-migrazione di SQL_VERIFICA_INTEGRITA_ANNUALITA.sql.
+2. Non procedere se emergono duplicati, record orfani o anomalie non comprese.
+3. Eseguire SQL_ANNUALITA_STORICO_2027.sql solo dopo backup verificato.
+4. Eseguire l'intero script SQL_VERIFICA_INTEGRITA_ANNUALITA.sql dopo la migrazione.
+5. Testare almeno: stesso tesserato in due stagioni, stesso tesserato in due corsi, nuovo certificato, pagamento annuale, mensilita e consenso foto negato o revocato.
+6. Attivare la nuova stagione dal 1 agosto; l'eccezione manuale e riservata all'Amministratore.
+
+Rollback:
+- Se una migrazione non viene completata, la transazione deve effettuare rollback senza modifiche parziali.
+- Se il problema emerge dopo un rilascio applicativo, sospendere il nuovo flusso, conservare i dati inseriti e ripristinare solo tramite backup e procedura documentata; non usare cancellazioni manuali non tracciate.
+- La sicurezza server-side e Storage privato restano una fase successiva pianificata e non devono essere introdotti parzialmente durante il go-live della Fase 1.1.
+
+------------------------------------------------------------------------------------------------
+11. ROADMAP EVOLUTIVA
 ------------------------------------------------------------------------------------------------
 
 Fase 1 - MVP gestione base
 - anagrafiche, iscrizioni, corsi, pagamenti, presenze
 - documenti obbligatori e notifiche
 - verifica duplicati e corretti vincoli di integrità
+
+Fase 1.1 - Go-live tesseramento annuale
+- storicizzazione del tesseramento sportivo per anno accademico settembre-agosto
+- aggiornamento dell'anagrafica corrente senza storico generalizzato delle variazioni
+- tracciamento annuale di corsi, pagamenti, certificati medici e consensi
+- selezione automatica della nuova stagione dal 1 agosto, con eccezione manuale dell'Amministratore
+- backup, migrazione non distruttiva, verifica integrità e test dei flussi prima della pubblicazione
 
 Fase 2 - automazione amministrativa
 - checklist pagamenti e report di morosità
@@ -240,10 +300,10 @@ Fase 3 - evoluzione avanzata
 - importazione CSV bancari
 - riconciliazione automatica pagamenti
 - analisi storiche e reporting annuale
-- integrazione smarter con workflow di gestione societaria
+- sicurezza server-side: sessioni verificate, Storage privato, URL firmati e autorizzazioni per ruolo
+- gestione automatizzata della retention e cancellazione dei documenti medici alla scadenza della politica ASD
 
-------------------------------------------------------------------------------------------------
-11. NOTE FINALE
+12. NOTE FINALE
 ------------------------------------------------------------------------------------------------
 
 Il progetto si trova in una fase di consolidamento e stabilizzazione del modello dati. I requisiti aggiornati riflettono il passaggio da una configurazione iniziale basata su logica applicativa a una soluzione più robusta, con garanzia di unicità, controllo qualità e maggiore stabilità del database.

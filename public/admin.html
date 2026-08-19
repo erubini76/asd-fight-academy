@@ -19,7 +19,7 @@
         </div>
         <div>
           <h1 class="text-2xl font-extrabold text-white tracking-tight uppercase">Area Riservata</h1>
-          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Dashboard Presidente & Istruttori</p>
+          <p class="text-[10px] text-slate-400 font-medium uppercase tracking-widest">Dashboard Amministratore & Istruttori</p>
         </div>
       </div>
       <div class="flex items-center gap-4">
@@ -235,11 +235,18 @@
       return latest?.nome_corso || 'N/D';
     }
 
-    function getQuotaAnnuale(pagamenti, socioId, anno = 2026) {
+    function getAnnoAccademico(data = new Date()) {
+      const anno = data.getFullYear();
+      const inizioStagione = new Date(anno, 7, 1);
+      const annoInizio = data >= inizioStagione ? anno : anno - 1;
+      return `${annoInizio}/${annoInizio + 1}`;
+    }
+
+    function getQuotaAnnuale(pagamenti, socioId, annoAccademico) {
       return pagamenti
         .filter(p => p.socio_id === socioId
           && (p.corso === 'Iscrizione Annuale' || p.tipo_pagamento === 'Iscrizione Annuale')
-          && (p.anno_riferimento === null || p.anno_riferimento === anno))
+          && p.anno_accademico === annoAccademico)
         .sort((a, b) => {
           const statoA = a.stato === 'Approvato' ? 1 : 0;
           const statoB = b.stato === 'Approvato' ? 1 : 0;
@@ -256,7 +263,7 @@
         const badge = document.getElementById('userRoleBadge');
         if (currentUser.ruolo === 'presidente') {
           badge.className = "text-[9px] px-2 py-0.5 rounded-full font-bold bg-red-600 text-white";
-          badge.innerText = "PRESIDENTE";
+          badge.innerText = "AMMINISTRATORE";
           document.getElementById('sezionePresidenteGestione').classList.remove('hidden');
           caricaSelectTesserati();
         } else {
@@ -283,6 +290,31 @@
 
         if (iscrizioniError) throw iscrizioniError;
 
+        const annoAccademico = getAnnoAccademico();
+        const { data: annualita, error: annualitaError } = await supabaseClient
+          .from('iscrizioni_annuali')
+          .select('*')
+          .in('socio_id', socioIds)
+          .eq('anno_accademico', annoAccademico);
+        if (annualitaError) throw annualitaError;
+
+        const { data: documentiMedici, error: documentiError } = await supabaseClient
+          .from('documenti_medici')
+          .select('*')
+          .in('socio_id', socioIds)
+          .eq('anno_accademico', annoAccademico)
+          .eq('attivo', true)
+          .is('eliminato_il', null);
+        if (documentiError) throw documentiError;
+
+        const { data: consensi, error: consensiError } = await supabaseClient
+          .from('consensi_tesseramento')
+          .select('*')
+          .in('socio_id', socioIds)
+          .eq('anno_accademico', annoAccademico)
+          .order('registrato_il', { ascending: false });
+        if (consensiError) throw consensiError;
+
         const { data: pagamenti, error: pagamentiError } = await supabaseClient
           .from('pagamenti')
           .select('*')
@@ -291,8 +323,12 @@
         if (pagamentiError) throw pagamentiError;
 
         soci.forEach(s => {
-          s.iscrizioni_corsi = (iscrizioni || []).filter(i => i.socio_id === s.id);
-          s.quota_annuale = getQuotaAnnuale(pagamenti || [], s.id);
+          s.iscrizioni_annuali = (annualita || []).filter(i => i.socio_id === s.id);
+          s.iscrizioni_corsi = s.iscrizioni_annuali;
+          s.documento_medico_corrente = (documentiMedici || []).find(d => d.socio_id === s.id) || null;
+          s.consensi_correnti = (consensi || []).filter(c => c.socio_id === s.id);
+          s.quota_annuale = getQuotaAnnuale(pagamenti || [], s.id, annoAccademico);
+          s.anno_accademico = annoAccademico;
         });
 
         const tbody = document.getElementById('sociTableBody');
@@ -308,10 +344,14 @@
 
         sociFiltrati.forEach(s => {
           const corsoDisplay = getCorsoDisplay(s);
-          const medScaduto = !s.scadenza_certificato_medico || new Date(s.scadenza_certificato_medico) < new Date();
+          const annualita = (s.iscrizioni_annuali || []).find(i => corsiCompatibili(i.nome_corso, corsoDisplay)) || s.iscrizioni_annuali?.[0] || null;
+          const documentoMedico = s.documento_medico_corrente;
+          const medScaduto = !documentoMedico?.scadenza || new Date(documentoMedico.scadenza) < new Date();
           const quota = s.quota_annuale;
-          const privacyAccettata = s.privacy_accettata === true;
-          const fotoAutorizzata = s.liberatoria_immagini === true;
+          const privacy = (s.consensi_correnti || []).find(c => c.tipo === 'presa_visione_privacy');
+          const foto = (s.consensi_correnti || []).find(c => c.tipo === 'foto_video');
+          const privacyAccettata = privacy?.stato === 'dato';
+          const fotoAutorizzata = foto?.stato === 'dato';
           const quotaApprovata = quota?.stato === 'Approvato';
           const quotaInVerifica = quota?.stato === 'In attesa di verifica';
           const quotaMetodo = quota?.metodo === 'bonifico' ? 'Bonifico' : (quota?.metodo === 'contanti' ? 'Contanti' : 'Metodo n/d');
@@ -349,8 +389,8 @@
               </details>
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
-              <button onclick="gestisciStatoIscrizione('${s.id}', '${s.stato_approvazione || 'In Attesa'}')" class="px-2 py-1 rounded border ${s.stato_approvazione === 'Approvato' ? 'bg-green-600/10 text-green-500 border-green-500/30' : 'bg-amber-600/10 text-amber-500 border-amber-500/30'} font-bold uppercase text-[8px]">
-                    ${s.stato_approvazione || 'In Attesa'}
+              <button onclick="gestisciStatoIscrizione('${s.id}', '${(annualita?.stato || 'In Attesa').replace(/'/g, "\\'")}', '${annualita?.nome_corso || corsoDisplay}', '${s.anno_accademico}')" class="px-2 py-1 rounded border ${annualita?.stato === 'Approvato' ? 'bg-green-600/10 text-green-500 border-green-500/30' : 'bg-amber-600/10 text-amber-500 border-amber-500/30'} font-bold uppercase text-[8px]">
+                ${annualita?.stato || 'In Attesa'}
                 </button>
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
@@ -363,10 +403,9 @@
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
                 <div class="flex flex-col items-center gap-1">
-                    <p class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">${s.scadenza_certificato_medico || '---'}</p>
+                <p class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">${documentoMedico?.scadenza || '---'}</p>
                     <div class="flex items-center gap-2">
-                        ${s.certificato_medico_url ? `<a href="${s.certificato_medico_url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-white" title="Visualizza certificato medico"><i class="fa-solid fa-file-medical"></i></a>` : ''}
-                        <button onclick="modificaScadenza('${s.id}', 'scadenza_certificato_medico', 'Certificato Medico', '${s.scadenza_certificato_medico || ''}')" class="text-slate-500 hover:text-white" title="Modifica scadenza certificato medico"><i class="fa-solid fa-pen-to-square"></i></button>
+                  ${currentUser.ruolo === 'presidente' && documentoMedico?.file_url ? `<a href="${documentoMedico.file_url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-white" title="Visualizza certificato medico"><i class="fa-solid fa-file-medical"></i></a>` : ''}
                     </div>
                 </div>
             </td>
@@ -392,7 +431,7 @@
       } catch (err) { console.error(err.message); }
     }
 
-    async function gestisciStatoIscrizione(id, statoAttuale) {
+    async function gestisciStatoIscrizione(id, statoAttuale, corso, annoAccademico) {
       const staApprovando = statoAttuale !== 'Approvato';
         try {
         const { data: socio, error: fetchError } = await supabaseClient
@@ -403,8 +442,13 @@
         if (fetchError) throw fetchError;
 
         if (!staApprovando) {
-          if (!confirm(`Confermi di riportare l'iscrizione di ${socio.nome} ${socio.cognome} in attesa?`)) return;
-          const { error } = await supabaseClient.from('soci').update({ stato_approvazione: 'In Attesa' }).eq('id', id);
+          if (!confirm(`Confermi di riportare il tesseramento di ${socio.nome} ${socio.cognome} in attesa?`)) return;
+          const { error } = await supabaseClient
+            .from('iscrizioni_annuali')
+            .update({ stato: 'In Attesa', data_approvazione: null, approvata_da: null })
+            .eq('socio_id', id)
+            .eq('nome_corso', corso)
+            .eq('anno_accademico', annoAccademico);
           if (error) throw error;
           caricaSociEVerifiche();
           return;
@@ -413,7 +457,8 @@
         const { data: pagamenti, error: pagamentiError } = await supabaseClient
           .from('pagamenti')
           .select('stato, corso, tipo_pagamento, importo')
-          .eq('socio_id', id);
+          .eq('socio_id', id)
+          .eq('anno_accademico', annoAccademico);
         if (pagamentiError) throw pagamentiError;
 
         const quotaPagata = (pagamenti || []).some(p =>
@@ -432,10 +477,18 @@
         const conferma = confirm(`Confermi di approvare l'iscrizione di ${socio.nome} ${socio.cognome} e inviare la mail di conferma all'associato?`);
         if (!conferma) return;
 
-        const { error } = await supabaseClient.from('soci').update({ stato_approvazione: 'Approvato' }).eq('id', id);
-            if (error) throw error;
+        const { error } = await supabaseClient
+          .from('iscrizioni_annuali')
+          .update({
+            stato: 'Approvato',
+            data_approvazione: new Date().toISOString(),
+            approvata_da: currentUser.nome || currentUser.email || 'Amministratore'
+          })
+          .eq('socio_id', id)
+          .eq('nome_corso', corso)
+          .eq('anno_accademico', annoAccademico);
+        if (error) throw error;
 
-        const corso = getCorsoDisplay(socio);
         const emailResponse = await fetch('/api/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

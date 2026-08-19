@@ -90,6 +90,13 @@
         const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function getAnnoAccademico(data = new Date()) {
+            const anno = data.getFullYear();
+            const inizioStagione = new Date(anno, 7, 1);
+            const annoInizio = data >= inizioStagione ? anno : anno - 1;
+            return `${annoInizio}/${annoInizio + 1}`;
+        }
         
         document.getElementById('data-lezione').value = new Date().toISOString().split('T')[0];
 
@@ -167,11 +174,12 @@
                     }
                 }
 
-                // 1. Carica gli iscritti al corso dalla tabella canonica iscrizioni_corsi
+                // 1. Carica i tesserati del corso nella stagione corrente.
                 const { data: iscrizioniCorso, error: iscrizioniError } = await supabaseClient
-                    .from('iscrizioni_corsi')
+                    .from('iscrizioni_annuali')
                     .select('socio_id')
-                    .eq('nome_corso', corso);
+                    .eq('nome_corso', corso)
+                    .eq('anno_accademico', getAnnoAccademico());
 
                 if (iscrizioniError) throw iscrizioniError;
 

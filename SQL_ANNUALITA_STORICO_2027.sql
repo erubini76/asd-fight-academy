@@ -3,8 +3,8 @@
 --
 -- Scopo:
 --   1) conservare le iscrizioni per anno accademico;
---   2) conservare tutti i certificati medici caricati;
---   3) predisporre lo storico delle modifiche;
+--   2) conservare i certificati medici per stagione;
+--   3) conservare prova versionata di privacy e liberatoria foto/video;
 --   4) mantenere intatte le tabelle e i dati legacy esistenti.
 --
 -- IMPORTANTE:
@@ -128,13 +128,15 @@ ON CONFLICT (socio_id, nome_corso, anno_accademico) DO NOTHING;
 CREATE TABLE IF NOT EXISTS public.documenti_medici (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   socio_id uuid NOT NULL REFERENCES public.soci(id),
-  iscrizione_annuale_id uuid REFERENCES public.iscrizioni_annuali(id),
+  anno_accademico text NOT NULL,
   file_url text NOT NULL,
   nome_file text,
   scadenza date,
   caricato_il timestamptz NOT NULL DEFAULT now(),
   caricato_da text,
   attivo boolean NOT NULL DEFAULT true,
+  conservare_fino_al date NOT NULL,
+  eliminato_il timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
@@ -142,20 +144,23 @@ CREATE INDEX IF NOT EXISTS documenti_medici_socio_idx
   ON public.documenti_medici (socio_id);
 CREATE INDEX IF NOT EXISTS documenti_medici_attivo_idx
   ON public.documenti_medici (socio_id, attivo);
+CREATE UNIQUE INDEX IF NOT EXISTS documenti_medici_unico_attivo_per_stagione_uidx
+  ON public.documenti_medici (socio_id, anno_accademico)
+  WHERE attivo AND eliminato_il IS NULL;
 
 INSERT INTO public.documenti_medici (
-  socio_id, iscrizione_annuale_id, file_url, scadenza, caricato_il, attivo
+  socio_id, anno_accademico, file_url, scadenza, caricato_il, attivo,
+  conservare_fino_al
 )
 SELECT
   s.id,
-  ia.id,
+  '2026/2027',
   s.certificato_medico_url,
   s.scadenza_certificato_medico,
   now(),
-  true
+  true,
+  DATE '2037-08-31'
 FROM public.soci s
-LEFT JOIN public.iscrizioni_annuali ia
-  ON ia.socio_id = s.id AND ia.anno_accademico = '2026/2027'
 WHERE NULLIF(TRIM(s.certificato_medico_url), '') IS NOT NULL
   AND NOT EXISTS (
     SELECT 1 FROM public.documenti_medici dm
@@ -176,25 +181,56 @@ WHERE anno_accademico IS NULL
 CREATE INDEX IF NOT EXISTS pagamenti_anno_accademico_idx
   ON public.pagamenti (socio_id, anno_accademico, corso);
 
--- 4. Audit generico: non registra ancora automaticamente le modifiche. Serve
--- come base stabile per il successivo trigger/applicativo di audit.
-CREATE TABLE IF NOT EXISTS public.storico_modifiche (
+-- 4. Eventi di consenso: la prova di privacy e liberatoria foto/video non puo
+-- essere affidata al solo booleano corrente salvato nella tabella soci.
+CREATE TABLE IF NOT EXISTS public.consensi_tesseramento (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  socio_id uuid REFERENCES public.soci(id),
-  iscrizione_annuale_id uuid REFERENCES public.iscrizioni_annuali(id),
-  utente_email text,
-  utente_nome text,
-  campo text NOT NULL,
-  valore_precedente text,
-  valore_nuovo text,
-  motivo text,
-  modificato_il timestamptz NOT NULL DEFAULT now()
+  socio_id uuid NOT NULL REFERENCES public.soci(id),
+  anno_accademico text NOT NULL,
+  tipo text NOT NULL,
+  stato text NOT NULL,
+  versione_testo text NOT NULL,
+  canale text NOT NULL DEFAULT 'modulo_web',
+  registrato_il timestamptz NOT NULL DEFAULT now(),
+  revoca_di uuid REFERENCES public.consensi_tesseramento(id),
+  CONSTRAINT consensi_tesseramento_tipo_chk
+    CHECK (tipo IN ('presa_visione_privacy', 'foto_video')),
+  CONSTRAINT consensi_tesseramento_stato_chk
+    CHECK (stato IN ('dato', 'negato', 'revocato'))
 );
 
-CREATE INDEX IF NOT EXISTS storico_modifiche_socio_idx
-  ON public.storico_modifiche (socio_id, modificato_il DESC);
-CREATE INDEX IF NOT EXISTS storico_modifiche_iscrizione_idx
-  ON public.storico_modifiche (iscrizione_annuale_id, modificato_il DESC);
+CREATE INDEX IF NOT EXISTS consensi_tesseramento_socio_idx
+  ON public.consensi_tesseramento (socio_id, anno_accademico, registrato_il DESC);
+
+-- Snapshot iniziale dei valori correnti. La versione iniziale dovra essere
+-- sostituita con la versione reale dei testi prima dell'uso in produzione.
+INSERT INTO public.consensi_tesseramento (
+  socio_id, anno_accademico, tipo, stato, versione_testo
+)
+SELECT s.id, '2026/2027', 'presa_visione_privacy',
+       CASE WHEN s.privacy_accettata THEN 'dato' ELSE 'negato' END,
+       'legacy-2026-2027-da-verificare'
+FROM public.soci s
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.consensi_tesseramento c
+  WHERE c.socio_id = s.id
+    AND c.anno_accademico = '2026/2027'
+    AND c.tipo = 'presa_visione_privacy'
+);
+
+INSERT INTO public.consensi_tesseramento (
+  socio_id, anno_accademico, tipo, stato, versione_testo
+)
+SELECT s.id, '2026/2027', 'foto_video',
+       CASE WHEN s.liberatoria_immagini THEN 'dato' ELSE 'negato' END,
+       'legacy-2026-2027-da-verificare'
+FROM public.soci s
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.consensi_tesseramento c
+  WHERE c.socio_id = s.id
+    AND c.anno_accademico = '2026/2027'
+    AND c.tipo = 'foto_video'
+);
 
 COMMIT;
 

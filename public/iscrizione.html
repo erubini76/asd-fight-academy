@@ -113,6 +113,12 @@
                     </select>
                 </div>
 
+                <div>
+                    <label class="block text-xs font-medium text-slate-300">Anno Accademico</label>
+                    <select id="anno_accademico" disabled class="mt-1 block w-full rounded-lg bg-slate-700 border-slate-600 text-slate-200 shadow-sm border p-2 text-sm cursor-not-allowed"></select>
+                    <p id="anno_accademico_hint" class="text-[9px] text-slate-500 mt-1">La stagione viene proposta automaticamente dal 1 agosto.</p>
+                </div>
+
                 <div class="border-b border-slate-700 pb-3 mt-6 mb-2">
                     <h3 class="text-sm font-bold text-red-500 uppercase tracking-wide">2. Documentazione Medica</h3>
                     <p class="text-[10px] text-slate-500 mt-1 italic font-medium uppercase tracking-tight">Facoltativo. Si può inserire in un secondo momento in Area Tesserati.</p>
@@ -187,6 +193,47 @@
     <script>
         const SUPABASE_URL = 'https://twiizsottstaacnvrxkg.supabase.co';
         let isSubmitting = false; // Flag per protezione double-submit
+
+        const VERSIONE_PRIVACY = 'informativa-privacy-2026-08';
+        const VERSIONE_FOTO_VIDEO = 'liberatoria-foto-video-2026-08';
+
+        function getAnnoAccademico(data = new Date()) {
+            const anno = data.getFullYear();
+            const inizioStagione = new Date(anno, 7, 1);
+            const annoInizio = data >= inizioStagione ? anno : anno - 1;
+            return `${annoInizio}/${annoInizio + 1}`;
+        }
+
+        function getDataConservazioneCertificato(annoAccademico) {
+            const annoFine = Number(annoAccademico.slice(5, 9));
+            return `${annoFine + 10}-08-31`;
+        }
+
+        function configuraSelettoreAnnoAccademico() {
+            const select = document.getElementById('anno_accademico');
+            const hint = document.getElementById('anno_accademico_hint');
+            const stagioneCorrente = getAnnoAccademico();
+            const annoInizio = Number(stagioneCorrente.slice(0, 4));
+            const sessionUser = JSON.parse(localStorage.getItem('asd_admin_user') || 'null');
+            const amministratore = sessionUser?.ruolo === 'presidente';
+            const stagioni = amministratore
+                ? [annoInizio - 1, annoInizio, annoInizio + 1]
+                : [annoInizio];
+
+            select.innerHTML = stagioni
+                .map(anno => `<option value="${anno}/${anno + 1}">${anno}/${anno + 1}</option>`)
+                .join('');
+            select.value = stagioneCorrente;
+            select.disabled = !amministratore;
+            select.classList.toggle('cursor-not-allowed', !amministratore);
+            select.classList.toggle('bg-slate-700', !amministratore);
+            select.classList.toggle('bg-slate-900', amministratore);
+            hint.textContent = amministratore
+                ? 'Amministratore: puoi selezionare una stagione diversa per un caso eccezionale.'
+                : 'La stagione viene proposta automaticamente dal 1 agosto.';
+        }
+
+        configuraSelettoreAnnoAccademico();
 
         async function autocompilaDati() {
             const email = document.getElementById('autofill-email').value.trim().toLowerCase();
@@ -406,6 +453,7 @@
             const file = fileInput.files[0];
             const scadenzaMedico = document.getElementById('scadenza_medico').value;
             const cf = document.getElementById('codice_fiscale').value.trim().toUpperCase();
+            const annoAccademico = document.getElementById('anno_accademico').value;
 
             let fileUrl = null;
 
@@ -475,6 +523,15 @@
                         throw new Error('Impossibile creare il profilo del tesserato.');
                     }
                     socioId = insertedRecord.id;
+                } else {
+                    const aggiornamentiAnagrafici = { ...formData };
+                    if (!fileUrl) delete aggiornamentiAnagrafici.certificato_medico_url;
+                    if (!scadenzaMedico) delete aggiornamentiAnagrafici.scadenza_certificato_medico;
+                    const { error: updateError } = await supabaseClient
+                        .from('soci')
+                        .update(aggiornamentiAnagrafici)
+                        .eq('id', socioId);
+                    if (updateError) throw updateError;
                 }
 
                 const corsoId = await trovaCorsoIdPerNome(nuovoCorso);
@@ -506,6 +563,84 @@
                         .insert([{ socio_id: socioId, corso_id: corsoId }]);
 
                     if (relazioneError) throw relazioneError;
+                }
+
+                const { data: annualitaEsistente, error: annualitaError } = await supabaseClient
+                    .from('iscrizioni_annuali')
+                    .select('id')
+                    .eq('socio_id', socioId)
+                    .eq('nome_corso', nuovoCorso)
+                    .eq('anno_accademico', annoAccademico)
+                    .maybeSingle();
+                if (annualitaError) throw annualitaError;
+
+                const annualitaPayload = {
+                    socio_id: socioId,
+                    nome_corso: nuovoCorso,
+                    anno_accademico: annoAccademico,
+                    privacy_accettata: formData.privacy_accettata,
+                    liberatoria_immagini: formData.liberatoria_immagini,
+                    scadenza_certificato_medico: scadenzaMedico || null,
+                    certificato_medico_url: fileUrl || null
+                };
+
+                if (annualitaEsistente) {
+                    if (!fileUrl) delete annualitaPayload.certificato_medico_url;
+                    if (!scadenzaMedico) delete annualitaPayload.scadenza_certificato_medico;
+                    const { error: updateAnnualitaError } = await supabaseClient
+                        .from('iscrizioni_annuali')
+                        .update(annualitaPayload)
+                        .eq('id', annualitaEsistente.id);
+                    if (updateAnnualitaError) throw updateAnnualitaError;
+                } else {
+                    const { error: insertAnnualitaError } = await supabaseClient
+                        .from('iscrizioni_annuali')
+                        .insert([{ ...annualitaPayload, stato: 'In Attesa' }]);
+                    if (insertAnnualitaError) throw insertAnnualitaError;
+                }
+
+                const consensi = [
+                    {
+                        socio_id: socioId,
+                        anno_accademico: annoAccademico,
+                        tipo: 'presa_visione_privacy',
+                        stato: 'dato',
+                        versione_testo: VERSIONE_PRIVACY
+                    },
+                    {
+                        socio_id: socioId,
+                        anno_accademico: annoAccademico,
+                        tipo: 'foto_video',
+                        stato: formData.liberatoria_immagini ? 'dato' : 'negato',
+                        versione_testo: VERSIONE_FOTO_VIDEO
+                    }
+                ];
+                const { error: consensiError } = await supabaseClient
+                    .from('consensi_tesseramento')
+                    .insert(consensi);
+                if (consensiError) throw consensiError;
+
+                if (fileUrl) {
+                    const { error: disattivaDocumentoError } = await supabaseClient
+                        .from('documenti_medici')
+                        .update({ attivo: false })
+                        .eq('socio_id', socioId)
+                        .eq('anno_accademico', annoAccademico)
+                        .eq('attivo', true);
+                    if (disattivaDocumentoError) throw disattivaDocumentoError;
+
+                    const { error: documentoError } = await supabaseClient
+                        .from('documenti_medici')
+                        .insert([{
+                            socio_id: socioId,
+                            anno_accademico: annoAccademico,
+                            file_url: fileUrl,
+                            nome_file: file.name,
+                            scadenza: scadenzaMedico || null,
+                            attivo: true,
+                            conservare_fino_al: getDataConservazioneCertificato(annoAccademico)
+                        }]);
+                    if (documentoError) throw documentoError;
                 }
 
                 const emailResponse = await fetch('/api/send-email', {

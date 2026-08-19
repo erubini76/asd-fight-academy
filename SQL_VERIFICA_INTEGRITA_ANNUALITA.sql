@@ -49,7 +49,7 @@ SELECT
   (SELECT COUNT(*) FROM public.iscrizioni_corsi) AS iscrizioni_legacy,
   (SELECT COUNT(*) FROM public.iscrizioni_annuali WHERE anno_accademico = '2026/2027') AS snapshot_2026_2027,
   (SELECT COUNT(*) FROM public.documenti_medici) AS documenti_medici,
-  (SELECT COUNT(*) FROM public.storico_modifiche) AS modifiche_storico;
+  (SELECT COUNT(*) FROM public.consensi_tesseramento) AS eventi_consenso;
 
 -- 7. Duplicati nella nuova tabella: devono essere zero.
 SELECT socio_id, LOWER(TRIM(nome_corso)) AS corso_normalizzato,
@@ -66,11 +66,14 @@ WHERE s.id IS NULL
    OR ia.nome_corso IS NULL
    OR ia.anno_accademico IS NULL;
 
--- 9. Documenti medici senza socio o URL.
+-- 9. Documenti medici senza socio, URL, stagione o data di conservazione.
 SELECT dm.*
 FROM public.documenti_medici dm
 LEFT JOIN public.soci s ON s.id = dm.socio_id
-WHERE s.id IS NULL OR NULLIF(TRIM(dm.file_url), '') IS NULL;
+WHERE s.id IS NULL
+  OR NULLIF(TRIM(dm.file_url), '') IS NULL
+  OR dm.anno_accademico IS NULL
+  OR dm.conservare_fino_al IS NULL;
 
 -- 10. Pagamenti annuali non ancora classificati per stagione.
 SELECT id, socio_id, corso, tipo_pagamento, anno_riferimento, anno_accademico, stato
@@ -79,16 +82,26 @@ WHERE tipo_pagamento = 'Iscrizione Annuale'
   AND anno_accademico IS NULL
 ORDER BY socio_id, id;
 
--- 11. Indici e vincoli rilevanti, per confronto prima/dopo.
+-- 11. Consensi senza socio, stagione, tipo, stato o versione testo.
+SELECT c.*
+FROM public.consensi_tesseramento c
+LEFT JOIN public.soci s ON s.id = c.socio_id
+WHERE s.id IS NULL
+   OR c.anno_accademico IS NULL
+   OR c.tipo IS NULL
+   OR c.stato IS NULL
+   OR NULLIF(TRIM(c.versione_testo), '') IS NULL;
+
+-- 12. Indici e vincoli rilevanti, per confronto prima/dopo.
 SELECT schemaname, tablename, indexname, indexdef
 FROM pg_indexes
 WHERE schemaname = 'public'
-  AND tablename IN ('iscrizioni_corsi', 'iscrizioni_annuali', 'pagamenti', 'documenti_medici', 'storico_modifiche')
+  AND tablename IN ('iscrizioni_corsi', 'iscrizioni_annuali', 'pagamenti', 'documenti_medici', 'consensi_tesseramento')
 ORDER BY tablename, indexname;
 
--- 12. Foreign key rilevanti.
+-- 13. Foreign key rilevanti.
 SELECT conrelid::regclass AS tabella, conname, pg_get_constraintdef(oid) AS definizione
 FROM pg_constraint
 WHERE contype = 'f'
-  AND conrelid::regclass::text IN ('iscrizioni_annuali', 'documenti_medici', 'storico_modifiche')
+  AND conrelid::regclass::text IN ('iscrizioni_annuali', 'documenti_medici', 'consensi_tesseramento')
 ORDER BY tabella, conname;

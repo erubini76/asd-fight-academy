@@ -78,6 +78,13 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR3aWl6c290dHN0YWFjbnZyeGtnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU4NDk3ODAsImV4cCI6MjEwMTQyNTc4MH0.ksm6L4sWhCQ-zWY2SsYbZPuhdXhvevprrd2aIsMXfFI';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        function getAnnoAccademico(data = new Date()) {
+            const anno = data.getFullYear();
+            const inizioStagione = new Date(anno, 7, 1);
+            const annoInizio = data >= inizioStagione ? anno : anno - 1;
+            return `${annoInizio}/${annoInizio + 1}`;
+        }
+
         function getCorsoDisplayFromSocio(socio) {
             const iscrizioni = Array.isArray(socio?.iscrizioni_corsi) ? socio.iscrizioni_corsi : [];
             const latest = iscrizioni.slice().sort((a, b) => new Date(b.data_iscrizione || 0) - new Date(a.data_iscrizione || 0))[0];
@@ -137,16 +144,29 @@
                 if (error) throw error;
 
                 const socioIds = (data || []).map(s => s.id);
+                const annoAccademico = getAnnoAccademico();
                 const { data: iscrizioni, error: iscrizioniError } = await supabaseClient
-                    .from('iscrizioni_corsi')
-                    .select('socio_id, nome_corso, stato, data_iscrizione')
-                    .in('socio_id', socioIds);
+                    .from('iscrizioni_annuali')
+                    .select('socio_id, nome_corso, stato, data_invio')
+                    .in('socio_id', socioIds)
+                    .eq('anno_accademico', annoAccademico);
 
                 if (iscrizioniError) throw iscrizioniError;
 
+                const { data: documentiMedici, error: documentiError } = await supabaseClient
+                    .from('documenti_medici')
+                    .select('socio_id, scadenza')
+                    .in('socio_id', socioIds)
+                    .eq('anno_accademico', annoAccademico)
+                    .eq('attivo', true)
+                    .is('eliminato_il', null);
+                if (documentiError) throw documentiError;
+
                 (data || []).forEach(s => {
                     s.iscrizioni_corsi = (iscrizioni || []).filter(i => i.socio_id === s.id);
-                    s.giorni_alla_scadenza_medica = giorniAllaScadenza(s.scadenza_certificato_medico);
+                    const documentoMedico = (documentiMedici || []).find(d => d.socio_id === s.id);
+                    s.scadenza_certificato_medico = documentoMedico?.scadenza || null;
+                    s.giorni_alla_scadenza_medica = giorniAllaScadenza(documentoMedico?.scadenza);
                     s.giorni_alla_scadenza_asi = giorniAllaScadenza(s.scadenza_tessera_asi);
                 });
 
