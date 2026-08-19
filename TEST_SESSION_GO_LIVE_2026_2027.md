@@ -1,4 +1,4 @@
-# Sessione Di Test Virtuale - Go-Live 2026/2027
+DO# Sessione Di Test Virtuale - Go-Live 2026/2027
 
 ## Scopo
 

@@ -407,6 +407,18 @@
                 })[0] || null;
         }
 
+        function quotaAnnualeAppartieneAlCorso(quota, corsoFiltro, istruttori) {
+            if (!quota || !quota.validato_da_email) return sessionUser.ruolo === 'presidente';
+            const istruttore = istruttori.find(i => i.email === quota.validato_da_email);
+            if (!istruttore) return false;
+            const corsiIstruttore = Array.isArray(istruttore.corsi_competenze)
+                ? istruttore.corsi_competenze
+                : [istruttore.corso, istruttore.nome_corso].filter(Boolean);
+            return corsoFiltro === 'tutti'
+                ? istruttore.email === sessionUser.email
+                : corsiIstruttore.some(corso => corsiCompatibili(corso, corsoFiltro));
+        }
+
             function getAnnoAccademicoDaMese(mese, anno) {
                 const annoInizio = mese >= 8 ? anno : anno - 1;
                 return `${annoInizio}/${annoInizio + 1}`;
@@ -445,6 +457,10 @@
                 });
                 const { data: allPags } = await supabaseClient.from('pagamenti').select('*');
                 const { data: allPres } = await supabaseClient.from('presenze').select('*');
+                const { data: istruttori, error: istruttoriError } = await supabaseClient
+                    .from('istruttori_corsi')
+                    .select('email, corsi_competenze');
+                if (istruttoriError) throw istruttoriError;
 
                 const corsoFiltro = selectCorso.value;
                 let sociFiltrati = allSoci;
@@ -464,7 +480,9 @@
                     const quotaAnnuale = getQuotaAnnuale(allPags, s.id, yearVal);
                     const pIsc = quotaAnnuale?.stato === 'Approvato' ? quotaAnnuale : null;
                     const pIscPending = quotaAnnuale?.stato === 'In attesa di verifica' ? quotaAnnuale : null;
-                    if (pIsc) totaliMese.iscrizione += (parseFloat(pIsc.importo) || 0);
+                    if (pIsc && quotaAnnualeAppartieneAlCorso(pIsc, corsoFiltro, istruttori || [])) {
+                        totaliMese.iscrizione += (parseFloat(pIsc.importo) || 0);
+                    }
 
                     const corsoPagamento = corsoFiltro !== 'tutti' ? corsoFiltro : (getCorsiNomiSocio(s).find(corsoIstruttoreCompatibile) || corsoDisplay);
                     const actionIsc = buildPayPayload(s.id, `${s.nome} ${s.cognome}`, 0, yearVal, 'Iscrizione Annuale', corsoPagamento, pIsc ? pIsc.id : (pIscPending ? pIscPending.id : null), pIsc ? pIsc.ricevuta_url : (pIscPending ? pIscPending.ricevuta_url : ''), pIsc ? pIsc.importo : (pIscPending ? pIscPending.importo : 0), pIsc ? pIsc.metodo : (pIscPending ? pIscPending.metodo : ''));
