@@ -372,7 +372,7 @@
 
         const { data: istruttori, error: istruttoriError } = await supabaseClient
           .from('istruttori_corsi')
-          .select('id, socio_id, nome, email, corsi_competenze, corsi_disabilitati, ruolo, attivo')
+          .select('id, socio_id, nome, email, corsi_competenze, corsi_disabilitati, ruolo')
           .order('nome');
         if (istruttoriError) throw istruttoriError;
         if (currentUser.ruolo === 'presidente') renderElencoIstruttori((istruttori || []).filter(i => i.ruolo === 'istruttore'));
@@ -679,7 +679,6 @@
           socio_id: socio.id,
           nome: `${socio.nome} ${socio.cognome}`,
           corsi_competenze: corsi,
-          attivo: true,
           corsi_disabilitati: (istruttore?.corsi_disabilitati || []).filter(corsoDisabilitato => corsoDisabilitato !== corso)
         };
         if (istruttore) {
@@ -738,7 +737,6 @@
             socio_id: tesseratoId,
             corsi_competenze: mergedCourses,
             nome: nomeIstruttore,
-            attivo: true,
             corsi_disabilitati: (existing.corsi_disabilitati || []).filter(corsoDisabilitato => !corsi.includes(corsoDisabilitato)),
           };
           if (pass) updatePayload.password_accesso = pass;
@@ -751,7 +749,7 @@
         }
 
         if (!pass) { alert("Password obbligatoria per nuovo istruttore."); return; }
-        const { error } = await supabaseClient.from('istruttori_corsi').insert([{ socio_id: tesseratoId, email, password_accesso: pass, corsi_competenze: corsi, corsi_disabilitati: [], ruolo: 'istruttore', nome: nomeIstruttore, attivo: true }]);
+        const { error } = await supabaseClient.from('istruttori_corsi').insert([{ socio_id: tesseratoId, email, password_accesso: pass, corsi_competenze: corsi, corsi_disabilitati: [], ruolo: 'istruttore', nome: nomeIstruttore }]);
         if (error) throw error;
         alert("Istruttore creato!"); location.reload();
       } catch (err) { alert(err.message); }
