@@ -125,7 +125,8 @@
         document.getElementById('data-lezione').value = new Date().toISOString().split('T')[0];
         const oggi = new Date();
         const inizioAnnoAccademico = new Date(oggi.getFullYear() - (oggi.getMonth() < 7 ? 1 : 0), 7, 1);
-        document.getElementById('storico-dal').value = inizioAnnoAccademico.toISOString().split('T')[0];
+        const dataInizioAnnoAccademico = inizioAnnoAccademico.toISOString().split('T')[0];
+        document.getElementById('storico-dal').value = dataInizioAnnoAccademico;
         document.getElementById('storico-al').value = oggi.toISOString().split('T')[0];
 
         // Popolamento dinamico select corsi in base ai permessi
@@ -292,7 +293,8 @@
                 const { data: presenzeCorso, error: presenzeError } = await supabaseClient
                     .from('presenze')
                     .select('data_presenza, socio_id')
-                    .eq('corso', corso);
+                    .eq('corso', corso)
+                    .gte('data_presenza', dataInizioAnnoAccademico);
                 
                 if (presenzeError) throw presenzeError;
 
