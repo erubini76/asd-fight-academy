@@ -120,6 +120,7 @@
             <button onclick="registraIstruttore()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-xl text-[10px] transition shadow-lg uppercase">Crea Istruttore</button>
         </div>
         <div class="overflow-x-auto border border-slate-700 rounded-xl">
+          <p class="border-b border-slate-700 px-3 py-2 text-[9px] text-slate-400">Ogni riga mostra un corso assegnato all'istruttore e il relativo stato.</p>
           <table class="w-full text-left text-[10px]">
             <thead class="bg-slate-900/50 text-slate-400 uppercase"><tr><th class="p-3">Istruttore</th><th class="p-3">Corso assegnato</th><th class="p-3 text-center">Stato corso</th><th class="p-3 text-center">Azione</th></tr></thead>
             <tbody id="istruttoriTableBody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
@@ -216,7 +217,7 @@
       try {
         const { data, error } = await supabaseClient.from('istruttori_corsi').select('*').eq('email', email).single();
         const corsiAttivi = data ? getCorsiAttiviIstruttore(data) : [];
-        if (error || !data || data.password_accesso !== password || (data.ruolo !== 'presidente' && (data.attivo === false || corsiAttivi.length === 0))) {
+        if (error || !data || data.password_accesso !== password || (data.ruolo !== 'presidente' && corsiAttivi.length === 0)) {
           alert("Credenziali non valide."); return;
         }
         currentUser = { ...data, corsi_competenze: data.ruolo === 'presidente' ? data.corsi_competenze : corsiAttivi };
