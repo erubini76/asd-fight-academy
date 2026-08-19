@@ -281,7 +281,13 @@
                         codiceFiscale: socio.codice_fiscale
                     })
                 });
-                const payload = await response.json();
+                const responseBody = await response.text();
+                let payload;
+                try {
+                    payload = JSON.parse(responseBody);
+                } catch {
+                    throw new Error('Il servizio di download non è disponibile. Riprova tra qualche istante.');
+                }
                 if (!response.ok) throw new Error(payload.error || 'Download non disponibile');
                 window.open(payload.url, '_blank', 'noopener');
             } catch (error) {
