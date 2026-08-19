@@ -106,7 +106,10 @@
         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
             <select id="selectTesseratoIstruttore" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none font-medium"></select>
             <input type="email" id="nuovaEmailLogin" placeholder="Email Login" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
-            <input type="text" id="nuovaPasswordIstruttore" placeholder="Password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
+            <div>
+              <input type="text" id="nuovaPasswordIstruttore" placeholder="Password primo accesso" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
+              <p class="mt-1 text-[8px] text-slate-500">Obbligatoria solo per un nuovo istruttore; facoltativa per istruttori gia abilitati.</p>
+            </div>
             <select id="selectCorsiCompetenza" multiple class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1 text-[9px] text-white h-16">
               <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti/Ragazzi</option>
               <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
@@ -118,7 +121,7 @@
         </div>
         <div class="overflow-x-auto border border-slate-700 rounded-xl">
           <table class="w-full text-left text-[10px]">
-            <thead class="bg-slate-900/50 text-slate-400 uppercase"><tr><th class="p-3">Istruttore</th><th class="p-3">Corsi assegnati</th><th class="p-3 text-center">Stato accesso</th><th class="p-3 text-center">Azione</th></tr></thead>
+            <thead class="bg-slate-900/50 text-slate-400 uppercase"><tr><th class="p-3">Istruttore</th><th class="p-3">Corso assegnato</th><th class="p-3 text-center">Stato corso</th><th class="p-3 text-center">Azione</th></tr></thead>
             <tbody id="istruttoriTableBody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
           </table>
         </div>
@@ -131,6 +134,10 @@
                 <i class="fa-solid fa-users text-blue-500"></i> Registro Unificato Tesserati & Documenti
             </h2>
         </div>
+        <div class="flex flex-col gap-3 border-b border-slate-700 p-4 md:flex-row md:items-center">
+          <input id="registro-ricerca" type="search" oninput="aggiornaRegistro(true)" placeholder="Cerca nome, cognome o codice fiscale" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none md:max-w-sm">
+          <select id="registro-corso" onchange="aggiornaRegistro(true)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none md:max-w-xs"></select>
+        </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-[10px] border-collapse">
             <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700 tracking-tighter">
@@ -142,11 +149,18 @@
                 <th class="p-4 text-center">Tessera ASI</th>
                 <th class="p-4 text-center">Privacy</th>
                 <th class="p-4 text-center">Foto</th>
-                <th class="p-4 text-center">Incarico Istruttore</th>
               </tr>
             </thead>
             <tbody id="sociTableBody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
           </table>
+        </div>
+        <div class="flex flex-col gap-3 border-t border-slate-700 p-4 text-xs text-slate-400 md:flex-row md:items-center md:justify-between">
+          <span id="registro-risultati"></span>
+          <div class="flex items-center gap-2">
+            <button onclick="cambiaPaginaRegistro(-1)" id="registro-prev" class="bg-slate-700 hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-40 px-3 py-1.5 rounded-lg text-white font-bold">Precedente</button>
+            <span id="registro-pagina" class="min-w-20 text-center"></span>
+            <button onclick="cambiaPaginaRegistro(1)" id="registro-next" class="bg-slate-700 hover:bg-slate-600 disabled:cursor-not-allowed disabled:opacity-40 px-3 py-1.5 rounded-lg text-white font-bold">Successiva</button>
+          </div>
         </div>
       </section>
 
@@ -162,6 +176,18 @@
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     let currentUser = null;
+    const RIGHE_PER_PAGINA = 25;
+    let paginaRegistro = 1;
+
+    function aggiornaRegistro(resetPagina) {
+      if (resetPagina) paginaRegistro = 1;
+      caricaSociEVerifiche();
+    }
+
+    function cambiaPaginaRegistro(delta) {
+      paginaRegistro += delta;
+      caricaSociEVerifiche();
+    }
 
     function togglePassword(inputId, iconId) {
       const input = document.getElementById(inputId);
@@ -177,6 +203,11 @@
       }
     }
 
+    function getCorsiAttiviIstruttore(istruttore) {
+      const disabilitati = istruttore.corsi_disabilitati || [];
+      return (istruttore.corsi_competenze || []).filter(corso => !disabilitati.includes(corso));
+    }
+
     async function autenticaAdmin() {
       const email = document.getElementById('adminEmail').value.trim().toLowerCase();
       const password = document.getElementById('adminPassword').value.trim();
@@ -184,10 +215,11 @@
 
       try {
         const { data, error } = await supabaseClient.from('istruttori_corsi').select('*').eq('email', email).single();
-        if (error || !data || data.password_accesso !== password || data.attivo === false) {
+        const corsiAttivi = data ? getCorsiAttiviIstruttore(data) : [];
+        if (error || !data || data.password_accesso !== password || (data.ruolo !== 'presidente' && (data.attivo === false || corsiAttivi.length === 0))) {
           alert("Credenziali non valide."); return;
         }
-        currentUser = data;
+        currentUser = { ...data, corsi_competenze: data.ruolo === 'presidente' ? data.corsi_competenze : corsiAttivi };
         localStorage.setItem('asd_admin_user', JSON.stringify(currentUser));
         renderDashboard();
       } catch (err) { alert(err.message); }
@@ -240,6 +272,14 @@
       }
       const latest = iscrizioni.slice().sort((a, b) => new Date(b.data_iscrizione || 0) - new Date(a.data_iscrizione || 0))[0];
       return latest?.nome_corso || 'N/D';
+    }
+
+    function getCorsiVisibiliSocio(socio) {
+      const corsi = getCorsiNomiSocio(socio);
+      if (currentUser?.ruolo === 'presidente') return corsi;
+      return corsi.filter(corso =>
+        (currentUser?.corsi_competenze || []).some(competenza => corsiCompatibili(corso, competenza))
+      );
     }
 
     function getAnnoAccademico(data = new Date()) {
@@ -331,10 +371,10 @@
 
         const { data: istruttori, error: istruttoriError } = await supabaseClient
           .from('istruttori_corsi')
-          .select('id, socio_id, nome, email, corsi_competenze, ruolo, attivo')
+          .select('id, socio_id, nome, email, corsi_competenze, corsi_disabilitati, ruolo, attivo')
           .order('nome');
         if (istruttoriError) throw istruttoriError;
-        if (currentUser.ruolo === 'presidente') renderElencoIstruttori(istruttori || []);
+        if (currentUser.ruolo === 'presidente') renderElencoIstruttori((istruttori || []).filter(i => i.ruolo === 'istruttore'));
 
         soci.forEach(s => {
           s.iscrizioni_annuali = (annualita || []).filter(i => i.socio_id === s.id);
@@ -356,8 +396,35 @@
               return corsiSocio.some(corsoNome => comp.some(c => corsiCompatibili(corsoNome, c)));
             });
 
-        sociFiltrati.forEach(s => {
+        const selectCorso = document.getElementById('registro-corso');
+        const corsoSelezionato = selectCorso.value;
+        const corsiFiltro = [...new Set(sociFiltrati.flatMap(s => getCorsiVisibiliSocio(s)))].filter(corso => corso !== 'N/D').sort();
+        selectCorso.innerHTML = `<option value="tutti">${currentUser.ruolo === 'presidente' ? 'Tutti i corsi' : 'Tutti i miei corsi'}</option>`
+          + corsiFiltro.map(corso => `<option value="${corso}">${corso}</option>`).join('');
+        selectCorso.value = corsiFiltro.includes(corsoSelezionato) ? corsoSelezionato : 'tutti';
+
+        const ricerca = document.getElementById('registro-ricerca').value.trim().toLowerCase();
+        const sociRicercati = sociFiltrati.filter(s => {
+          const nomeCompleto = `${s.nome || ''} ${s.cognome || ''} ${s.codice_fiscale || ''}`.toLowerCase();
+          const corsoCorrisponde = selectCorso.value === 'tutti'
+            || getCorsiVisibiliSocio(s).some(corso => corsiCompatibili(corso, selectCorso.value));
+          return (!ricerca || nomeCompleto.includes(ricerca)) && corsoCorrisponde;
+        });
+
+        const totalePagine = Math.max(1, Math.ceil(sociRicercati.length / RIGHE_PER_PAGINA));
+        paginaRegistro = Math.min(paginaRegistro, totalePagine);
+        const inizio = (paginaRegistro - 1) * RIGHE_PER_PAGINA;
+        const sociPagina = sociRicercati.slice(inizio, inizio + RIGHE_PER_PAGINA);
+        document.getElementById('registro-risultati').textContent = sociRicercati.length
+          ? `${inizio + 1}-${Math.min(inizio + RIGHE_PER_PAGINA, sociRicercati.length)} di ${sociRicercati.length} tesserati`
+          : 'Nessun tesserato trovato';
+        document.getElementById('registro-pagina').textContent = `Pagina ${paginaRegistro} di ${totalePagine}`;
+        document.getElementById('registro-prev').disabled = paginaRegistro === 1;
+        document.getElementById('registro-next').disabled = paginaRegistro === totalePagine;
+
+        sociPagina.forEach(s => {
           const corsoDisplay = getCorsoDisplay(s);
+          const corsiVisibili = getCorsiVisibiliSocio(s);
           const annualita = (s.iscrizioni_annuali || []).find(i => corsiCompatibili(i.nome_corso, corsoDisplay)) || s.iscrizioni_annuali?.[0] || null;
           const documentoMedico = s.documento_medico_corrente;
           const medScaduto = !documentoMedico?.scadenza || new Date(documentoMedico.scadenza) < new Date();
@@ -368,7 +435,6 @@
           const fotoAutorizzata = foto?.stato === 'dato';
           const quotaApprovata = quota?.stato === 'Approvato';
           const quotaInVerifica = quota?.stato === 'In attesa di verifica';
-          const richiestaIstruttore = annualita?.stato_richiesta_istruttore || 'Nessuna';
           const quotaMetodo = quota?.metodo === 'bonifico' ? 'Bonifico' : (quota?.metodo === 'contanti' ? 'Contanti' : 'Metodo n/d');
           const quotaDocumento = quota?.ricevuta_url ? 'Ricevuta' : (quota?.metodo === 'contanti' ? 'Contanti' : 'Ricevuta assente');
           const quotaDescrizione = quotaApprovata
@@ -391,7 +457,7 @@
             <td class="p-4 border-b border-slate-700/50">
                 <p class="font-bold text-white text-sm leading-tight">${s.cognome} ${s.nome}</p>
                 <p class="text-[9px] text-slate-500 font-mono">${s.codice_fiscale || ''}</p>
-                <span class="text-[8px] px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase tracking-widest">${corsoDisplay}</span>
+                <div class="mt-1 flex flex-wrap gap-1">${corsiVisibili.map(corso => `<span class="text-[8px] px-1 bg-slate-900 border border-slate-700 rounded text-slate-400 font-bold uppercase tracking-widest">${corso}</span>`).join('')}</div>
               <details class="mt-2 text-left">
                 <summary class="cursor-pointer text-[8px] font-bold text-cyan-400 uppercase">Dati tesserato</summary>
                 <div class="mt-2 space-y-1 text-[9px] text-slate-300">
@@ -439,11 +505,6 @@
               <span class="inline-flex items-center gap-1 px-2 py-1 rounded border ${fotoAutorizzata ? 'bg-green-600/10 text-green-500 border-green-500/30' : 'bg-amber-600/10 text-amber-400 border-amber-500/30'} font-bold uppercase text-[8px]" title="${fotoAutorizzata ? 'Liberatoria immagini accettata' : 'Liberatoria immagini non accettata'}">
                 <i class="fa-solid ${fotoAutorizzata ? 'fa-check' : 'fa-minus'}"></i> ${fotoAutorizzata ? 'SI' : 'NO'}
               </span>
-            </td>
-            <td class="p-4 text-center border-b border-slate-700/50">
-              ${richiestaIstruttore === 'In attesa' && currentUser.ruolo === 'presidente'
-                ? `<button onclick="confermaRichiestaIstruttore('${s.id}', '${(annualita?.nome_corso || corsoDisplay).replace(/'/g, "\\'")}', '${s.anno_accademico}')" class="bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded text-[8px] font-bold uppercase">Da confermare</button>`
-                : `<span class="text-[8px] font-bold uppercase ${richiestaIstruttore === 'Confermata' ? 'text-green-400' : 'text-slate-500'}">${richiestaIstruttore}</span>`}
             </td>
           `;
           tbody.appendChild(tr);
@@ -554,25 +615,36 @@
         tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">Nessun istruttore configurato.</td></tr>';
         return;
       }
-      tbody.innerHTML = istruttori.map(istruttore => {
-        const attivo = istruttore.attivo !== false;
-        const corsi = (istruttore.corsi_competenze || []).join(', ') || 'Nessun corso assegnato';
-        return `<tr>
-          <td class="p-3"><p class="font-bold text-white">${istruttore.nome || 'N/D'}</p><p class="text-slate-500">${istruttore.email || ''}</p></td>
-          <td class="p-3">${corsi}</td>
-          <td class="p-3 text-center"><span class="font-bold uppercase ${attivo ? 'text-green-400' : 'text-red-400'}">${attivo ? 'Attivo' : 'Disabilitato'}</span></td>
-          <td class="p-3 text-center"><button onclick="toggleStatoIstruttore(${istruttore.id}, ${attivo})" class="${attivo ? 'bg-red-900 hover:bg-red-800' : 'bg-green-700 hover:bg-green-600'} text-white px-2 py-1 rounded text-[8px] font-bold uppercase">${attivo ? 'Disabilita' : 'Abilita'}</button></td>
-        </tr>`;
+      tbody.innerHTML = istruttori.flatMap(istruttore => {
+        const corsi = istruttore.corsi_competenze || [];
+        return corsi.map((corso, index) => {
+          const disabilitato = (istruttore.corsi_disabilitati || []).includes(corso);
+          return `<tr>
+            <td class="p-3">${index === 0 ? `<p class="font-bold text-white">${istruttore.nome || 'N/D'}</p><p class="text-slate-500">${istruttore.email || ''}</p>` : ''}</td>
+            <td class="p-3">${corso}</td>
+            <td class="p-3 text-center"><span class="font-bold uppercase ${disabilitato ? 'text-red-400' : 'text-green-400'}">${disabilitato ? 'Disabilitato' : 'Attivo'}</span></td>
+            <td class="p-3 text-center"><button onclick="toggleCorsoIstruttore(${istruttore.id}, '${corso.replace(/'/g, "\\'")}', ${disabilitato})" class="${disabilitato ? 'bg-green-700 hover:bg-green-600' : 'bg-red-900 hover:bg-red-800'} text-white px-2 py-1 rounded text-[8px] font-bold uppercase">${disabilitato ? 'Abilita' : 'Disabilita'}</button></td>
+          </tr>`;
+        });
       }).join('');
     }
 
-    async function toggleStatoIstruttore(istruttoreId, attivo) {
-      const azione = attivo ? 'disabilitare' : 'abilitare';
-      if (!confirm(`Confermi di ${azione} l accesso dell istruttore?`)) return;
+    async function toggleCorsoIstruttore(istruttoreId, corso, disabilitato) {
+      const azione = disabilitato ? 'abilitare' : 'disabilitare';
+      if (!confirm(`Confermi di ${azione} l istruttore per il corso ${corso}?`)) return;
       try {
+        const { data: istruttore, error: letturaError } = await supabaseClient
+          .from('istruttori_corsi')
+          .select('corsi_disabilitati')
+          .eq('id', istruttoreId)
+          .single();
+        if (letturaError) throw letturaError;
+        const corsiDisabilitati = new Set(istruttore.corsi_disabilitati || []);
+        if (disabilitato) corsiDisabilitati.delete(corso);
+        else corsiDisabilitati.add(corso);
         const { error } = await supabaseClient
           .from('istruttori_corsi')
-          .update({ attivo: !attivo })
+          .update({ corsi_disabilitati: [...corsiDisabilitati] })
           .eq('id', istruttoreId);
         if (error) throw error;
         caricaSociEVerifiche();
@@ -606,7 +678,8 @@
           socio_id: socio.id,
           nome: `${socio.nome} ${socio.cognome}`,
           corsi_competenze: corsi,
-          attivo: true
+          attivo: true,
+          corsi_disabilitati: (istruttore?.corsi_disabilitati || []).filter(corsoDisabilitato => corsoDisabilitato !== corso)
         };
         if (istruttore) {
           const { error } = await supabaseClient.from('istruttori_corsi').update(payload).eq('id', istruttore.id);
@@ -665,6 +738,7 @@
             corsi_competenze: mergedCourses,
             nome: nomeIstruttore,
             attivo: true,
+            corsi_disabilitati: (existing.corsi_disabilitati || []).filter(corsoDisabilitato => !corsi.includes(corsoDisabilitato)),
           };
           if (pass) updatePayload.password_accesso = pass;
 
@@ -676,7 +750,7 @@
         }
 
         if (!pass) { alert("Password obbligatoria per nuovo istruttore."); return; }
-        const { error } = await supabaseClient.from('istruttori_corsi').insert([{ socio_id: tesseratoId, email, password_accesso: pass, corsi_competenze: corsi, ruolo: 'istruttore', nome: nomeIstruttore, attivo: true }]);
+        const { error } = await supabaseClient.from('istruttori_corsi').insert([{ socio_id: tesseratoId, email, password_accesso: pass, corsi_competenze: corsi, corsi_disabilitati: [], ruolo: 'istruttore', nome: nomeIstruttore, attivo: true }]);
         if (error) throw error;
         alert("Istruttore creato!"); location.reload();
       } catch (err) { alert(err.message); }

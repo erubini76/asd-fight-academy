@@ -30,6 +30,12 @@
         </header>
 
         <main class="space-y-6">
+            <div class="grid grid-cols-2 gap-2 bg-slate-800 p-2 rounded-xl border border-slate-700">
+                <button id="tab-appello" onclick="mostraVistaPresenze('appello')" class="bg-purple-600 text-white font-bold py-2 rounded-lg text-xs uppercase"><i class="fa-solid fa-clipboard-check mr-1"></i> Appello</button>
+                <button id="tab-storico" onclick="mostraVistaPresenze('storico')" class="text-slate-400 hover:text-white font-bold py-2 rounded-lg text-xs uppercase"><i class="fa-solid fa-clock-rotate-left mr-1"></i> Storico</button>
+            </div>
+
+            <div id="vista-appello" class="space-y-6">
             <!-- SELEZIONE CORSO E DATA -->
             <section class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -70,6 +76,24 @@
                 <i class="fa-solid fa-clipboard-list text-4xl mb-3 opacity-20"></i>
                 <p>Seleziona un corso per visualizzare gli allievi</p>
             </div>
+            </div>
+
+            <section id="vista-storico" class="hidden space-y-4">
+                <div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-xl space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-bold text-slate-400 uppercase mb-1">Corso</label><select id="storico-corso" onchange="caricaStoricoPresenze()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none"></select></div>
+                        <div><label class="block text-xs font-bold text-slate-400 uppercase mb-1">Cerca tesserato</label><input id="storico-ricerca" type="search" oninput="filtraStoricoPresenze()" placeholder="Nome o cognome" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none"></div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-bold text-slate-400 uppercase mb-1">Dal</label><input id="storico-dal" type="date" onchange="caricaStoricoPresenze()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none"></div>
+                        <div><label class="block text-xs font-bold text-slate-400 uppercase mb-1">Al</label><input id="storico-al" type="date" onchange="caricaStoricoPresenze()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none"></div>
+                    </div>
+                </div>
+                <div id="storico-riepilogo" class="grid grid-cols-3 gap-2"></div>
+                <div class="bg-slate-800 rounded-2xl border border-slate-700 shadow-xl overflow-hidden">
+                    <div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="bg-slate-900/50 text-slate-400 uppercase"><tr><th class="p-3">Data</th><th class="p-3">Corso</th><th class="p-3">Tesserato</th></tr></thead><tbody id="storico-tbody" class="divide-y divide-slate-700/50 text-slate-300"></tbody></table></div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -99,6 +123,10 @@
         }
         
         document.getElementById('data-lezione').value = new Date().toISOString().split('T')[0];
+        const oggi = new Date();
+        const inizioAnnoAccademico = new Date(oggi.getFullYear() - (oggi.getMonth() < 7 ? 1 : 0), 7, 1);
+        document.getElementById('storico-dal').value = inizioAnnoAccademico.toISOString().split('T')[0];
+        document.getElementById('storico-al').value = oggi.toISOString().split('T')[0];
 
         // Popolamento dinamico select corsi in base ai permessi
         const corsoSelect = document.getElementById('corso-select');
@@ -147,8 +175,73 @@
             }
         });
 
+        const storicoCorsoSelect = document.getElementById('storico-corso');
+        storicoCorsoSelect.innerHTML = '<option value="tutti">Tutti i corsi autorizzati</option>';
+        tuttiICorsi.forEach(c => {
+            const haCompetenza = (sessionUser.corsi_competenze || []).some(comp => corsoCorrisponde(comp, c.val));
+            if (sessionUser.ruolo === 'presidente' || haCompetenza) {
+                const opt = document.createElement('option');
+                opt.value = c.val;
+                opt.textContent = c.lab;
+                storicoCorsoSelect.appendChild(opt);
+            }
+        });
+
         let allieviCaricati = [];
         const presentiIds = new Set();
+        let storicoPresenze = [];
+
+        function mostraVistaPresenze(vista) {
+            const storico = vista === 'storico';
+            document.getElementById('vista-appello').classList.toggle('hidden', storico);
+            document.getElementById('vista-storico').classList.toggle('hidden', !storico);
+            document.getElementById('tab-appello').className = storico ? 'text-slate-400 hover:text-white font-bold py-2 rounded-lg text-xs uppercase' : 'bg-purple-600 text-white font-bold py-2 rounded-lg text-xs uppercase';
+            document.getElementById('tab-storico').className = storico ? 'bg-purple-600 text-white font-bold py-2 rounded-lg text-xs uppercase' : 'text-slate-400 hover:text-white font-bold py-2 rounded-lg text-xs uppercase';
+            if (storico) caricaStoricoPresenze();
+        }
+
+        async function caricaStoricoPresenze() {
+            const corsoSelezionato = storicoCorsoSelect.value;
+            const dal = document.getElementById('storico-dal').value;
+            const al = document.getElementById('storico-al').value;
+            const tbody = document.getElementById('storico-tbody');
+            tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center"><i class="fa-solid fa-spinner fa-spin text-purple-500"></i></td></tr>';
+
+            try {
+                const corsiAutorizzati = tuttiICorsi
+                    .filter(c => sessionUser.ruolo === 'presidente' || (sessionUser.corsi_competenze || []).some(comp => corsoCorrisponde(comp, c.val)))
+                    .map(c => c.val);
+                let query = supabaseClient.from('presenze').select('socio_id, data_presenza, corso').gte('data_presenza', dal).lte('data_presenza', al).order('data_presenza', { ascending: false });
+                if (corsoSelezionato !== 'tutti') query = query.eq('corso', corsoSelezionato);
+                else if (sessionUser.ruolo !== 'presidente') query = query.in('corso', corsiAutorizzati);
+                const { data: presenze, error } = await query;
+                if (error) throw error;
+
+                const socioIds = [...new Set((presenze || []).map(p => p.socio_id))];
+                const { data: soci, error: sociError } = socioIds.length
+                    ? await supabaseClient.from('soci').select('id, nome, cognome').in('id', socioIds)
+                    : { data: [], error: null };
+                if (sociError) throw sociError;
+                const sociPerId = new Map((soci || []).map(s => [s.id, s]));
+                storicoPresenze = (presenze || []).map(p => ({ ...p, socio: sociPerId.get(p.socio_id) }));
+                filtraStoricoPresenze();
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-red-400">Errore caricamento storico: ${err.message}</td></tr>`;
+            }
+        }
+
+        function filtraStoricoPresenze() {
+            const ricerca = document.getElementById('storico-ricerca').value.trim().toLowerCase();
+            const righe = storicoPresenze.filter(p => `${p.socio?.nome || ''} ${p.socio?.cognome || ''}`.toLowerCase().includes(ricerca));
+            const lezioni = new Set(righe.map(p => `${p.corso}|${p.data_presenza}`)).size;
+            const tesserati = new Set(righe.map(p => p.socio_id)).size;
+            document.getElementById('storico-riepilogo').innerHTML = [
+                ['Lezioni', lezioni], ['Presenze', righe.length], ['Tesserati', tesserati]
+            ].map(([label, valore]) => `<div class="bg-slate-800 border border-slate-700 rounded-xl p-3 text-center"><p class="text-[8px] uppercase font-bold text-slate-500">${label}</p><p class="text-lg font-black text-purple-400">${valore}</p></div>`).join('');
+            document.getElementById('storico-tbody').innerHTML = righe.length
+                ? righe.map(p => `<tr><td class="p-3">${new Date(`${p.data_presenza}T00:00:00`).toLocaleDateString('it-IT')}</td><td class="p-3">${p.corso}</td><td class="p-3 font-bold text-white">${p.socio ? `${p.socio.cognome} ${p.socio.nome}` : 'Tesserato non disponibile'}</td></tr>`).join('')
+                : '<tr><td colspan="3" class="p-8 text-center text-slate-500">Nessuna presenza nel periodo selezionato.</td></tr>';
+        }
 
         async function caricaIscritti() {
             const corso = document.getElementById('corso-select').value;
