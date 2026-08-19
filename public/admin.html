@@ -116,6 +116,12 @@
             </select>
             <button onclick="registraIstruttore()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-xl text-[10px] transition shadow-lg uppercase">Crea Istruttore</button>
         </div>
+        <div class="overflow-x-auto border border-slate-700 rounded-xl">
+          <table class="w-full text-left text-[10px]">
+            <thead class="bg-slate-900/50 text-slate-400 uppercase"><tr><th class="p-3">Istruttore</th><th class="p-3">Corsi assegnati</th><th class="p-3 text-center">Stato accesso</th><th class="p-3 text-center">Azione</th></tr></thead>
+            <tbody id="istruttoriTableBody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
+          </table>
+        </div>
       </section>
 
       <!-- ELENCO SOCI UNIFICATO -->
@@ -136,6 +142,7 @@
                 <th class="p-4 text-center">Tessera ASI</th>
                 <th class="p-4 text-center">Privacy</th>
                 <th class="p-4 text-center">Foto</th>
+                <th class="p-4 text-center">Incarico Istruttore</th>
               </tr>
             </thead>
             <tbody id="sociTableBody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
@@ -177,7 +184,7 @@
 
       try {
         const { data, error } = await supabaseClient.from('istruttori_corsi').select('*').eq('email', email).single();
-        if (error || !data || data.password_accesso !== password) {
+        if (error || !data || data.password_accesso !== password || data.attivo === false) {
           alert("Credenziali non valide."); return;
         }
         currentUser = data;
@@ -322,6 +329,13 @@
 
         if (pagamentiError) throw pagamentiError;
 
+        const { data: istruttori, error: istruttoriError } = await supabaseClient
+          .from('istruttori_corsi')
+          .select('id, socio_id, nome, email, corsi_competenze, ruolo, attivo')
+          .order('nome');
+        if (istruttoriError) throw istruttoriError;
+        if (currentUser.ruolo === 'presidente') renderElencoIstruttori(istruttori || []);
+
         soci.forEach(s => {
           s.iscrizioni_annuali = (annualita || []).filter(i => i.socio_id === s.id);
           s.iscrizioni_corsi = s.iscrizioni_annuali;
@@ -354,6 +368,7 @@
           const fotoAutorizzata = foto?.stato === 'dato';
           const quotaApprovata = quota?.stato === 'Approvato';
           const quotaInVerifica = quota?.stato === 'In attesa di verifica';
+          const richiestaIstruttore = annualita?.stato_richiesta_istruttore || 'Nessuna';
           const quotaMetodo = quota?.metodo === 'bonifico' ? 'Bonifico' : (quota?.metodo === 'contanti' ? 'Contanti' : 'Metodo n/d');
           const quotaDocumento = quota?.ricevuta_url ? 'Ricevuta' : (quota?.metodo === 'contanti' ? 'Contanti' : 'Ricevuta assente');
           const quotaDescrizione = quotaApprovata
@@ -424,6 +439,11 @@
               <span class="inline-flex items-center gap-1 px-2 py-1 rounded border ${fotoAutorizzata ? 'bg-green-600/10 text-green-500 border-green-500/30' : 'bg-amber-600/10 text-amber-400 border-amber-500/30'} font-bold uppercase text-[8px]" title="${fotoAutorizzata ? 'Liberatoria immagini accettata' : 'Liberatoria immagini non accettata'}">
                 <i class="fa-solid ${fotoAutorizzata ? 'fa-check' : 'fa-minus'}"></i> ${fotoAutorizzata ? 'SI' : 'NO'}
               </span>
+            </td>
+            <td class="p-4 text-center border-b border-slate-700/50">
+              ${richiestaIstruttore === 'In attesa' && currentUser.ruolo === 'presidente'
+                ? `<button onclick="confermaRichiestaIstruttore('${s.id}', '${(annualita?.nome_corso || corsoDisplay).replace(/'/g, "\\'")}', '${s.anno_accademico}')" class="bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded text-[8px] font-bold uppercase">Da confermare</button>`
+                : `<span class="text-[8px] font-bold uppercase ${richiestaIstruttore === 'Confermata' ? 'text-green-400' : 'text-slate-500'}">${richiestaIstruttore}</span>`}
             </td>
           `;
           tbody.appendChild(tr);
@@ -527,6 +547,93 @@
       } catch (err) {}
     }
 
+    function renderElencoIstruttori(istruttori) {
+      const tbody = document.getElementById('istruttoriTableBody');
+      if (!tbody) return;
+      if (istruttori.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">Nessun istruttore configurato.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = istruttori.map(istruttore => {
+        const attivo = istruttore.attivo !== false;
+        const corsi = (istruttore.corsi_competenze || []).join(', ') || 'Nessun corso assegnato';
+        return `<tr>
+          <td class="p-3"><p class="font-bold text-white">${istruttore.nome || 'N/D'}</p><p class="text-slate-500">${istruttore.email || ''}</p></td>
+          <td class="p-3">${corsi}</td>
+          <td class="p-3 text-center"><span class="font-bold uppercase ${attivo ? 'text-green-400' : 'text-red-400'}">${attivo ? 'Attivo' : 'Disabilitato'}</span></td>
+          <td class="p-3 text-center"><button onclick="toggleStatoIstruttore(${istruttore.id}, ${attivo})" class="${attivo ? 'bg-red-900 hover:bg-red-800' : 'bg-green-700 hover:bg-green-600'} text-white px-2 py-1 rounded text-[8px] font-bold uppercase">${attivo ? 'Disabilita' : 'Abilita'}</button></td>
+        </tr>`;
+      }).join('');
+    }
+
+    async function toggleStatoIstruttore(istruttoreId, attivo) {
+      const azione = attivo ? 'disabilitare' : 'abilitare';
+      if (!confirm(`Confermi di ${azione} l accesso dell istruttore?`)) return;
+      try {
+        const { error } = await supabaseClient
+          .from('istruttori_corsi')
+          .update({ attivo: !attivo })
+          .eq('id', istruttoreId);
+        if (error) throw error;
+        caricaSociEVerifiche();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function confermaRichiestaIstruttore(socioId, corso, annoAccademico) {
+      try {
+        const { data: socio, error: socioError } = await supabaseClient
+          .from('soci')
+          .select('id, nome, cognome, email')
+          .eq('id', socioId)
+          .single();
+        if (socioError) throw socioError;
+
+        const { data: istruttore, error: istruttoreError } = await supabaseClient
+          .from('istruttori_corsi')
+          .select('*')
+          .eq('email', socio.email)
+          .maybeSingle();
+        if (istruttoreError) throw istruttoreError;
+
+        let password = null;
+        if (!istruttore) {
+          password = prompt(`Imposta la password di accesso per ${socio.nome} ${socio.cognome}:`);
+          if (!password || !password.trim()) return;
+        }
+
+        const corsi = Array.from(new Set([...(istruttore?.corsi_competenze || []), corso]));
+        const payload = {
+          socio_id: socio.id,
+          nome: `${socio.nome} ${socio.cognome}`,
+          corsi_competenze: corsi,
+          attivo: true
+        };
+        if (istruttore) {
+          const { error } = await supabaseClient.from('istruttori_corsi').update(payload).eq('id', istruttore.id);
+          if (error) throw error;
+        } else {
+          const { error } = await supabaseClient.from('istruttori_corsi').insert([{
+            ...payload,
+            email: socio.email,
+            password_accesso: password.trim(),
+            ruolo: 'istruttore'
+          }]);
+          if (error) throw error;
+        }
+
+        const { error: richiestaError } = await supabaseClient
+          .from('iscrizioni_annuali')
+          .update({ stato_richiesta_istruttore: 'Confermata' })
+          .eq('socio_id', socioId)
+          .eq('nome_corso', corso)
+          .eq('anno_accademico', annoAccademico);
+        if (richiestaError) throw richiestaError;
+
+        alert('Incarico istruttore confermato.');
+        caricaSociEVerifiche();
+      } catch (err) { alert(err.message); }
+    }
+
     async function modificaScadenza(id, campo, descrizione, valoreAttuale) {
       const nuovaData = prompt(`Modifica scadenza ${descrizione} (AAAA-MM-DD):`, valoreAttuale);
       if (nuovaData === null) return;
@@ -557,6 +664,7 @@
             socio_id: tesseratoId,
             corsi_competenze: mergedCourses,
             nome: nomeIstruttore,
+            attivo: true,
           };
           if (pass) updatePayload.password_accesso = pass;
 
@@ -568,7 +676,7 @@
         }
 
         if (!pass) { alert("Password obbligatoria per nuovo istruttore."); return; }
-        const { error } = await supabaseClient.from('istruttori_corsi').insert([{ socio_id: tesseratoId, email, password_accesso: pass, corsi_competenze: corsi, ruolo: 'istruttore', nome: nomeIstruttore }]);
+        const { error } = await supabaseClient.from('istruttori_corsi').insert([{ socio_id: tesseratoId, email, password_accesso: pass, corsi_competenze: corsi, ruolo: 'istruttore', nome: nomeIstruttore, attivo: true }]);
         if (error) throw error;
         alert("Istruttore creato!"); location.reload();
       } catch (err) { alert(err.message); }
