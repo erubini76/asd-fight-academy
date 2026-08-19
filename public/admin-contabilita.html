@@ -434,7 +434,7 @@
 
             if (selectCorso.options.length <= 1) {
                 const corsi = sessionUser.ruolo === 'presidente' ? 
-                    ["Ninjutsu Adulti/Ragazzi", "Ninjutsu Bambini", "Vietvodao Adulti/Ragazzi", "Vietvodao Bambini", "Shodo (Calligrafia)"] : 
+                    ["Ninjutsu Adulti/Ragazzi", "Ninjutsu Bambini", "Vietvodao Adulti/Ragazzi", "Vietvodao Bambini", "Shodo (Calligrafia Giapponese)"] : 
                     sessionUser.corsi_competenze;
                 corsi.forEach(c => selectCorso.add(new Option(c, c)));
             }
