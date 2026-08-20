@@ -1,6 +1,3 @@
-import { Resend } from 'resend';
-import { createClient } from '@supabase/supabase-js';
-
 export default async function handler(req, res) {
   if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -12,16 +9,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    const resend = new Resend(RESEND_API_KEY);
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const supabaseResponse = await fetch(`${SUPABASE_URL}/rest/v1/v_scadenze_soci?select=*`, {
+      headers: {
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
+      }
+    });
+    const supabaseBody = await supabaseResponse.json();
 
-    const { data: sociScadenze, error } = await supabase
-      .from('v_scadenze_soci')
-      .select('*');
-
-    if (error) {
-      return res.status(200).json({ success: false, message: "Vista SQL non pronta o vuota: " + error.message });
+    if (!supabaseResponse.ok) {
+      return res.status(200).json({ success: false, message: 'Vista SQL non pronta o non accessibile: ' + (supabaseBody.message || supabaseBody.error || 'errore Supabase') });
     }
+
+    const sociScadenze = supabaseBody;
 
     if (!sociScadenze || sociScadenze.length === 0) {
       return res.status(200).json({ success: true, processed: 0, logs: ["Nessun tesserato trovato nella vista di controllo."] });
@@ -38,8 +38,8 @@ export default async function handler(req, res) {
           recipients.push('kawasemidojo@gmail.com');
         }
         if (recipients.length > 0) {
-          await resend.emails.send({
-            from: 'A.S.D. Fight Academy <onboarding@resend.dev>',
+          await inviaEmail({
+            apiKey: RESEND_API_KEY,
             to: recipients,
             subject: `AVVISO: Scadenza Certificato Medico tra ${giorni_alla_scadenza_medica} giorni`,
             html: `<p>Ciao <strong>${nome || ''} ${cognome || ''}</strong>,</p><p>ti ricordiamo che il tuo certificato medico scadrà tra <strong>${giorni_alla_scadenza_medica} giorni</strong>.</p>`
@@ -49,8 +49,8 @@ export default async function handler(req, res) {
       }
 
       if (giorni_alla_scadenza_asi === 15) {
-        await resend.emails.send({
-          from: 'A.S.D. Fight Academy <onboarding@resend.dev>',
+        await inviaEmail({
+          apiKey: RESEND_API_KEY,
           to: ['kawasemidojo@gmail.com'],
           subject: `ALERT ASI: Tessera per ${nome || ''} ${cognome || ''}`,
           html: `<p>La tessera ASI di <strong>${nome || ''} ${cognome || ''}</strong> scadrà tra 15 giorni.</p>`
@@ -63,5 +63,26 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message });
+  }
+}
+
+async function inviaEmail({ apiKey, to, subject, html }) {
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      from: 'A.S.D. Fight Academy <onboarding@resend.dev>',
+      to,
+      subject,
+      html
+    })
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Resend ${response.status}: ${body.slice(0, 300)}`);
   }
 }
