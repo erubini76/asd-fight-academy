@@ -1,7 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/check-expirations",
+      "path": "/api/scadenze-alert",
       "schedule": "0 8 * * *"
     }
   ]
