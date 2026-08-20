@@ -274,7 +274,13 @@
 
             try {
                 const response = await fetch('/api/scadenze-alert', { method: 'POST' });
-                const result = await response.json();
+                const rawText = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(rawText);
+                } catch {
+                    throw new Error(`Risposta non valida dal server (${response.status}): ${rawText.slice(0, 150)}`);
+                }
 
                 if (response.ok) {
                     alert(`Operazione completata!\nTesserati processati: ${result.processed}\nEmail inviate: ${result.logs.length}`);
