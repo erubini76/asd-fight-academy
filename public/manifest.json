@@ -3,18 +3,20 @@
   "name": "A.S.D. Fight Academy - Gestione Soci",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3048/3048381.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "https://cdn-icons-png.flaticon.com/512/3048/3048381.png",
+      "src": "/logo.png",
       "type": "image/png",
       "sizes": "512x512"
+    },
+    {
+      "src": "/logo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
-  "start_url": "/admin.html",
-  "background_color": "#ffffff",
+  "start_url": "/index.html",
+  "scope": "/",
+  "background_color": "#0f172a",
   "theme_color": "#b91c1c",
   "display": "standalone",
   "orientation": "portrait"
