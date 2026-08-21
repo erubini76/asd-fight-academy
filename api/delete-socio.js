@@ -41,14 +41,15 @@ module.exports = async (req, res) => {
     return body;
   };
 
-  const deleteRows = async (table) => {
+  const deleteRows = async (table, optional = false) => {
     const response = await fetch(`${restUrl}/${table}?socio_id=eq.${escapeFilter(socioId)}`, {
       method: 'DELETE',
       headers: { ...headers, Prefer: 'return=minimal' }
     });
     if (!response.ok) {
-      const body = await response.text();
-      throw new Error(`Errore eliminazione ${table}: ${body.slice(0, 300)}`);
+      const body = await response.json().catch(() => ({}));
+      if (optional && body.code === 'PGRST205') return;
+      throw new Error(`Errore eliminazione ${table}: ${body.message || JSON.stringify(body).slice(0, 300)}`);
     }
   };
 
@@ -77,7 +78,7 @@ module.exports = async (req, res) => {
     await deleteRows('documenti_medici');
     await deleteRows('iscrizioni_annuali');
     await deleteRows('iscrizioni_corsi');
-    await deleteRows('storico_modifiche');
+    await deleteRows('storico_modifiche', true);
 
     const response = await fetch(`${restUrl}/soci?id=eq.${escapeFilter(socioId)}`, {
       method: 'DELETE',
