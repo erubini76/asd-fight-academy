@@ -65,6 +65,22 @@
             return `${annoInizio}/${annoInizio + 1}`;
         }
 
+        function formatDataItaliana(value) {
+            if (!value) return '';
+            const [anno, mese, giorno] = String(value).slice(0, 10).split('-');
+            return anno && mese && giorno ? `${giorno}-${mese}-${anno}` : value;
+        }
+
+        function parseDataItaliana(value) {
+            const match = String(value || '').trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+            if (!match) return null;
+            const [, giorno, mese, anno] = match;
+            const data = new Date(Number(anno), Number(mese) - 1, Number(giorno));
+            return data.getFullYear() === Number(anno) && data.getMonth() === Number(mese) - 1 && data.getDate() === Number(giorno)
+                ? `${anno}-${mese}-${giorno}`
+                : null;
+        }
+
         function getAnnoAccademicoDaMese(mese, anno) {
             const annoInizio = mese >= 8 ? anno : anno - 1;
             return `${annoInizio}/${annoInizio + 1}`;
@@ -250,7 +266,7 @@
                             </div>` : ''}
                             <div class="bg-slate-900/30 p-4 rounded-xl border border-slate-700/50">
                                 <h5 class="text-[10px] font-bold text-cyan-400 uppercase tracking-widest flex items-center gap-2 mb-3"><i class="fa-solid fa-stethoscope"></i> Aggiorna Certificato</h5>
-                                <input type="date" id="scadenza_${cardKey}" value="${documentoMedico?.scadenza || ''}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-white outline-none mb-2">
+                                <input type="text" id="scadenza_${cardKey}" placeholder="GG-MM-AAAA" inputmode="numeric" value="${formatDataItaliana(documentoMedico?.scadenza)}" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-[10px] text-white outline-none mb-2">
                                 <input type="file" id="fileCert_${cardKey}" accept="image/*,.pdf" class="w-full text-[9px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-slate-700 file:text-white cursor-pointer mb-2">
                                 <button onclick="uploadCertificato('${s.id}', '${s.anno_accademico}', '${cardKey}')" class="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-lg text-[10px] transition uppercase tracking-widest border border-slate-600">Carica Documento</button>
                             </div>
@@ -363,7 +379,8 @@
         }
 
         async function uploadCertificato(tesseratoId, annoAccademico, cardKey = tesseratoId) {
-            const f = document.getElementById(`fileCert_${cardKey}`).files[0], d = document.getElementById(`scadenza_${cardKey}`).value;
+            const f = document.getElementById(`fileCert_${cardKey}`).files[0], dInput = document.getElementById(`scadenza_${cardKey}`).value, d = parseDataItaliana(dInput);
+            if (dInput.trim() && !d) { alert('Data non valida. Usa il formato GG-MM-AAAA.'); return; }
             if (!f || !d) { alert("Dati mancanti."); return; }
             const fileName = `c_${tesseratoId}_${Date.now()}.${f.name.split('.').pop()}`;
             try {

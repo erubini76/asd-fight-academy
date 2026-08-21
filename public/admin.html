@@ -299,6 +299,22 @@
       return `${annoInizio}/${annoInizio + 1}`;
     }
 
+    function formatDataItaliana(value) {
+      if (!value) return '';
+      const [anno, mese, giorno] = String(value).slice(0, 10).split('-');
+      return anno && mese && giorno ? `${giorno}-${mese}-${anno}` : value;
+    }
+
+    function parseDataItaliana(value) {
+      const match = String(value || '').trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+      if (!match) return null;
+      const [, giorno, mese, anno] = match;
+      const data = new Date(Number(anno), Number(mese) - 1, Number(giorno));
+      return data.getFullYear() === Number(anno) && data.getMonth() === Number(mese) - 1 && data.getDate() === Number(giorno)
+        ? `${anno}-${mese}-${giorno}`
+        : null;
+    }
+
     function getQuotaAnnuale(pagamenti, socioId, annoAccademico) {
       return pagamenti
         .filter(p => p.socio_id === socioId
@@ -494,16 +510,17 @@
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
                 <div class="flex flex-col items-center gap-1">
-                <p class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">${documentoMedico?.scadenza || '---'}</p>
+                <p class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">${formatDataItaliana(documentoMedico?.scadenza) || '---'}</p>
                     <div class="flex items-center gap-2">
                   ${currentUser.ruolo === 'presidente' && documentoMedico?.file_url ? `<a href="${documentoMedico.file_url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-white" title="Visualizza certificato medico"><i class="fa-solid fa-file-medical"></i></a>` : ''}
+                  <button onclick="modificaScadenzaCertificato('${s.id}', '${documentoMedico?.id || ''}', '${formatDataItaliana(documentoMedico?.scadenza)}')" class="text-slate-500 hover:text-white" title="Modifica scadenza certificato medico"><i class="fa-solid fa-pen-to-square"></i></button>
                     </div>
                 </div>
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
                 <div class="flex flex-col items-center gap-1">
-                    <p class="${asiClass}">${s.scadenza_tessera_asi || '---'}</p>
-                    <button onclick="modificaScadenza('${s.id}', 'scadenza_tessera_asi', 'Tessera ASI', '${s.scadenza_tessera_asi || ''}')" class="text-slate-500 hover:text-white" title="Modifica scadenza tessera ASI"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <p class="${asiClass}">${formatDataItaliana(s.scadenza_tessera_asi) || '---'}</p>
+                    <button onclick="modificaScadenza('${s.id}', 'scadenza_tessera_asi', 'Tessera ASI', '${formatDataItaliana(s.scadenza_tessera_asi)}')" class="text-slate-500 hover:text-white" title="Modifica scadenza tessera ASI"><i class="fa-solid fa-pen-to-square"></i></button>
                 </div>
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
@@ -717,8 +734,10 @@
     }
 
     async function modificaScadenza(id, campo, descrizione, valoreAttuale) {
-      const nuovaData = prompt(`Modifica scadenza ${descrizione} (AAAA-MM-DD):`, valoreAttuale);
-      if (nuovaData === null) return;
+      const nuovaDataInput = prompt(`Modifica scadenza ${descrizione} (GG-MM-AAAA):`, valoreAttuale);
+      if (nuovaDataInput === null) return;
+      const nuovaData = nuovaDataInput.trim() ? parseDataItaliana(nuovaDataInput) : null;
+      if (nuovaDataInput.trim() && !nuovaData) { alert('Data non valida. Usa il formato GG-MM-AAAA.'); return; }
 
         try {
         const { error } = await supabaseClient.from('soci').update({ [campo]: nuovaData || null }).eq('id', id);
@@ -726,6 +745,24 @@
             alert("Dati aggiornati!");
             caricaSociEVerifiche();
         } catch (err) { alert(err.message); }
+    }
+
+    async function modificaScadenzaCertificato(socioId, documentoId, valoreAttuale) {
+      const nuovaDataInput = prompt('Modifica scadenza certificato medico (GG-MM-AAAA):', valoreAttuale);
+      if (nuovaDataInput === null) return;
+      const nuovaData = nuovaDataInput.trim() ? parseDataItaliana(nuovaDataInput) : null;
+      if (nuovaDataInput.trim() && !nuovaData) { alert('Data non valida. Usa il formato GG-MM-AAAA.'); return; }
+
+      try {
+        const payload = { scadenza: nuovaData || null };
+        const query = supabaseClient.from('documenti_medici');
+        const result = documentoId
+          ? await query.update(payload).eq('id', documentoId)
+          : await query.insert({ socio_id: socioId, anno_accademico: getAnnoAccademico(), scadenza: payload.scadenza, attivo: true });
+        if (result.error) throw result.error;
+        alert('Scadenza certificato aggiornata!');
+        caricaSociEVerifiche();
+      } catch (err) { alert(err.message); }
     }
 
     async function registraIstruttore() {

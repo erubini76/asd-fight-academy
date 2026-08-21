@@ -73,7 +73,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300">Data di Nascita</label>
-                        <input type="date" id="data_nascita" onchange="verificaEta()" required class="mt-1 block w-full rounded-lg bg-slate-900 border-slate-700 text-white shadow-sm border p-2 text-sm focus:border-red-500 focus:ring-red-500">
+                        <input type="text" id="data_nascita" placeholder="GG-MM-AAAA" inputmode="numeric" onchange="verificaEta()" required class="mt-1 block w-full rounded-lg bg-slate-900 border-slate-700 text-white shadow-sm border p-2 text-sm focus:border-red-500 focus:ring-red-500">
                     </div>
                 </div>
 
@@ -140,7 +140,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-slate-300">Scadenza Certificato Medico</label>
-                        <input type="date" id="scadenza_medico" class="mt-1 block w-full rounded-lg bg-slate-900 border-slate-700 text-white shadow-sm border p-2 text-sm focus:border-red-500 focus:ring-red-500">
+                        <input type="text" id="scadenza_medico" placeholder="GG-MM-AAAA" inputmode="numeric" class="mt-1 block w-full rounded-lg bg-slate-900 border-slate-700 text-white shadow-sm border p-2 text-sm focus:border-red-500 focus:ring-red-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300">Upload Certificato (PDF/Foto)</label>
@@ -217,6 +217,22 @@
             return `${annoInizio}/${annoInizio + 1}`;
         }
 
+        function formatDataItaliana(value) {
+            if (!value) return '';
+            const [anno, mese, giorno] = String(value).slice(0, 10).split('-');
+            return anno && mese && giorno ? `${giorno}-${mese}-${anno}` : value;
+        }
+
+        function parseDataItaliana(value) {
+            const match = String(value || '').trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+            if (!match) return null;
+            const [, giorno, mese, anno] = match;
+            const data = new Date(Number(anno), Number(mese) - 1, Number(giorno));
+            return data.getFullYear() === Number(anno) && data.getMonth() === Number(mese) - 1 && data.getDate() === Number(giorno)
+                ? `${anno}-${mese}-${giorno}`
+                : null;
+        }
+
         function getDataConservazioneCertificato(annoAccademico) {
             const annoFine = Number(annoAccademico.slice(5, 9));
             return `${annoFine + 10}-08-31`;
@@ -264,7 +280,7 @@
                 document.getElementById('nome').value = data.nome || '';
                 document.getElementById('cognome').value = data.cognome || '';
                 document.getElementById('codice_fiscale').value = data.codice_fiscale || '';
-                document.getElementById('data_nascita').value = data.data_nascita || '';
+                document.getElementById('data_nascita').value = formatDataItaliana(data.data_nascita);
                 document.getElementById('luogo_nascita').value = data.luogo_nascita || '';
                 document.getElementById('residenza_indirizzo').value = data.residenza_indirizzo || '';
                 document.getElementById('residenza_cap').value = data.residenza_cap || '';
@@ -399,7 +415,7 @@
 
             if (!dataNascitaVal) return;
 
-            const dataNascita = new Date(dataNascitaVal);
+                const dataNascita = new Date(`${parseDataItaliana(dataNascitaVal)}T00:00:00`);
             const oggi = new Date();
             let eta = oggi.getFullYear() - dataNascita.getFullYear();
             const m = oggi.getMonth() - dataNascita.getMonth();
@@ -478,7 +494,15 @@
 
             const fileInput = document.getElementById('file_medico');
             const file = fileInput.files[0];
-            const scadenzaMedico = document.getElementById('scadenza_medico').value;
+            const dataNascita = parseDataItaliana(document.getElementById('data_nascita').value);
+            const scadenzaMedico = parseDataItaliana(document.getElementById('scadenza_medico').value);
+            if (!dataNascita || (document.getElementById('scadenza_medico').value.trim() && !scadenzaMedico)) {
+                alert('Controlla le date: usa il formato GG-MM-AAAA.');
+                isSubmitting = false;
+                btn.disabled = false;
+                btn.textContent = 'Invia domanda';
+                return;
+            }
             const cf = document.getElementById('codice_fiscale').value.trim().toUpperCase();
             const annoAccademico = document.getElementById('anno_accademico').value;
             const richiestaIstruttore = document.getElementById('richiesta_istruttore').checked;
@@ -520,7 +544,7 @@
                     nome: document.getElementById('nome').value.trim(),
                     cognome: document.getElementById('cognome').value.trim(),
                     codice_fiscale: cf,
-                    data_nascita: document.getElementById('data_nascita').value,
+                    data_nascita: dataNascita,
                     luogo_nascita: document.getElementById('luogo_nascita').value.trim(),
                     residenza_indirizzo: document.getElementById('residenza_indirizzo').value.trim(),
                     residenza_cap: document.getElementById('residenza_cap').value.trim(),

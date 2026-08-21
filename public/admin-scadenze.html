@@ -142,6 +142,12 @@
             return Math.round((scadenza - oggi) / (1000 * 60 * 60 * 24));
         }
 
+        function formatDataItaliana(value) {
+            if (!value) return '';
+            const [anno, mese, giorno] = String(value).slice(0, 10).split('-');
+            return anno && mese && giorno ? `${giorno}-${mese}-${anno}` : value;
+        }
+
         async function caricaScadenze() {
             const tbody = document.getElementById('scadenze-tbody');
             
@@ -241,7 +247,7 @@
                             </td>
                             <td class="p-4">
                                 <div class="${medColor} font-bold">
-                                    ${tesserato.scadenza_certificato_medico || 'N/D'}
+                                    ${formatDataItaliana(tesserato.scadenza_certificato_medico) || 'N/D'}
                                 </div>
                                 <div class="text-[9px] opacity-60 uppercase font-bold tracking-tighter ${medColor}">
                                     ${medLabel}
@@ -249,7 +255,7 @@
                             </td>
                             <td class="p-4">
                                 <div class="${asiColor} font-bold">
-                                    ${tesserato.scadenza_tessera_asi || 'N/D'}
+                                    ${formatDataItaliana(tesserato.scadenza_tessera_asi) || 'N/D'}
                                 </div>
                                 <div class="text-[9px] opacity-60 uppercase font-bold tracking-tighter ${asiColor}">
                                     ${asiLabel}
