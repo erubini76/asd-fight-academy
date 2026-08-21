@@ -136,11 +136,30 @@ SELECT nome_corso, categoria, soglia_alunni, perc_istruttore_sotto,
 FROM public.corsi_config_contabile
 ORDER BY nome_corso;
 
--- NON fare COMMIT senza aver letto i risultati delle SELECT precedenti.
--- In SQL Editor, dopo revisione dei risultati:
---   COMMIT;   -- per applicare definitivamente il reset
--- oppure
---   ROLLBACK; -- per annullare tutto
+-- Il SQL Editor mostra spesso solo l'ultimo risultato: questi conteggi devono
+-- quindi restare come ultimo SELECT prima di ROLLBACK/COMMIT.
+SELECT 'istruttori_non_admin' AS controllo, COUNT(*) AS residui
+FROM public.istruttori_corsi
+WHERE id <> (SELECT istruttore_id FROM reset_admin)
+UNION ALL
+SELECT 'soci_non_admin', COUNT(*)
+FROM public.soci
+WHERE id IS DISTINCT FROM (SELECT socio_id FROM reset_admin)
+UNION ALL
+SELECT 'presenze', COUNT(*) FROM public.presenze
+UNION ALL
+SELECT 'pagamenti', COUNT(*) FROM public.pagamenti
+UNION ALL
+SELECT 'iscrizioni_corsi', COUNT(*) FROM public.iscrizioni_corsi
+UNION ALL
+SELECT 'iscrizioni_annuali', COUNT(*) FROM public.iscrizioni_annuali
+UNION ALL
+SELECT 'contabilita_mesi', COUNT(*) FROM public.contabilita_mesi;
+
+-- PRIMA ESECUZIONE: mantenere ROLLBACK per visualizzare i conteggi senza
+-- modificare il database. DOPO aver verificato i risultati, sostituire soltanto
+-- la riga ROLLBACK seguente con COMMIT e rieseguire l'intero script.
+ROLLBACK;
 
 -- ============================================================================
 -- PULIZIA STORAGE DA ESEGUIRE SEPARATAMENTE, DOPO COMMIT E SOLO SE CONFERMATA

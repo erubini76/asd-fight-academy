@@ -119,14 +119,17 @@
               <input type="text" id="nuovaPasswordIstruttore" placeholder="Password primo accesso" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none">
               <p class="mt-1 text-[8px] text-slate-500">Obbligatoria solo per un nuovo istruttore; facoltativa per istruttori gia abilitati.</p>
             </div>
-            <select id="selectCorsiCompetenza" multiple class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1 text-[9px] text-white h-16">
+            <select id="selectCorsiCompetenza" multiple onchange="aggiornaCorsiPraticatiIstruttore()" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1 text-[9px] text-white h-16">
               <option value="Ninjutsu Adulti/Ragazzi">Ninjutsu Adulti/Ragazzi</option>
               <option value="Ninjutsu Bambini">Ninjutsu Bambini</option>
               <option value="Vietvodao Adulti/Ragazzi">Vietvodao Adulti/Ragazzi</option>
               <option value="Vietvodao Bambini">Vietvodao Bambini</option>
               <option value="Shodo (Calligrafia Giapponese)">Shodo (Calligrafia Giapponese)</option>
             </select>
-            <button onclick="registraIstruttore()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-xl text-[10px] transition shadow-lg uppercase">Crea Istruttore</button>
+            <div class="space-y-2">
+              <div id="istruttore-corsi-praticati" class="space-y-1 text-[9px] text-slate-300"></div>
+              <button onclick="registraIstruttore()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 rounded-xl text-[10px] transition shadow-lg uppercase">Crea Istruttore</button>
+            </div>
         </div>
         <div class="overflow-x-auto border border-slate-700 rounded-xl">
           <p class="border-b border-slate-700 px-3 py-2 text-[9px] text-slate-400">Ogni riga mostra un corso assegnato all'istruttore e il relativo stato.</p>
@@ -641,9 +644,10 @@
         data.forEach(s => {
           select.innerHTML += `<option value="${s.id}" data-email="${s.email}">${s.cognome} ${s.nome}</option>`;
         });
-        select.onchange = function() {
+        select.onchange = async function() {
           const opt = select.options[select.selectedIndex];
           if (opt && opt.getAttribute('data-email')) document.getElementById('nuovaEmailLogin').value = opt.getAttribute('data-email');
+          await aggiornaCorsiPraticatiIstruttore();
         };
       } catch (err) {}
     }
@@ -857,6 +861,8 @@
       const email = document.getElementById('nuovaEmailLogin').value;
       const pass = document.getElementById('nuovaPasswordIstruttore').value;
       const corsi = Array.from(document.getElementById('selectCorsiCompetenza').selectedOptions).map(o => o.value);
+      const corsiPraticati = Array.from(document.querySelectorAll('[data-corso-praticato]:checked')).map(input => input.value);
+      const corsiNonPraticati = corsi.filter(corso => !corsiPraticati.includes(corso));
       if (!tesseratoId || !email || corsi.length === 0) { alert("Dati mancanti."); return; }
 
       try {
@@ -876,6 +882,7 @@
 
           const { error } = await supabaseClient.from('istruttori_corsi').update(updatePayload).eq('email', email);
           if (error) throw error;
+          if (corsiNonPraticati.length > 0) await rimuoviIscrizioniPraticante(tesseratoId, corsiNonPraticati);
           alert("Istruttore esistente aggiornato con i nuovi corsi.");
           location.reload();
           return;
@@ -884,8 +891,58 @@
         if (!pass) { alert("Password obbligatoria per nuovo istruttore."); return; }
         const { error } = await supabaseClient.from('istruttori_corsi').insert([{ socio_id: tesseratoId, email, password_accesso: pass, corsi_competenze: corsi, corsi_disabilitati: [], ruolo: 'istruttore', nome: nomeIstruttore }]);
         if (error) throw error;
+        if (corsiNonPraticati.length > 0) await rimuoviIscrizioniPraticante(tesseratoId, corsiNonPraticati);
         alert("Istruttore creato!"); location.reload();
       } catch (err) { alert(err.message); }
+    }
+
+    async function rimuoviIscrizioniPraticante(tesseratoId, corsi) {
+      const annoAccademico = getAnnoAccademico();
+      const { error } = await supabaseClient
+        .from('iscrizioni_annuali')
+        .delete()
+        .eq('socio_id', tesseratoId)
+        .eq('anno_accademico', annoAccademico)
+        .in('nome_corso', corsi);
+      if (error) throw error;
+
+      const { error: legacyError } = await supabaseClient
+        .from('iscrizioni_corsi')
+        .delete()
+        .eq('socio_id', tesseratoId)
+        .in('nome_corso', corsi);
+      if (legacyError) throw legacyError;
+    }
+
+    async function aggiornaCorsiPraticatiIstruttore() {
+      const container = document.getElementById('istruttore-corsi-praticati');
+      const tesseratoId = document.getElementById('selectTesseratoIstruttore').value;
+      const corsi = Array.from(document.getElementById('selectCorsiCompetenza').selectedOptions).map(o => o.value);
+
+      if (!tesseratoId || corsi.length === 0) {
+        container.innerHTML = corsi.length === 0 ? 'Seleziona uno o più corsi.' : 'Seleziona prima il tesserato.';
+        return;
+      }
+
+      try {
+        const { data: iscrizioni, error } = await supabaseClient
+          .from('iscrizioni_annuali')
+          .select('nome_corso')
+          .eq('socio_id', tesseratoId)
+          .eq('anno_accademico', getAnnoAccademico())
+          .in('nome_corso', corsi);
+        if (error) throw error;
+
+        const corsiGiaPraticati = new Set((iscrizioni || []).map(iscrizione => iscrizione.nome_corso));
+        container.innerHTML = corsi.map(corso => `
+          <label class="flex items-start gap-2">
+            <input type="checkbox" data-corso-praticato value="${corso}" ${corsiGiaPraticati.has(corso) ? 'checked' : ''} class="mt-0.5 rounded border-slate-700 bg-slate-900 text-red-600">
+            <span>Pratica anche ${corso}</span>
+          </label>
+        `).join('');
+      } catch (err) {
+        container.innerHTML = `<span class="text-red-400">Errore verifica corsi praticati: ${err.message}</span>`;
+      }
     }
 
     function logoutAdmin() {
