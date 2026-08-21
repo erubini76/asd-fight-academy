@@ -304,10 +304,11 @@
                             <th class="p-3 text-right">Contanti</th>
                             <th class="p-3 text-right">Bonifici</th>
                             <th class="p-3 text-right">Totale</th>
+                            <th class="p-3 text-right">Quota Istr.</th>
                             <th class="p-3 text-right">Quota Pal.</th>
                             <th class="p-3 text-right">Conguaglio</th>
                             <th class="p-3 text-center">Stato</th>
-                            <th class="p-3 text-center">Override / Quota istruttore</th>
+                            <th class="p-3 text-center">Override (quota istruttore)</th>
                         </tr>
                     </thead>
                     <tbody id="conguaglio-tbody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
@@ -748,7 +749,8 @@
                     const dataPresenza = new Date(presenza.data_presenza);
                     return dataPresenza.getMonth() + 1 === m.id
                         && dataPresenza.getFullYear() === anno
-                        && corsiCompatibili(presenza.corso, corsoFiltro);
+                    && corsiCompatibili(presenza.corso, corsoFiltro)
+                    && pagamentiMese.some(pagamento => pagamento.socio_id === presenza.socio_id);
                 }).map(presenza => presenza.socio_id)).size;
 
                 const meseContabile = getMeseContabile(corsoFiltro, m.id, anno);
@@ -799,10 +801,11 @@
                         <td class="p-3 text-right">€${r.contanti.toFixed(2)}</td>
                         <td class="p-3 text-right">€${r.bonifici.toFixed(2)}</td>
                         <td class="p-3 text-right font-bold">€${r.totale.toFixed(2)}</td>
+                        <td class="p-3 text-right text-cyan-400">€${r.quotaIstruttore.toFixed(2)}</td>
                         <td class="p-3 text-right text-emerald-400">€${r.quotaPalestra.toFixed(2)}</td>
                         <td class="p-3 text-right font-bold ${r.conguaglio >= 0 ? 'text-amber-400' : 'text-red-400'}">€${r.conguaglio.toFixed(2)}</td>
                         <td class="p-3 text-center">${badge}${sbloccaBtn}</td>
-                        <td class="p-3 text-center">${overrideControls}<span class="block mt-2 pt-2 border-t border-slate-700 text-[10px] font-bold text-cyan-400">Quota istr.: €${r.quotaIstruttore.toFixed(2)}</span></td>
+                        <td class="p-3 text-center">${overrideControls}</td>
                     </tr>
                 `;
             }).join('');
@@ -825,10 +828,11 @@
                     <td class="p-3 text-right">€${totali.contanti.toFixed(2)}</td>
                     <td class="p-3 text-right">€${totali.bonifici.toFixed(2)}</td>
                     <td class="p-3 text-right text-white">€${totali.totale.toFixed(2)}</td>
+                    <td class="p-3 text-right text-cyan-400">€${totali.quotaIstruttore.toFixed(2)}</td>
                     <td class="p-3 text-right text-emerald-400">€${totali.quotaPalestra.toFixed(2)}</td>
                     <td class="p-3 text-right ${totali.conguaglio >= 0 ? 'text-amber-400' : 'text-red-400'}">€${totali.conguaglio.toFixed(2)}</td>
                     <td class="p-3"></td>
-                    <td class="p-3 text-center text-cyan-400">Quota istr.: €${totali.quotaIstruttore.toFixed(2)}</td>
+                    <td class="p-3"></td>
                 </tr>
             `;
 
