@@ -651,7 +651,7 @@
                     && pagamentoAppartieneAlCorso(p, sociFiltrati.find(s => s.id === p.socio_id), corsoFiltro)), sociFiltrati);
 
                 renderConfigCorsi();
-                renderConguaglio(corsoFiltro, mesiCur, typeYear, yearVal, allPags);
+                renderConguaglio(corsoFiltro, mesiCur, typeYear, yearVal, allPags, allSoci);
             } catch (err) { console.error(err); }
         }
 
@@ -725,7 +725,7 @@
             return totale * (perc / 100);
         }
 
-        function renderConguaglio(corsoFiltro, mesiCur, typeYear, yearVal, allPags) {
+        function renderConguaglio(corsoFiltro, mesiCur, typeYear, yearVal, allPags, allSoci) {
             const section = document.getElementById('conguaglio-section');
             if (corsoFiltro === 'tutti') { section.classList.add('hidden'); conguaglioRigheCorrenti = []; return; }
             section.classList.remove('hidden');
@@ -738,9 +738,8 @@
                 const pagamentiMese = allPags.filter(p => p.stato === 'Approvato'
                     && p.mese_riferimento === m.id
                     && p.anno_riferimento === anno
-                    && (p.corso === 'Mensilità' || p.tipo_pagamento === 'Mensilità' || corsiCompatibili(p.corso, corsoFiltro))
                     && p.corso !== 'Iscrizione Annuale' && p.tipo_pagamento !== 'Iscrizione Annuale'
-                    && corsiCompatibili(p.corso || corsoFiltro, corsoFiltro));
+                    && pagamentoAppartieneAlCorso(p, allSoci.find(s => s.id === p.socio_id), corsoFiltro));
 
                 const contanti = pagamentiMese.filter(p => p.metodo === 'contanti').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
                 const bonifici = pagamentiMese.filter(p => p.metodo === 'bonifico').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
