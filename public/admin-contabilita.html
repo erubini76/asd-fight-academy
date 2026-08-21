@@ -745,13 +745,16 @@
                 const contanti = pagamentiMese.filter(p => p.metodo === 'contanti').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
                 const bonifici = pagamentiMese.filter(p => p.metodo === 'bonifico').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
                 const totale = contanti + bonifici;
-                const alunniPresenti = new Set((allPres || []).filter(presenza => {
+                const sociPresenti = (allPres || []).filter(presenza => {
                     const [annoPresenza, mesePresenza] = String(presenza.data_presenza || '').split('-').map(Number);
                     return mesePresenza === m.id
                         && annoPresenza === anno
-                    && corsiCompatibili(presenza.corso, corsoFiltro)
-                    && pagamentiMese.some(pagamento => pagamento.socio_id === presenza.socio_id);
-                }).map(presenza => presenza.socio_id)).size;
+                        && corsiCompatibili(presenza.corso, corsoFiltro);
+                }).map(presenza => presenza.socio_id);
+                const alunniPresenti = new Set([
+                    ...sociPresenti,
+                    ...pagamentiMese.map(pagamento => pagamento.socio_id)
+                ]).size;
 
                 const meseContabile = getMeseContabile(corsoFiltro, m.id, anno);
                 const quotaIstruttore = calcolaQuotaIstruttore(config, meseContabile, totale, alunniPresenti);
