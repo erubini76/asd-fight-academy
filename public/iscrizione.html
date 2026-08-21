@@ -700,7 +700,7 @@
                 const emailResponse = await fetch('/api/send-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(formData)
+                    body: JSON.stringify({ ...formData, corso: formData.corso_scelto })
                 });
 
                 if (!emailResponse.ok) {
