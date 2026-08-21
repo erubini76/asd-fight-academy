@@ -221,6 +221,31 @@
             </div>
         </section>
 
+        <!-- CONFIGURAZIONE CONTABILE CORSI (SOLO ADMIN) -->
+        <section id="config-corsi-section" class="hidden bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+            <div class="p-6 border-b border-slate-700 bg-slate-700/30">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-cyan-400"></i> Configurazione Istruttori per Corso
+                </h2>
+                <p class="text-[9px] text-slate-400 mt-1">Soglia alunni, percentuali di riparto e istruttore principale (destinatario del conguaglio).</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-[11px] border-collapse">
+                    <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700">
+                        <tr>
+                            <th class="p-3">Corso</th>
+                            <th class="p-3">Soglia Alunni</th>
+                            <th class="p-3">% Istruttore (sotto soglia)</th>
+                            <th class="p-3">% Istruttore (sopra soglia)</th>
+                            <th class="p-3">Istruttore Principale</th>
+                            <th class="p-3"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="config-corsi-tbody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
+                </table>
+            </div>
+        </section>
+
         <!-- GRIGLIA PAGAMENTI MENSILI -->
         <main class="bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
             <div class="p-6 border-b border-slate-700 bg-slate-700/30 flex flex-col md:flex-row justify-between items-center gap-4 text-[9px]">
@@ -252,6 +277,40 @@
                     <tbody id="contabilita-tbody" class="divide-y divide-slate-700/50 text-slate-300">
                         <tr><td colspan="15" class="p-12 text-center text-slate-500 italic">Caricamento flussi in corso...</td></tr>
                     </tbody>
+                </table>
+            </div>
+        </main>
+
+        <!-- CONGUAGLIO ISTRUTTORE -->
+        <main id="conguaglio-section" class="hidden bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
+            <div class="p-6 border-b border-slate-700 bg-slate-700/30 flex flex-col md:flex-row justify-between items-center gap-4">
+                <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-scale-balanced text-amber-400"></i> Conguaglio Istruttore / Palestra
+                </h2>
+                <button id="btn-conferma-conguaglio" onclick="confermaConguaglio()" class="hidden bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition shadow-lg flex items-center gap-2 uppercase">
+                    <i class="fa-solid fa-lock"></i> Conferma e Notifica Mesi Selezionati
+                </button>
+            </div>
+            <p class="px-6 py-2 border-b border-slate-700 bg-slate-900/40 text-[9px] text-slate-400 uppercase tracking-tight text-center">
+                Conguaglio = Contanti - Quota Istruttore. Positivo: l'istruttore versa alla palestra. Negativo: la palestra accredita l'istruttore.
+            </p>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-[11px] border-collapse">
+                    <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700">
+                        <tr>
+                            <th class="p-3"></th>
+                            <th class="p-3">Mese</th>
+                            <th class="p-3 text-right">Contanti</th>
+                            <th class="p-3 text-right">Bonifici</th>
+                            <th class="p-3 text-right">Totale</th>
+                            <th class="p-3 text-right">Quota Istr.</th>
+                            <th class="p-3 text-right">Quota Pal.</th>
+                            <th class="p-3 text-right">Conguaglio</th>
+                            <th class="p-3 text-center">Stato</th>
+                            <th class="p-3 text-center">Override</th>
+                        </tr>
+                    </thead>
+                    <tbody id="conguaglio-tbody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
                 </table>
             </div>
         </main>
@@ -303,6 +362,23 @@
         ];
 
         let currentSelection = { socioId: null, mese: null, anno: null, tipo: '', corso: '', existingPagId: null };
+        let configCorsiContabili = [];
+        let contabilitaMesiCorrenti = [];
+        let istruttoriDisponibili = [];
+        let conguaglioRigheCorrenti = [];
+
+        function getConfigCorso(nomeCorso) {
+            return configCorsiContabili.find(c => c.nome_corso === nomeCorso) || null;
+        }
+
+        function getMeseContabile(nomeCorso, mese, anno) {
+            return contabilitaMesiCorrenti.find(m => m.nome_corso === nomeCorso && m.mese === mese && m.anno === anno) || null;
+        }
+
+        function isMeseBloccato(nomeCorso, mese, anno) {
+            return getMeseContabile(nomeCorso, mese, anno)?.stato === 'LOCKED';
+        }
+
 
         function buildPayPayload(socioId, nome, mese, anno, tipo, corso, pagId, url, imp, metodo) {
             return {
@@ -471,6 +547,24 @@
                     .select('email, corsi_competenze');
                 if (istruttoriError) throw istruttoriError;
 
+                const { data: istruttoriCompleti, error: istruttoriCompletiError } = await supabaseClient
+                    .from('istruttori_corsi')
+                    .select('id, nome, email, corsi_competenze');
+                if (istruttoriCompletiError) throw istruttoriCompletiError;
+                istruttoriDisponibili = istruttoriCompleti || [];
+
+                const { data: configCorsi, error: configCorsiError } = await supabaseClient
+                    .from('corsi_config_contabile')
+                    .select('*');
+                if (configCorsiError) throw configCorsiError;
+                configCorsiContabili = configCorsi || [];
+
+                const { data: mesiContabili, error: mesiContabiliError } = await supabaseClient
+                    .from('contabilita_mesi')
+                    .select('*');
+                if (mesiContabiliError) throw mesiContabiliError;
+                contabilitaMesiCorrenti = mesiContabili || [];
+
                 const corsoFiltro = selectCorso.value;
                 let sociFiltrati = allSoci;
                 sociFiltrati = allSoci.filter(s => socioAppartieneAlCorso(s, corsoFiltro));
@@ -555,6 +649,9 @@
 
                 renderKPI(allPags.filter(p => sociFiltrati.some(s => s.id === p.socio_id)
                     && pagamentoAppartieneAlCorso(p, sociFiltrati.find(s => s.id === p.socio_id), corsoFiltro)), sociFiltrati);
+
+                renderConfigCorsi();
+                renderConguaglio(corsoFiltro, mesiCur, typeYear, yearVal, allPags);
             } catch (err) { console.error(err); }
         }
 
@@ -566,7 +663,248 @@
             document.getElementById('kpi-section').innerHTML = `<div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg text-center"><p class="text-[8px] font-bold text-slate-500 uppercase mb-1 tracking-widest leading-none">Entrate Mese</p><p class="text-2xl font-black text-emerald-400 leading-none">€${totMese.toFixed(0)}</p></div><div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg text-center"><p class="text-[8px] font-bold text-slate-500 uppercase mb-1 tracking-widest leading-none">Totale Visibile</p><p class="text-2xl font-black text-white leading-none">€${totVis.toFixed(0)}</p></div><div class="bg-slate-800 p-5 rounded-2xl border border-slate-700 shadow-lg col-span-2 flex flex-col justify-center text-center"><p class="text-[8px] font-bold text-slate-500 uppercase mb-1 tracking-widest leading-none">Istruttore Attivo</p><p class="text-xs font-black text-cyan-400 uppercase tracking-widest leading-none truncate">${sessionUser.nome}</p></div>`;
         }
 
+        function renderConfigCorsi() {
+            const section = document.getElementById('config-corsi-section');
+            if (sessionUser.ruolo !== 'presidente') { section.classList.add('hidden'); return; }
+            section.classList.remove('hidden');
+
+            const tbody = document.getElementById('config-corsi-tbody');
+            tbody.innerHTML = configCorsiContabili.map(cfg => {
+                const istruttoriCorso = istruttoriDisponibili.filter(i => (i.corsi_competenze || []).some(c => corsiCompatibili(c, cfg.nome_corso)));
+                const options = ['<option value="">— Nessuno —</option>']
+                    .concat(istruttoriCorso.map(i => `<option value="${i.id}" ${String(cfg.istruttore_principale_id) === String(i.id) ? 'selected' : ''}>${i.nome || i.email}</option>`));
+                return `
+                    <tr data-config-corso="${cfg.nome_corso}">
+                        <td class="p-3 font-bold text-white">${cfg.nome_corso}<span class="block text-[9px] text-slate-500 uppercase">${cfg.categoria}</span></td>
+                        <td class="p-3"><input type="number" min="0" class="w-20 bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-white outline-none" data-field="soglia_alunni" value="${cfg.soglia_alunni}"></td>
+                        <td class="p-3"><input type="number" min="0" max="100" step="0.1" class="w-20 bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-white outline-none" data-field="perc_istruttore_sotto" value="${cfg.perc_istruttore_sotto}"></td>
+                        <td class="p-3"><input type="number" min="0" max="100" step="0.1" class="w-20 bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-white outline-none" data-field="perc_istruttore_sopra" value="${cfg.perc_istruttore_sopra}"></td>
+                        <td class="p-3"><select class="bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-white outline-none" data-field="istruttore_principale_id">${options.join('')}</select></td>
+                        <td class="p-3"><button onclick="salvaConfigCorso('${cfg.nome_corso}')" class="bg-cyan-600 hover:bg-cyan-700 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase">Salva</button></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function salvaConfigCorso(nomeCorso) {
+            const tr = document.querySelector(`#config-corsi-tbody tr[data-config-corso="${CSS.escape(nomeCorso)}"]`);
+            if (!tr) return;
+            const soglia = parseInt(tr.querySelector('[data-field="soglia_alunni"]').value, 10);
+            const percSotto = parseFloat(tr.querySelector('[data-field="perc_istruttore_sotto"]').value);
+            const percSopra = parseFloat(tr.querySelector('[data-field="perc_istruttore_sopra"]').value);
+            const istruttoreId = tr.querySelector('[data-field="istruttore_principale_id"]').value || null;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('corsi_config_contabile')
+                    .update({
+                        soglia_alunni: soglia,
+                        perc_istruttore_sotto: percSotto,
+                        perc_istruttore_sopra: percSopra,
+                        istruttore_principale_id: istruttoreId,
+                        aggiornato_da: sessionUser.nome || sessionUser.email,
+                        aggiornato_il: new Date().toISOString()
+                    })
+                    .eq('nome_corso', nomeCorso);
+                if (error) throw error;
+                alert('Configurazione aggiornata!');
+                caricaDatiContabili();
+            } catch (err) { alert(err.message); }
+        }
+
+        function calcolaQuotaIstruttore(config, mese, totale, numAlunniPaganti) {
+            if (mese?.is_custom_override) {
+                return mese.tipo_override === 'fisso'
+                    ? Number(mese.valore_override || 0)
+                    : totale * (Number(mese.valore_override || 0) / 100);
+            }
+            const soglia = config?.soglia_alunni ?? 7;
+            const percSotto = config?.perc_istruttore_sotto ?? 50;
+            const percSopra = config?.perc_istruttore_sopra ?? 60;
+            const perc = numAlunniPaganti >= soglia ? percSopra : percSotto;
+            return totale * (perc / 100);
+        }
+
+        function renderConguaglio(corsoFiltro, mesiCur, typeYear, yearVal, allPags) {
+            const section = document.getElementById('conguaglio-section');
+            if (corsoFiltro === 'tutti') { section.classList.add('hidden'); conguaglioRigheCorrenti = []; return; }
+            section.classList.remove('hidden');
+
+            const config = getConfigCorso(corsoFiltro);
+            const isAdmin = sessionUser.ruolo === 'presidente';
+
+            conguaglioRigheCorrenti = mesiCur.map(m => {
+                const anno = typeYear === 'solare' ? yearVal : (m.id >= 9 ? yearVal : yearVal + 1);
+                const pagamentiMese = allPags.filter(p => p.stato === 'Approvato'
+                    && p.mese_riferimento === m.id
+                    && p.anno_riferimento === anno
+                    && (p.corso === 'Mensilità' || p.tipo_pagamento === 'Mensilità' || corsiCompatibili(p.corso, corsoFiltro))
+                    && p.corso !== 'Iscrizione Annuale' && p.tipo_pagamento !== 'Iscrizione Annuale'
+                    && corsiCompatibili(p.corso || corsoFiltro, corsoFiltro));
+
+                const contanti = pagamentiMese.filter(p => p.metodo === 'contanti').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
+                const bonifici = pagamentiMese.filter(p => p.metodo === 'bonifico').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
+                const totale = contanti + bonifici;
+                const numAlunniPaganti = new Set(pagamentiMese.map(p => p.socio_id)).size;
+
+                const meseContabile = getMeseContabile(corsoFiltro, m.id, anno);
+                const quotaIstruttore = calcolaQuotaIstruttore(config, meseContabile, totale, numAlunniPaganti);
+                const quotaPalestra = totale - quotaIstruttore;
+                const conguaglio = contanti - quotaIstruttore;
+                const stato = meseContabile?.stato || 'OPEN';
+
+                return {
+                    nomeCorso: corsoFiltro, mese: m.id, meseLabel: m.nome, anno,
+                    contanti, bonifici, totale, quotaIstruttore, quotaPalestra, conguaglio, stato,
+                    isCustomOverride: meseContabile?.is_custom_override || false,
+                    tipoOverride: meseContabile?.tipo_override || 'percentuale',
+                    valoreOverride: meseContabile?.valore_override ?? ''
+                };
+            });
+
+            const tbody = document.getElementById('conguaglio-tbody');
+            tbody.innerHTML = conguaglioRigheCorrenti.map(r => {
+                const checkbox = isAdmin
+                    ? `<input type="checkbox" data-conguaglio-check data-mese="${r.mese}" data-anno="${r.anno}">`
+                    : '';
+                const badge = r.stato === 'LOCKED'
+                    ? '<span class="px-2 py-1 rounded bg-red-600/20 text-red-400 font-bold uppercase text-[9px]">Locked</span>'
+                    : '<span class="px-2 py-1 rounded bg-emerald-600/20 text-emerald-400 font-bold uppercase text-[9px]">Open</span>';
+                const sbloccaBtn = (isAdmin && r.stato === 'LOCKED')
+                    ? `<button onclick="sbloccaMese('${r.nomeCorso}', ${r.mese}, ${r.anno})" class="mt-1 bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Sblocca</button>`
+                    : '';
+                const overrideControls = isAdmin ? `
+                    <div class="flex flex-col items-center gap-1">
+                        <label class="text-[8px] uppercase font-bold text-slate-400 flex items-center gap-1">
+                            <input type="checkbox" data-override-check data-mese="${r.mese}" data-anno="${r.anno}" ${r.isCustomOverride ? 'checked' : ''}> Attiva
+                        </label>
+                        <select data-override-tipo data-mese="${r.mese}" data-anno="${r.anno}" class="bg-slate-900 border border-slate-700 rounded text-[9px] p-1 text-white">
+                            <option value="percentuale" ${r.tipoOverride === 'percentuale' ? 'selected' : ''}>%</option>
+                            <option value="fisso" ${r.tipoOverride === 'fisso' ? 'selected' : ''}>Fisso €</option>
+                        </select>
+                        <input type="number" step="0.01" data-override-valore data-mese="${r.mese}" data-anno="${r.anno}" value="${r.valoreOverride}" class="w-16 bg-slate-900 border border-slate-700 rounded text-[9px] p-1 text-white" placeholder="0">
+                        <button onclick="salvaOverrideMese('${r.nomeCorso}', ${r.mese}, ${r.anno})" class="bg-cyan-600 hover:bg-cyan-700 text-white px-2 py-1 rounded text-[9px] font-bold uppercase">Salva</button>
+                    </div>
+                ` : (r.isCustomOverride ? '<span class="text-[9px] text-amber-400 font-bold uppercase">Custom</span>' : '<span class="text-[9px] text-slate-500">—</span>');
+
+                return `
+                    <tr>
+                        <td class="p-3 text-center">${checkbox}</td>
+                        <td class="p-3 font-bold text-white">${r.meseLabel} ${r.anno}</td>
+                        <td class="p-3 text-right">€${r.contanti.toFixed(2)}</td>
+                        <td class="p-3 text-right">€${r.bonifici.toFixed(2)}</td>
+                        <td class="p-3 text-right font-bold">€${r.totale.toFixed(2)}</td>
+                        <td class="p-3 text-right text-cyan-400">€${r.quotaIstruttore.toFixed(2)}</td>
+                        <td class="p-3 text-right text-emerald-400">€${r.quotaPalestra.toFixed(2)}</td>
+                        <td class="p-3 text-right font-bold ${r.conguaglio >= 0 ? 'text-amber-400' : 'text-red-400'}">€${r.conguaglio.toFixed(2)}</td>
+                        <td class="p-3 text-center">${badge}${sbloccaBtn}</td>
+                        <td class="p-3 text-center">${overrideControls}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('btn-conferma-conguaglio').classList.toggle('hidden', !isAdmin);
+        }
+
+        async function salvaOverrideMese(nomeCorso, mese, anno) {
+            const tr = document.querySelector(`[data-override-check][data-mese="${mese}"][data-anno="${anno}"]`)?.closest('tr');
+            if (!tr) return;
+            const attivo = tr.querySelector('[data-override-check]').checked;
+            const tipo = tr.querySelector('[data-override-tipo]').value;
+            const valore = parseFloat(tr.querySelector('[data-override-valore]').value) || 0;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('contabilita_mesi')
+                    .upsert({
+                        nome_corso: nomeCorso, mese, anno,
+                        is_custom_override: attivo,
+                        tipo_override: attivo ? tipo : null,
+                        valore_override: attivo ? valore : null,
+                        updated_at: new Date().toISOString()
+                    }, { onConflict: 'nome_corso,mese,anno' });
+                if (error) throw error;
+                alert('Override aggiornato!');
+                caricaDatiContabili();
+            } catch (err) { alert(err.message); }
+        }
+
+        async function sbloccaMese(nomeCorso, mese, anno) {
+            if (sessionUser.ruolo !== 'presidente') { alert('Solo l\'amministratore puo sbloccare un mese.'); return; }
+            if (!confirm(`Sbloccare ${nomeCorso} - ${mese}/${anno}?`)) return;
+            try {
+                const { error } = await supabaseClient
+                    .from('contabilita_mesi')
+                    .update({ stato: 'OPEN', updated_at: new Date().toISOString() })
+                    .eq('nome_corso', nomeCorso).eq('mese', mese).eq('anno', anno);
+                if (error) throw error;
+                caricaDatiContabili();
+            } catch (err) { alert(err.message); }
+        }
+
+        async function confermaConguaglio() {
+            if (sessionUser.ruolo !== 'presidente') { alert('Solo l\'amministratore puo confermare il conguaglio.'); return; }
+
+            const checkbox = Array.from(document.querySelectorAll('[data-conguaglio-check]:checked'));
+            if (checkbox.length === 0) { alert('Seleziona almeno un mese da confermare.'); return; }
+
+            const corsoFiltro = document.getElementById('filter-corso').value;
+            const config = getConfigCorso(corsoFiltro);
+            if (!config?.istruttore_principale_id) {
+                alert('Nessun istruttore principale assegnato a questo corso: impostalo nel pannello di configurazione prima di notificare il conguaglio.');
+                return;
+            }
+            const istruttore = istruttoriDisponibili.find(i => String(i.id) === String(config.istruttore_principale_id));
+            if (!istruttore?.email) {
+                alert('Istruttore principale non trovato o senza email valida.');
+                return;
+            }
+
+            const selezionati = checkbox.map(cb => ({ mese: parseInt(cb.dataset.mese, 10), anno: parseInt(cb.dataset.anno, 10) }));
+            const righe = conguaglioRigheCorrenti.filter(r => selezionati.some(s => s.mese === r.mese && s.anno === r.anno));
+
+            if (!confirm(`Confermi il conguaglio per ${righe.length} mese/i? I mesi selezionati verranno bloccati e verra inviata la notifica via email a ${istruttore.email}.`)) return;
+
+            try {
+                for (const r of righe) {
+                    const { error } = await supabaseClient
+                        .from('contabilita_mesi')
+                        .upsert({
+                            nome_corso: r.nomeCorso, mese: r.mese, anno: r.anno,
+                            stato: 'LOCKED',
+                            bloccato_da: sessionUser.nome || sessionUser.email,
+                            bloccato_il: new Date().toISOString(),
+                            notificato_il: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        }, { onConflict: 'nome_corso,mese,anno' });
+                    if (error) throw error;
+                }
+
+                const totaleCumulativo = righe.reduce((s, r) => s + r.conguaglio, 0);
+                const emailResponse = await fetch('/api/notifica-conguaglio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        corso: corsoFiltro,
+                        istruttoreEmail: istruttore.email,
+                        istruttoreNome: istruttore.nome,
+                        righe,
+                        totaleCumulativo
+                    })
+                });
+                const emailResult = await emailResponse.json();
+                if (!emailResponse.ok) throw new Error(emailResult.error || 'Errore invio notifica');
+
+                alert('Mesi bloccati e notifica inviata con successo!');
+                caricaDatiContabili();
+            } catch (err) { alert(err.message); }
+        }
+
         function openPayModal(socId, nome, mese, anno, tipo, corso, pagId, url, imp, metodo) {
+            if (mese !== 0 && sessionUser.ruolo !== 'presidente' && isMeseBloccato(corso, mese, anno)) {
+                alert('Questo mese è stato chiuso (LOCKED) dopo il conguaglio: non è più possibile modificare gli incassi. Contatta l\'amministratore.');
+                return;
+            }
             currentSelection = { socioId: socId, mese, anno, tipo, corso, existingPagId: pagId };
             const label = (mese === 0) ? 'Iscrizione' : (mesiAccademici.find(m => m.id === mese) || mesiSolari.find(m => m.id === mese)).nome;
             document.getElementById('modal-title').textContent = `${label} ${anno} - ${nome}`;
