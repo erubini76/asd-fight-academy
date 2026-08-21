@@ -748,18 +748,19 @@
     }
 
     async function modificaScadenzaCertificato(socioId, documentoId, valoreAttuale) {
+      if (!documentoId) {
+        alert('Nessun certificato caricato per questo tesserato: il file è obbligatorio. Chiedi al socio di caricarlo dalla sua area personale prima di poterne modificare la scadenza.');
+        return;
+      }
+
       const nuovaDataInput = prompt('Modifica scadenza certificato medico (GG-MM-AAAA):', valoreAttuale);
       if (nuovaDataInput === null) return;
       const nuovaData = nuovaDataInput.trim() ? parseDataItaliana(nuovaDataInput) : null;
       if (nuovaDataInput.trim() && !nuovaData) { alert('Data non valida. Usa il formato GG-MM-AAAA.'); return; }
 
       try {
-        const payload = { scadenza: nuovaData || null };
-        const query = supabaseClient.from('documenti_medici');
-        const result = documentoId
-          ? await query.update(payload).eq('id', documentoId)
-          : await query.insert({ socio_id: socioId, anno_accademico: getAnnoAccademico(), scadenza: payload.scadenza, attivo: true });
-        if (result.error) throw result.error;
+        const { error } = await supabaseClient.from('documenti_medici').update({ scadenza: nuovaData }).eq('id', documentoId);
+        if (error) throw error;
         alert('Scadenza certificato aggiornata!');
         caricaSociEVerifiche();
       } catch (err) { alert(err.message); }
