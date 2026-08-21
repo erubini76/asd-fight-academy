@@ -70,7 +70,7 @@
 
     <!-- DASHBOARD OPERATIVA -->
     <div id="dashboardSection" class="hidden space-y-8">
-      
+
       <!-- MENU RAPIDO -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <a href="presenze.html" class="bg-gradient-to-br from-purple-600 to-purple-800 hover:from-purple-500 hover:to-purple-700 p-5 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-between group border border-purple-400/20">
@@ -83,7 +83,7 @@
           </div>
           <i class="fa-solid fa-circle-arrow-right text-lg text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all"></i>
         </a>
-        
+
         <a href="admin-contabilita.html" class="bg-gradient-to-br from-emerald-500 to-emerald-700 hover:from-emerald-400 hover:to-emerald-600 p-5 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-between group border border-emerald-400/20">
             <div class="flex items-center gap-4">
               <div class="bg-white/20 p-3 rounded-xl"><i class="fa-solid fa-chart-pie text-xl text-white"></i></div>
@@ -153,6 +153,7 @@
             <thead class="bg-slate-900/50 text-slate-400 uppercase font-bold border-b border-slate-700 tracking-tighter">
               <tr>
                 <th class="p-4">Tesserato / Email</th>
+                <th class="p-4 text-center">Azioni</th>
                 <th class="p-4 text-center">Stato Iscrizione</th>
                 <th class="p-4 text-center">Quota Iscrizione</th>
                 <th class="p-4 text-center">Certificato</th>
@@ -472,7 +473,7 @@
             : (quotaInVerifica
               ? `IN VERIFICA · €${Number(quota.importo || 0).toFixed(0)} · ${quotaMetodo} · ${quotaDocumento}`
               : 'DA PAGARE');
-          
+
           // Logica Scadenza ASI
           let asiClass = 'text-slate-300';
           if (s.scadenza_tessera_asi) {
@@ -498,6 +499,14 @@
                   ${(s.nome_tutore || s.cognome_tutore || s.cf_tutore) ? `<p><span class="text-slate-500 uppercase">Tutore:</span> ${[s.nome_tutore, s.cognome_tutore].filter(Boolean).join(' ')}${s.cf_tutore ? ` · CF ${s.cf_tutore}` : ''}</p>` : ''}
                 </div>
               </details>
+            </td>
+            <td class="p-4 text-center border-b border-slate-700/50">
+              ${currentUser.ruolo === 'presidente' ? `
+                <div class="flex justify-center gap-2">
+                  <button onclick="modificaDatiTesserato('${s.id}')" class="text-cyan-400 hover:text-white" title="Modifica dati tesserato"><i class="fa-solid fa-pen-to-square"></i></button>
+                  <button onclick="eliminaTesserato('${s.id}', '${`${s.nome || ''} ${s.cognome || ''}`.replace(/'/g, "\\'")}')" class="text-red-400 hover:text-red-200" title="Elimina tesserato"><i class="fa-solid fa-trash-can"></i></button>
+                </div>
+              ` : '<span class="text-slate-600">—</span>'}
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
               <button onclick="gestisciStatoIscrizione('${s.id}', '${(annualita?.stato || 'In Attesa').replace(/'/g, "\\'")}', '${annualita?.nome_corso || corsoDisplay}', '${s.anno_accademico}')" class="px-2 py-1 rounded border ${annualita?.stato === 'Approvato' ? 'bg-green-600/10 text-green-500 border-green-500/30' : 'bg-amber-600/10 text-amber-500 border-amber-500/30'} font-bold uppercase text-[8px]">
@@ -749,6 +758,79 @@
             alert("Dati aggiornati!");
             caricaSociEVerifiche();
         } catch (err) { alert(err.message); }
+    }
+
+    async function modificaDatiTesserato(socioId) {
+      if (currentUser.ruolo !== 'presidente') return;
+
+      try {
+        const { data: socio, error } = await supabaseClient
+          .from('soci')
+          .select('nome, cognome, codice_fiscale, data_nascita, luogo_nascita, email, telefono, residenza_indirizzo, residenza_cap, residenza_citta')
+          .eq('id', socioId)
+          .single();
+        if (error) throw error;
+
+        const nome = prompt('Nome:', socio.nome || '');
+        if (nome === null) return;
+        const cognome = prompt('Cognome:', socio.cognome || '');
+        if (cognome === null) return;
+        const codiceFiscale = prompt('Codice fiscale:', socio.codice_fiscale || '');
+        if (codiceFiscale === null) return;
+        const email = prompt('Email:', socio.email || '');
+        if (email === null) return;
+        const telefono = prompt('Telefono:', socio.telefono || '');
+        if (telefono === null) return;
+        const indirizzo = prompt('Indirizzo di residenza:', socio.residenza_indirizzo || '');
+        if (indirizzo === null) return;
+        const cap = prompt('CAP:', socio.residenza_cap || '');
+        if (cap === null) return;
+        const citta = prompt('Città di residenza:', socio.residenza_citta || '');
+        if (citta === null) return;
+
+        const { error: updateError } = await supabaseClient
+          .from('soci')
+          .update({
+            nome: nome.trim(),
+            cognome: cognome.trim(),
+            codice_fiscale: codiceFiscale.trim().toUpperCase(),
+            email: email.trim(),
+            telefono: telefono.trim(),
+            residenza_indirizzo: indirizzo.trim(),
+            residenza_cap: cap.trim(),
+            residenza_citta: citta.trim()
+          })
+          .eq('id', socioId);
+        if (updateError) throw updateError;
+        alert('Dati tesserato aggiornati.');
+        caricaSociEVerifiche();
+      } catch (err) { alert(err.message); }
+    }
+
+    async function eliminaTesserato(socioId, nomeCompleto) {
+      if (currentUser.ruolo !== 'presidente') return;
+
+      const conferma = prompt(`Eliminazione definitiva di ${nomeCompleto}.\n\nDigita ELIMINA per proseguire:`);
+      if (conferma !== 'ELIMINA') return;
+      const password = prompt('Inserisci la password dell’amministratore per confermare:');
+      if (!password) return;
+
+      try {
+        const response = await fetch('/api/delete-socio', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            socioId,
+            adminEmail: currentUser.email,
+            password,
+            confirmation: conferma
+          })
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Errore eliminazione tesserato');
+        alert(result.message);
+        caricaSociEVerifiche();
+      } catch (err) { alert(err.message); }
     }
 
     async function modificaScadenzaCertificato(socioId, documentoId, valoreAttuale) {
