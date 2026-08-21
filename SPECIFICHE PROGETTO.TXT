@@ -1,317 +1,593 @@
-------------------------------------------------------------------------------------------------
-DOCUMENTO DI SPECIFICA DEI REQUISITI DI PROGETTO (SRS)
-------------------------------------------------------------------------------------------------
+================================================================================
+FIGHT ACADEMY - SPECIFICA DI RICOSTRUZIONE COMPLETA
+================================================================================
+Versione: 3.0
+Ultimo aggiornamento: 21 agosto 2026
+Scopo: questo documento deve bastare per ricostruire da zero database Supabase,
+frontend statico, API Vercel, automazioni email e configurazione operativa.
 
-Progetto: Piattaforma Gestionale ASD
-Versione: 2.0
-Data ultima revisione: 19 Agosto 2026
-Stato: aggiornato in base ai requisiti implementati, ai vincoli di database e alle correzioni di integrità eseguite
+================================================================================
+1. IDENTITA' E INFRASTRUTTURA
+================================================================================
+Associazione: A.S.D. Fight Academy
+Codice fiscale ASD: 91023520280
+Affiliazione ASI: VEN-PD0814
+Repository GitHub: erubini76/asd-fight-academy
+Deploy: Vercel
+Dominio app corrente: https://asd-fight-academy.vercel.app
+Supabase project URL corrente: https://twiizsottstaacnvrxkg.supabase.co
+Dominio email verificato Resend: kawasemidojo.it
+Mittente email: Fight Academy <info@kawasemidojo.it>
+Risposte e copie amministrative: kawasemidojo@gmail.com
 
-------------------------------------------------------------------------------------------------
-1. PANORAMICA DEL PROGETTO
-------------------------------------------------------------------------------------------------
+Stack:
+- Frontend: HTML statico, JavaScript vanilla, Tailwind CDN, Font Awesome CDN.
+- PWA: manifest.json e sw.js.
+- Database/Storage: Supabase PostgreSQL e Supabase Storage.
+- Backend: Vercel Serverless Functions nella cartella api/.
+- Email: Resend API REST / SDK.
+- Nessun framework frontend, nessun bundler, nessun ORM.
 
-Obiettivo principale:
-La piattaforma ha lo scopo di supportare la gestione amministrativa, contabile e didattica dell'attività sportiva di un'associazione sportiva dilettantistica, riducendo tempi di gestione, minimizzando errori manuali e centralizzando dati relativi a tesserati, iscrizioni ai corsi, pagamenti, presenze, corsi e documentazione obbligatoria.
+Struttura progetto da ricreare:
+- public/index.html: sito pubblico e catalogo corsi.
+- public/iscrizione.html: iscrizione tesserato/corso con upload certificato.
+- public/socio.html: area tesserato, pagamenti, documenti e regolamento.
+- public/admin.html: login amministratore/istruttore e registro tesserati.
+- public/presenze.html: appello, presenze e storico.
+- public/admin-scadenze.html: controllo scadenze e invio alert.
+- public/admin-contabilita.html: pagamenti, contabilità e conguagli istruttori.
+- public/manifest.json, public/sw.js, public/logo.png, public/favicon.ico.
+- api/index.js: health/status dell'app.
+- api/send-email.js: conferme iscrizione e approvazione.
+- api/scadenze-alert.js: alert scadenze usato dal cron e da invio manuale.
+- api/check-expirations.js: versione alternativa/compatibile degli alert.
+- api/regolamento-pagamenti.js: URL firmato del regolamento in Storage.
+- api/notifica-conguaglio.js: email di chiusura conguaglio istruttore.
+- api/delete-socio.js: eliminazione protetta di una domanda inattiva.
+- vercel.json: cron giornaliero.
+- SQL_*.sql: migrazioni, policy e verifiche.
 
-Modello operativo:
-- Web app multi-dispositivo, accessibile tramite browser
-- PWA compatibile con desktop e mobile
-- Infrastruttura cloud basata su Supabase + Vercel
-- Gestione utenti e dati tramite PostgreSQL
-- Accesso con ruoli differenti e permessi mirati
+================================================================================
+2. VARIABILI D'AMBIENTE E SERVIZI ESTERNI
+================================================================================
+Variabili Vercel obbligatorie:
+- SUPABASE_URL=https://<project-ref>.supabase.co
+- SUPABASE_SERVICE_ROLE_KEY=<segreto service-role Supabase>
+- RESEND_API_KEY=<chiave Resend Full Access>
 
-Perimetro funzionale deliberato - gestione dei soli tesserati:
-- L'app gestisce esclusivamente i tesserati e l'attività sportiva: corsi, presenze, pagamenti, tessere, certificati medici, scadenze e consensi collegati al tesseramento.
-- La vita associativa resta fuori perimetro: domanda e ammissione a socio, libro degli associati, quote associative, diritto di voto, assemblee, verbali e decadenza dalla qualifica di socio sono gestiti separatamente dall'ASD.
-- La tabella tecnica denominata `soci` e le etichette legacy presenti nell'app rappresentano il profilo del tesserato; non costituiscono né sostituiscono il libro degli associati previsto dallo statuto.
-- Le future annualità dovranno storicizzare il tesseramento sportivo per anno accademico settembre-agosto, senza modellare lo status di socio dell'associazione.
-- La nuova stagione accademica è proposta automaticamente dal 1 agosto di ogni anno; l'amministratore può selezionare manualmente una stagione diversa per i casi eccezionali.
-- Nell'app il ruolo con visione completa è denominato Amministratore. L'Amministratore gestisce tutti i tesserati, corsi, pagamenti, scadenze, consensi e documenti necessari all'attività sportiva; la gestione di eventuali deleghe resta esterna al perimetro applicativo.
+Variabile opzionale ma raccomandata:
+- EMAIL_FROM=Fight Academy <info@kawasemidojo.it>
 
-------------------------------------------------------------------------------------------------
-2. ARCHITETTURA TECNOLOGICA
-------------------------------------------------------------------------------------------------
+Regole email:
+- Fallback EMAIL_FROM: Fight Academy <info@kawasemidojo.it>.
+- Reply-To: kawasemidojo@gmail.com.
+- Copia amministrativa: kawasemidojo@gmail.com.
+- Mai usare onboarding@resend.dev in produzione.
+- Non hardcodare erubini@gmail.com: è un indirizzo presente nei dati di test,
+  non un destinatario tecnico di sistema.
 
-Stack tecnologico:
-- Database: PostgreSQL via Supabase
-- Autenticazione / gestione utenti: credenziali applicative legacy lato client; migrazione a sessioni verificate lato server pianificata dopo il go-live
-- Hosting frontend: Vercel
-- Repository: GitHub
-- Invio email: Resend API
-- Frontend: HTML, JavaScript, pagina web statica + logica lato client
-- Backup e verifica: script SQL dedicati per bonifica e controllo integrità
+Configurazione Resend:
+- Dominio kawasemidojo.it verificato in Resend.
+- DNS richiesti (SPF/DKIM/MX) configurati presso il provider DNS/Plesk.
+- API Resend: POST https://api.resend.com/emails con header
+  Authorization: Bearer ${RESEND_API_KEY}.
 
-Ambiente di riferimento:
-- Database inizialmente di test, successivamente pronto per transizione in ambiente di produzione
-- Struttura schema pensata per essere facilmente ri-creata da zero in caso di reset completo
+Supabase Storage:
+- Bucket certificati medici: certificati_medici.
+- Bucket ricevute pagamenti: ricevute_pagamenti.
+- Bucket regolamento: regolamenti.
+- File regolamento attuale: Anno associativo 2026-27.pdf.
+- Gli upload di certificati e ricevute usano getPublicUrl: i bucket devono
+  essere pubblici per compatibilità con il frontend corrente. La migrazione
+  sicurezza dovrà renderli privati e usare URL firmati.
+- Il regolamento deve essere servito tramite URL firmato di 600 secondi da
+  /api/regolamento-pagamenti, previa verifica di socio ID + email + CF.
 
-Decisione di rilascio - go-live in due fasi:
-- Priorità immediata: completare entro 15 giorni le funzioni operative per tesserati, corsi, presenze, pagamenti, scadenze e annualità.
-- Il modello dati del go-live deve essere predisposto per tesseramento annuale, documenti medici e consensi storicizzati senza sovrascrivere i dati esistenti.
-- La sicurezza server-side non è bloccante per il go-live, ma costituisce debito tecnico esplicito: l'attuale accesso usa credenziali e chiave anon nel frontend, mentre gli URL dei documenti possono essere pubblici.
-- La fase successiva deve introdurre sessioni verificate lato server, bucket Storage privati, URL firmati temporanei e controlli di autorizzazione server-side per i documenti medici.
-- Fino al completamento della fase successiva, l'uso dell'app e l'accesso ai documenti devono restare limitati al contesto operativo interno definito dall'ASD.
+Sicurezza attuale e debito tecnico:
+- Il frontend contiene SUPABASE_URL e anon key; il login amministrativo è una
+  credenziale applicativa nella tabella istruttori_corsi, non Supabase Auth.
+- Le policy go-live consentono anon/authenticated per mantenere operativa
+  l'app. Non sono policy di produzione ad alta sicurezza.
+- Le operazioni sensibili server-side (eliminazione socio, regolamento firmato,
+  scadenze e email) usano SUPABASE_SERVICE_ROLE_KEY solo su Vercel.
+- Evoluzione necessaria: Supabase Auth, ruoli server-side, RLS restrittiva,
+  bucket privati e URL firmati anche per certificati medici.
 
-------------------------------------------------------------------------------------------------
-3. RUOLI E PERMESSI (RBAC)
-------------------------------------------------------------------------------------------------
+================================================================================
+3. RUOLI E ACCESSO
+================================================================================
+Ruoli nella tabella istruttori_corsi:
+- presidente: Amministratore con accesso globale.
+- istruttore: vede solo i corsi nelle proprie competenze non disabilitati.
 
-Amministratore:
-- Gestione completa del sistema
-- Gestione anagrafiche tesserati, corsi, pagamenti e documenti
-- Controllo completo delle liste di morosità e delle scadenze
-- Visualizzazione contabilità e storico amministrativo
+Login admin/istruttore:
+- public/admin.html cerca istruttori_corsi per email.
+- Confronta password_accesso con la password inserita.
+- Per istruttore, l'accesso è consentito solo se ha almeno un corso attivo.
+- La sessione applicativa è salvata in localStorage con chiave
+  asd_admin_user.
+- Il presidente ha corsi_competenze completo e accesso a tutte le funzioni.
 
-Accesso ai documenti medici:
-- L'istruttore vede per i tesserati dei propri corsi solo lo stato operativo e la scadenza del certificato medico corrente.
-- L'Amministratore ha visione del documento medico corrente e dello storico soggetto alla politica di conservazione definita dall'ASD.
+Permessi applicativi:
+- Presidente: registro completo, modifica anagrafica, modifica scadenze,
+  approvazioni, gestione istruttori, contabilità, override, lock/sblocco,
+  eliminazione socio inattivo.
+- Istruttore: presenze e consultazione dei soli propri corsi; non modifica
+  dati finanziari, configurazione corsi, quota istruttore, lock o cancellazioni.
+- Tesserato: entra con codice fiscale, vede il profilo, paga quote, carica
+  certificato e ottiene il regolamento firmato. Non modifica oggi l'anagrafica.
 
-Istruttore:
-- Gestione dei propri corsi e studenti assegnati
-- Gestione presenze
-- Controllo percentuali di presenza
-- Monitoraggio stato delle iscrizioni e degli allievi assegnati
+Gestione istruttori:
+- Non eliminare un istruttore con attività storica.
+- Per cessazione o passaggio corso: chiudere/LOCKED i mesi maturati, disabilitare
+  l'istruttore su tutti i corsi con corsi_disabilitati, creare/abilitare il nuovo
+  istruttore e impostarlo come istruttore principale in contabilità.
+- Gli accordi Co.Co.Co., contratti e adempimenti fiscali restano esterni all'app.
 
-Super User / Tecnico:
-- Manutenzione sistema e struttura dati
-- Gestione script SQL, correzioni schema, verifiche di integrità
-- Accesso tecnico alle parti non finanziarie o non sensibili
+================================================================================
+4. MODELLO DATI - TABELLE BASE
+================================================================================
+Queste tabelle devono esistere prima delle migrazioni annualità/contabilità.
+I tipi UUID sono preferibili per soci e tabelle collegate.
 
-Nota di sicurezza:
-- Le informazioni finanziarie e di amministrazione devono rimanere accessibili solo ai ruoli autorizzati.
+4.1 soci
+Profilo tecnico del tesserato. Non sostituisce il libro soci associativo.
+Campi richiesti o usati dall'app:
+- id uuid PK default gen_random_uuid().
+- codice_fiscale text, idealmente unico e normalizzato maiuscolo.
+- nome text, cognome text.
+- data_nascita date, luogo_nascita text.
+- residenza_indirizzo text, residenza_cap text, residenza_citta text,
+  residenza_provincia text.
+- email text, telefono text.
+- corso_scelto text: legacy/compatibilità, non fonte annuale primaria.
+- is_minore boolean.
+- nome_tutore text, cognome_tutore text, cf_tutore text.
+- privacy_accettata boolean, liberatoria_immagini boolean: legacy/snapshot.
+- consenso_gdpr boolean, consenso_immagini_video boolean: compatibilità legacy.
+- data_iscrizione date, created_at timestamptz, updated_at timestamptz.
+- scadenza_certificato_medico date, certificato_medico_url text: legacy;
+  la fonte corrente è documenti_medici.
+- scadenza_tessera_asi date, data_tesseramento_asi date.
+- stato/stato_approvazione text.
+- mesi_non_praticante text[]: chiavi "mese-anno", es. "9-2026".
+- pagamento_iscrizione_2627 boolean: compatibilità UI corrente.
 
-------------------------------------------------------------------------------------------------
-4. REQUISITI FUNZIONALI CORE
-------------------------------------------------------------------------------------------------
+4.2 corsi
+Catalogo corsi.
+- id uuid PK.
+- nome_corso text unico.
+- categoria text: usare "Bambini" per corsi bambini; "Adulti" o NULL per
+  adulti/altri. Esempi: Ninjutsu Adulti/Ragazzi, Ninjutsu Bambini,
+  Vietvodao Adulti/Ragazzi, Vietvodao Bambini, Shodo (Calligrafia Giapponese).
+- quota_mensile numeric.
+- istruttore text legacy, orari text.
 
-FR-01 - Anagrafiche tesserati
-- Registro dei tesserati con dati anagrafici principali
-- Gestione di nuclei familiari e relazione tra genitore e figli
-- Possibilità di aggiornare dati anagrafici e stato del tesseramento sportivo
+4.3 iscrizioni_corsi (legacy)
+Relazione socio-corso non stagionale, mantenuta per compatibilità e migrazione.
+- id uuid/bigint PK.
+- socio_id uuid FK -> soci.id.
+- nome_corso text.
+- stato text, data_iscrizione date/timestamptz.
+Vincolo: UNIQUE (socio_id, lower(trim(nome_corso))) tramite indice funzionale.
 
-FR-02 - Iscrizioni ai corsi
-- Un tesserato può iscriversi a uno o più corsi distinti
-- Ogni iscrizione deve essere univoca per tesserato e corso
-- Il sistema deve evitare duplicati di iscrizione al medesimo corso
+4.4 pagamenti
+Pagamenti annuali e mensili.
+Campi usati:
+- id PK.
+- socio_id uuid FK -> soci.id.
+- importo numeric, importo_totale numeric.
+- metodo text: contanti | bonifico.
+- stato text: Approvato | In attesa di verifica | altri stati legacy.
+- corso text; per nuova mensilità salvare il nome effettivo del corso.
+- tipo_pagamento text: Iscrizione Annuale | Mensilità | Tranche |
+  Lezione Singola.
+- periodo_riferimento text, mese_riferimento integer, anno_riferimento integer.
+- anno_accademico text nel formato AAAA/AAAA.
+- data_pagamento date, data_inserimento timestamptz, ricevuta_url text.
+- validato_da_email text, validato_da_nome text, validato_il timestamptz.
+Regola: Iscrizione Annuale non entra nel calcolo del compenso istruttore.
 
-FR-03 - Corsi
-- Gestione dei corsi disponibili
-- Normalizzazione nomi dei corsi per evitare duplicati dovuti a differenze di maiuscole/spazi
-- Consolidamento di varianti del nome corso tramite policy di normalizzazione
+4.5 presenze
+- id uuid PK default gen_random_uuid().
+- socio_id uuid FK -> soci.id.
+- data_presenza date.
+- corso text NOT NULL.
+- created_at timestamptz.
+Indice/unique consigliato: UNIQUE (socio_id, data_presenza, corso).
+Non salvare mai corso come "undefined" o "null"; record legacy così formati
+non sono attribuibili con certezza al corso e non vanno conteggiati.
 
-FR-04 - Pagamenti
-- Gestione pagamenti associati a socio, mese, anno e corso
-- Un pagamento mensile per lo stesso socio, corso e periodo deve essere univoco
-- Il sistema deve supportare la gestione di rate, bonifici e scan di ricevuta
-- Deve essere possibile marcare stato pagamento e morosità
+4.6 istruttori_corsi
+Account applicativo e competenze.
+- id bigint PK (richiesto dal FK contabile attuale).
+- socio_id uuid NULL FK -> soci.id.
+- email text unique, nome text, password_accesso text.
+- ruolo text: presidente | istruttore.
+- corsi_competenze text[] NOT NULL.
+- corsi_disabilitati text[] NOT NULL DEFAULT '{}'.
+Regola: un istruttore con tutti i corsi disabilitati non accede al pannello.
 
-FR-05 - Presenze
-- Registrazione presenze per singolo socio in un dato giorno e corso
-- Una presenza duplicata per lo stesso socio, data e corso non deve essere consentita
-- Il sistema deve generare metriche di presenza e percentuali di idoneità
+================================================================================
+5. MODELLO DATI - ANNUALITA', DOCUMENTI E CONSENSI
+================================================================================
+Anno accademico: dal 1 agosto viene proposta la nuova stagione; formato
+"2026/2027". I mesi accademici sono Settembre-Agosto.
 
-FR-06 - Conformità legale / documenti obbligatori
-- Raccolta consensi digitali: statuto, privacy, liberatoria foto, tesseramento EPS
-- Tracciamento timestamp e IP per eventuale audit
-- Sostituzione della firma cartacea con firma digitale o consenso web
+5.1 iscrizioni_annuali
+- id uuid PK default gen_random_uuid().
+- socio_id uuid NOT NULL FK -> soci.id.
+- nome_corso text NOT NULL.
+- anno_accademico text NOT NULL, CHECK regex ^[0-9]{4}/[0-9]{4}$.
+- stato text NOT NULL default "In Attesa".
+- privacy_accettata boolean, liberatoria_immagini boolean: snapshot annuale.
+- scadenza_certificato_medico date, certificato_medico_url text: compatibilità.
+- data_invio timestamptz, data_approvazione timestamptz, approvata_da text.
+- richiesta_istruttore boolean default false.
+- stato_richiesta_istruttore text default "Nessuna", valori: Nessuna, In attesa,
+  Confermata, Rifiutata.
+- created_at, updated_at timestamptz.
+Vincolo: UNIQUE (socio_id, nome_corso, anno_accademico).
 
-FR-07 - Conformità medica
-- Upload obbligatorio del certificato medico in PDF o immagine
-- Monitoraggio delle scadenze mediche
-- Alert via email e notifiche push in-app
+5.2 documenti_medici
+- id uuid PK.
+- socio_id uuid NOT NULL FK -> soci.id.
+- anno_accademico text NOT NULL.
+- file_url text NOT NULL. Non creare un documento senza file.
+- nome_file text, scadenza date.
+- caricato_il timestamptz default now(), caricato_da text.
+- attivo boolean default true.
+- conservare_fino_al date NOT NULL.
+- eliminato_il timestamptz NULL.
+- created_at timestamptz.
+Vincolo: al massimo un documento attivo e non eliminato per socio/stagione:
+UNIQUE (socio_id, anno_accademico) WHERE attivo AND eliminato_il IS NULL.
+Quando viene caricato un nuovo documento, disattivare quello attivo della stessa
+stagione prima dell'insert. La modifica della sola scadenza aggiorna il record
+attivo esistente; non creare record senza file_url.
 
-FR-08 - Notifiche
-- Sistema di alert esclusivamente per email e notifiche push in-app
-- Gestione di avvisi per scadenze, pagamenti, documenti mancanti e morosità
+5.3 consensi_tesseramento
+- id uuid PK.
+- socio_id uuid NOT NULL FK -> soci.id.
+- anno_accademico text NOT NULL.
+- tipo: presa_visione_privacy | foto_video.
+- stato: dato | negato | revocato.
+- versione_testo text NOT NULL.
+- canale text default modulo_web.
+- registrato_il timestamptz default now().
+- revoca_di uuid NULL FK -> consensi_tesseramento.id.
+Indice: (socio_id, anno_accademico, registrato_il DESC).
 
-FR-09 - Gestione delle scadenze
-- Monitoraggio delle date di scadenza dei documenti e delle rate
-- Possibilità di alert automatici prima o dopo la scadenza
+5.4 storico_modifiche (opzionale, non sempre migrato)
+Se viene usato: id UUID, socio_id FK, iscrizione_annuale_id FK, utente_email,
+utente_nome, campo, valore_precedente, valore_nuovo, motivo, modificato_il.
+L'API delete-socio deve trattarlo come tabella opzionale perché ambienti già
+operativi possono non averlo.
 
-FR-10 - Admin e contabilità
-- Accesso ai dati economici per ruolo autorizzato
-- Gestione stato pagamento e registrazione manuale di approvazione
-- Supporto alla verifica dei pagamenti ricevuti e delle posizioni aperte
+================================================================================
+6. MODELLO DATI - CONTABILITA' ISTRUTTORI
+================================================================================
+6.1 corsi_config_contabile
+Una riga per corso.
+- id uuid PK.
+- nome_corso text UNIQUE NOT NULL.
+- categoria text NOT NULL default Adulti.
+- soglia_alunni integer NOT NULL.
+- perc_istruttore_sotto numeric(5,2), 0..100.
+- perc_istruttore_sopra numeric(5,2), 0..100.
+- istruttore_principale_id bigint NULL FK -> istruttori_corsi.id ON DELETE SET NULL.
+- aggiornato_da text, aggiornato_il timestamptz, created_at timestamptz.
+Default inserimento da corsi:
+- categoria Bambini: soglia 5, 50% sotto soglia, 60% da soglia in poi.
+- tutti gli altri: soglia 7, 50% sotto soglia, 60% da soglia in poi.
+- la configurazione è sempre modificabile dal presidente per singolo corso.
 
-------------------------------------------------------------------------------------------------
-5. REQUISITI DI BUSINESS AGGIUNTIVI E MODIFICATI
-------------------------------------------------------------------------------------------------
+6.2 contabilita_mesi
+Una riga solo quando un mese viene personalizzato o chiuso.
+- id uuid PK.
+- nome_corso text, mese integer 1..12, anno integer.
+- stato text: OPEN default | LOCKED.
+- is_custom_override boolean default false.
+- tipo_override: fisso | percentuale.
+- valore_override numeric(10,2).
+- bloccato_da text, bloccato_il timestamptz, notificato_il timestamptz.
+- created_at, updated_at timestamptz.
+Vincolo UNIQUE (nome_corso, mese, anno).
 
-BR-01 - Duplicati non ammessi a livello logico
-- Il sistema deve prevenire duplicati logici per chiavi funzionali critiche
-- Per le table principali sono stati introdotti vincoli di unicità per evitare inserimenti multipli accidentali
+Calcolo conguaglio mensile per corso:
+- Considerare soltanto pagamenti Approvati di Mensilità; escludere sempre
+  Iscrizione Annuale.
+- C = somma metodo contanti.
+- B = somma metodo bonifico.
+- T = C + B.
+- Alunni = unione di soci che hanno una presenza valida nel mese/corso OR un
+  pagamento mensile Approvato nel mese/corso. Ogni socio conta una sola volta.
+- Se non c'è override: percentuale istruttore = perc_sotto se Alunni < soglia,
+  altrimenti perc_sopra. Q_istr = T * percentuale / 100.
+- Override percentuale: Q_istr = T * valore_override / 100.
+- Override fisso: Q_istr = valore_override.
+- Q_pal = T - Q_istr.
+- Conguaglio = C - Q_istr.
+  - positivo: istruttore versa contanti alla palestra;
+  - negativo: palestra accredita il credito all'istruttore.
+- La tabella mostra alunni, contanti, bonifici, totale, quota istruttore,
+  quota palestra, conguaglio, stato e override; include riga totali.
 
-BR-02 - Controllo preventivo su schema
-- Il database deve essere progettato per evitare duplicazioni non intenzionali in base a regole di business
-- È previsto l'uso di unique index e unique constraints per garantire coerenza dei dati
+Locking:
+- Il presidente può confermare uno o più mesi OPEN: diventano LOCKED e viene
+  inviata la notifica al solo istruttore principale.
+- Un mese LOCKED non è selezionabile per nuova conferma, quindi non genera una
+  seconda email accidentalmente.
+- Il presidente può sbloccare un singolo mese tramite popup di conferma;
+  sbloccare non invia email. Una nuova email parte solo alla successiva conferma.
+- L'istruttore non può modificare/aggiungere incassi su mese LOCKED; il
+  presidente mantiene l'accesso.
+- Le presenze retroattive restano salvabili: non modificano righe LOCKED.
 
-BR-03 - Pulizia e bonifica dati storici
-- Sono previsti script di bonifica per eliminare duplicati esistenti e consolidare dati incoerenti
-- Le correzioni vengono applicate in modo controllato e verificabile
+================================================================================
+7. VISTA SQL NECESSARIA PER LE SCADENZE
+================================================================================
+Creare public.v_scadenze_soci con almeno:
+- id oppure socio_id (l'API accetta entrambi per filtro test).
+- email, nome, cognome.
+- giorni_alla_scadenza_medica integer/null.
+- giorni_alla_scadenza_asi integer/null.
+- date sottostanti se utili per UI.
 
-BR-04 - Governance dei dati e analisi
-- I record duplicati o incoerenti devono essere individuati tramite query di audit
-- È prevista una fase di verifica finale e di analisi delle tabelle critiche prima di chiudere un test o un rilascio
+La data medica corrente deve provenire da documenti_medici con:
+attivo = true AND eliminato_il IS NULL, per la stagione in uso. La data ASI
+proviene da soci.scadenza_tessera_asi.
 
-BR-05 - Ambiente di test e reset finale
-- Il database di test può essere ripulito e ricreato da zero in una fase finale, una volta concluse le modifiche funzionali
-- Il reset del database è da considerarsi una procedura di validazione finale e non come routine operativa standard
+================================================================================
+8. FRONTEND: FLUSSI OBBLIGATORI
+================================================================================
+8.1 Iscrizione (iscrizione.html)
+- Acquisisce dati tesserato, corso, tutore se minore, consensi e certificato.
+- Salva/aggiorna soci, iscrizioni_annuali, iscrizioni_corsi per compatibilità,
+  consensi_tesseramento e documenti_medici.
+- Il certificato richiede file_url e data scadenza opzionale.
+- Invia POST /api/send-email con formData e corso: formData.corso_scelto.
+  L'API legge il campo corso, non corso_scelto.
+- Usare UI data italiana GG-MM-AAAA; convertire in ISO AAAA-MM-GG prima di
+  salvare in PostgreSQL.
 
-------------------------------------------------------------------------------------------------
-6. REQUISITI TECNICI DI INTEGRITÀ DATABASE
-------------------------------------------------------------------------------------------------
+8.2 Area tesserato (socio.html)
+- Accesso con codice fiscale.
+- Visualizza anagrafica, stato annualità, quota, certificato e consensi.
+- Permette pagamento e upload/sostituzione certificato.
+- Non permette attualmente modifica autonoma dell'anagrafica.
+- Mantiene temporaneamente la lista dei profili trovati in localStorage con
+  chiave foundTesseratiList; la sessione admin usa invece asd_admin_user.
 
-I seguenti requisiti sono stati introdotti o rafforzati dopo il controllo della struttura dati:
+8.3 Registro amministrativo (admin.html)
+- Mostra soci, annualità, quota, certificato, ASI, privacy, foto.
+- Colore certificato: rosso se mancante/scaduto, giallo entro 30 giorni,
+  grigio oltre 30 giorni.
+- Il presidente modifica scadenza certificato sul record documenti_medici
+  esistente e scadenza ASI su soci.
+- Colonna Azioni solo presidente:
+  - Matita: modifica nome, cognome, CF, email, telefono, indirizzo, CAP, città.
+  - Cestino: richiede testo ELIMINA e password amministratore.
+  - L'eliminazione è consentita solo senza pagamenti, presenze e annualità
+    approvata; altrimenti correggere con matita/archiviare.
 
-RT-01 - Vincolo unico per iscrizioni ai corsi
-- Regola: un socio non può avere più iscrizioni al medesimo corso
-- Implementazione: unique index su (socio_id, nome_corso)
-- Condizione: solo record con socio_id e nome_corso non nulli sono considerati
+8.4 Presenze (presenze.html)
+- Il presidente vede tutti i corsi; istruttore solo i propri corsi attivi.
+- Salva righe socio_id, data_presenza ISO, corso esatto.
+- Prima rimuove le presenze di quel corso/data per gli iscritti e poi inserisce
+  l'elenco aggiornato, evitando duplicati.
+- Calcola percentuale presenza su lezioni uniche del corso.
 
-RT-02 - Vincolo unico per pagamenti mensili
-- Regola: non possono esistere pagamenti duplicati per lo stesso socio, mese, anno e corso
-- Implementazione: unique index su (socio_id, mese_riferimento, anno_riferimento, corso)
-- Condizione: solo campi obbligatori non nulli sono considerati
+8.5 Scadenze (admin-scadenze.html)
+- Carica soci e documento medico attivo corrente.
+- Mostra scadenze critiche: assenti, scadute o entro 30 giorni.
+- Istruttore vede solo i propri corsi; presidente vede tutto.
+- Pulsante invio manuale chiama POST /api/scadenze-alert.
 
-RT-03 - Vincolo unico per presenze
-- Regola: non possono esistere presenze duplicate per lo stesso socio, data e corso
-- Implementazione: unique index su (socio_id, DATE(data_presenza), corso)
-- Condizione: il controllo viene fatto con espressione su data per supportare PostgreSQL
+8.6 Contabilità (admin-contabilita.html)
+- Griglia mensile pagamenti, filtro anno solare/accademico e corso.
+- Gestione pagamento rapido: contanti/bonifico, approvazione, morosità/non
+  praticante. Istruttore non modifica mesi LOCKED.
+- Presidente configura soglia, percentuali e istruttore principale.
+- Conguaglio visibile solo con un corso specifico, non "Tutti i corsi".
+- Pagamenti legacy con corso = "Mensilità" devono essere attribuiti al corso
+  del socio tramite pagamentoAppartieneAlCorso, non esclusi per confronto diretto.
 
-RT-04 - Indici supporto per query frequenti
-- Indice su socio_id per tabelle con filtri frequenti
-- Indice su nome_corso per ricerche e aggregazioni per corso
-- Indice su data_presenza per report e controllo presenze nel tempo
+================================================================================
+9. API VERCEL: CONTRATTI
+================================================================================
+GET /api/index
+Risposta stato con associazione, codice fiscale e affiliazione.
 
-RT-05 - Ridondanza indici da evitare
-- Gli indici duplicati o ridondanti devono essere rimossi per mantenere performance e qualità del database
-- In particolare, un indice il cui comportamento è sostanzialmente identico a un altro indice su stesso campo deve essere eliminato
+POST /api/send-email
+Body: tipo opzionale (approvazione), nome, cognome, email, telefono,
+codice_fiscale, corso.
+- tipo=approvazione: email al tesserato + cc admin.
+- altro: conferma al tesserato + cc admin, poi notifica admin separata.
+- from EMAIL_FROM, reply_to admin, cc admin.
 
-RT-06 - Audit e verifiche SQL
-- Devono essere disponibili script di controllo di duplicati e integrità
-- Le verifiche devono includere:
-  - controllo duplicati logici
-  - controllo record con chiave primaria critica null
-  - verifica set finale degli indici
-  - analisi delle statistiche del planner tramite ANALYZE
+GET|POST /api/scadenze-alert[?socio_id=<uuid>]
+- GET: invia solo alle soglie automatiche medico 45/30/15 e ASI 15.
+- POST: invio manuale medico/ASI entro 30 giorni.
+- socio_id è un filtro di test applicato dopo la lettura della vista; non usare
+  un filtro PostgREST su socio_id perché la vista può esporre id.
+- Cron Vercel: GET ogni giorno alle 08:00 UTC, path /api/scadenze-alert.
 
-------------------------------------------------------------------------------------------------
-7. STRUTTURA DATI ESSENZIALE (MODELLAZIONE)
-------------------------------------------------------------------------------------------------
+GET|POST /api/check-expirations[?socio_id=<uuid>]
+Endpoint compatibile alternativo; stesso mittente/reply-to e stesse soglie GET.
 
-Tabelle critiche del dominio:
-- soci
-- corsi
-- iscrizioni_corsi
-- pagamenti
-- presenze
-- documenti_obbligatori
-- utenti
+POST /api/notifica-conguaglio
+Body: corso, istruttoreEmail, istruttoreNome, righe[], totaleCumulativo.
+Ogni riga: meseLabel, anno, contanti, bonifici, totale, quotaIstruttore,
+quotaPalestra, conguaglio.
+Invia al solo istruttore principale con cc/reply-to admin; oggetto:
+[Fight Academy] Notifica Conguaglio - Corso <corso> - Mesi: <elenco>.
+Corpo HTML con tabella e totale cumulativo.
 
-Regole di dominio:
-- ogni record di pagamento, presenza e iscrizione deve riferirsi in modo coerente a un socio e a un corso quando disponibile
-- i dati storici legacy con valori null possono esistere in ambiente di test, ma vanno trattati come eccezioni storiche e non come regola di business attiva
-- in ambiente production o di test strutturato, la policy di nullability va stabilita in modo esplicito
+POST /api/regolamento-pagamenti
+Body: socioId, email, codiceFiscale.
+Verifica il socio via service role e restituisce URL firmato del regolamento,
+valido 600 secondi.
 
-------------------------------------------------------------------------------------------------
-8. REGOLE DI QUALITÀ DEI DATI
-------------------------------------------------------------------------------------------------
+POST /api/delete-socio
+Body: socioId, adminEmail, password, confirmation="ELIMINA".
+- Verifica che l'account in istruttori_corsi sia ruolo presidente e password valida.
+- Blocca se esistono pagamenti, presenze o iscrizioni_annuali Approvato.
+- Elimina consensi_tesseramento, documenti_medici, iscrizioni_annuali,
+  iscrizioni_corsi e, se presente, storico_modifiche; poi soci.
+- storico_modifiche deve essere opzionale: ignorare PGRST205 se tabella assente.
 
-- Nessuna duplicazione logica sui campi chiave funzionali
-- Nessun index ridondante senza necessità
-- Nessuna modifica del database senza controllo di impatto
-- Qualsiasi script di bonifica deve essere documentato e verificabile
-- Il database deve essere sempre auditabile e ripristinabile tramite script SQL
+================================================================================
+10. EMAIL E TEST END-TO-END
+================================================================================
+Destinazioni:
+- Tesserato: email reale nel record soci.
+- Copia/notifiche amministrative: kawasemidojo@gmail.com.
+- Per minori, email registrata è quella del genitore/tutore se indicata nel form.
 
-------------------------------------------------------------------------------------------------
-9. CRITERI DI ACCETTAZIONE
-------------------------------------------------------------------------------------------------
+Test sicuro alert singolo:
+POST https://asd-fight-academy.vercel.app/api/scadenze-alert?socio_id=<UUID>
+La risposta contiene success, processed e logs. Per attivare un test medico,
+configurare un certificato esistente con scadenza entro 30 giorni. Non inviare
+il batch senza socio_id se non si vogliono processare tutti i tesserati.
 
-Accettazione funzionale:
-- l'utente può registrare e gestire i propri tesserati
-- è possibile iscrivere un tesserato a un corso senza duplicati
-- i pagamenti sono tracciati senza duplicazioni per periodo
-- le presenze sono registrate senza doppie approssimazioni per lo stesso giorno
-- i documenti obbligatori sono monitorati e avvisati
+================================================================================
+11. MIGRAZIONI E ORDINE DI RICOSTRUZIONE
+================================================================================
+1. Creare progetto Supabase e bucket Storage.
+2. Creare le tabelle base: soci, corsi, iscrizioni_corsi, pagamenti, presenze,
+   istruttori_corsi con campi del capitolo 4.
+3. Applicare SQL_FIX_URGENTE.sql adattandolo al nuovo schema: una sola FK tra
+   iscrizioni_corsi.socio_id e soci.id; indici anti duplicato; policy go-live.
+4. Applicare SQL_ANNUALITA_STORICO_2027.sql per annualità, documenti e consensi.
+5. Applicare SQL_GESTIONE_ISTRUTTORI.sql.
+6. Applicare SQL_PAGAMENTI_VALIDAZIONE.sql.
+7. Applicare SQL_CONTABILITA_ISTRUTTORI.sql.
+8. Creare/validare v_scadenze_soci.
+9. Applicare policy go-live per le tabelle frontend se necessario; usare
+   SQL_POLICY_ANNUALITA_GO_LIVE.sql per annualità/documenti/consensi.
+10. Configurare Vercel, environment variables e cron da vercel.json.
+11. Deploy delle pagine e API.
+12. Test: iscrizione, login admin, login istruttore, pagamento, presenze,
+    certificato, modifica scadenza, email, test alert singolo, conguaglio,
+    lock/sblocco, eliminazione domanda inattiva.
 
-Accettazione tecnica:
-- gli indici critici sono presenti
-- i vincoli univoci sono rispettati
-- non ci sono duplicati logici rilevabili nei campi chiave
-- lo schema è verificabile tramite query SQL e script di controllo
+Script di controllo:
+- SQL_VERIFICA_INTEGRITA_ANNUALITA.sql: eseguire prima e dopo la migrazione.
+- Verificare duplicati, orfani, vincoli, indici e policy.
+- Backup JSON/SQL prima di ogni migrazione distruttiva o bonifica.
 
-------------------------------------------------------------------------------------------------
-10. PROCEDURA DI SVILUPPO E RILASCIO
-------------------------------------------------------------------------------------------------
+================================================================================
+12. POLICY, RETENTION E LIMITI LEGALI OPERATIVI
+================================================================================
+- La tabella soci è un profilo tecnico di tesseramento sportivo, non il libro
+  soci previsto dalla vita associativa/statuto.
+- Per dati di tesserati con pagamenti, presenze, contratti o conguagli, non
+  effettuare cancellazione fisica senza valutare obblighi contabili, fiscali,
+  contrattuali e privacy con il consulente competente.
+- L'eliminazione definitiva in app è destinata a prove, duplicati e domande
+  abbandonate senza attività.
+- Per istruttori cessati: disabilitare corsi e preservare lo storico. Non
+  eliminare account che hanno svolto attività o ricevuto compensi/conguagli.
+- La gestione dei contratti Co.Co.Co., chiusure/aperture contrattuali e relativi
+  adempimenti resta esterna all'app.
 
-Regola generale:
-- Ogni modifica che coinvolge dati, schema, pagamenti, certificati o consensi deve essere sviluppata e verificata prima sul database di test.
-- Non sono ammessi comandi distruttivi, reset o bonifiche sui dati senza backup verificato e script documentato.
-- Le modifiche non correlate al requisito corrente non devono essere incluse nel rilascio.
+================================================================================
+13. CONVENZIONI TECNICHE
+================================================================================
+- Date database/API: ISO AAAA-MM-GG.
+- Date mostrate e richieste da UI: GG-MM-AAAA, convertite esplicitamente in JS.
+- Mesi: integer 1-12; anno: anno solare del mese.
+- Anno accademico: AAAA/AAAA, Settembre-Agosto.
+- Corso: usare esattamente il nome del catalogo; normalizzare solo per confronti
+  di compatibilità. Non salvare valori "undefined", "null" o "Mensilità" come
+  corso per nuovi pagamenti/presenze.
+- ASCII preferito nei file di codice; nomi visualizzati possono contenere lettere
+  accentate italiane.
 
-Sequenza obbligatoria per modifiche a schema e dati:
-1. Aggiornare le specifiche e definire la regola di business da implementare.
-2. Creare un backup locale del codice e un export dei dati di test accessibili.
-3. Eseguire lo script di verifica integrità in sola lettura e analizzare eventuali anomalie prima della migrazione.
-4. Applicare una migrazione SQL transazionale, idempotente e non distruttiva sul database di test.
-5. Eseguire nuovamente la verifica integrità e confrontare numero di record, vincoli e indici.
-6. Aggiornare il frontend e le API necessarie mantenendo compatibilità con i dati legacy fino al completamento della migrazione.
-7. Validare sintassi, controlli statici e flussi operativi con dati di prova.
-8. Creare un nuovo backup prima della pubblicazione.
-9. Pubblicare il rilascio e verificare in produzione i flussi essenziali: login, tesseramento, pagamento, presenza, scadenza e consultazione documenti.
-10. Conservare il riepilogo del rilascio, gli script eseguiti e l'esito delle verifiche.
+================================================================================
+14. CHECKLIST DI RIPRISTINO MINIMA
+================================================================================
+[ ] Supabase URL e service role inseriti solo in Vercel.
+[ ] Domini Resend e DNS verificati; EMAIL_FROM configurato.
+[ ] Bucket certificati_medici, ricevute_pagamenti e regolamenti creati;
+  regolamento caricato.
+[ ] Tabelle base, annualità, consensi, documenti, istruttori e contabilità create.
+[ ] v_scadenze_soci disponibile.
+[ ] Policy applicate coerentemente con l'autenticazione scelta.
+[ ] Presidente creato in istruttori_corsi.
+[ ] Corsi caricati e config contabile seedata.
+[ ] Istruttore principale assegnato ai corsi prima dei conguagli.
+[ ] vercel.json contiene cron /api/scadenze-alert alle 08:00 UTC.
+[ ] Test email a socio di test, admin copy e reply-to verificati.
+[ ] Test eliminazione solo su domanda senza attività.
+[ ] Piano di migrazione a Supabase Auth/RLS restrittiva pianificato.
 
-Procedura specifica per la Fase 1.1 - annualita e storico:
-1. Eseguire prima le sezioni pre-migrazione di SQL_VERIFICA_INTEGRITA_ANNUALITA.sql.
-2. Non procedere se emergono duplicati, record orfani o anomalie non comprese.
-3. Eseguire SQL_ANNUALITA_STORICO_2027.sql solo dopo backup verificato.
-4. Eseguire l'intero script SQL_VERIFICA_INTEGRITA_ANNUALITA.sql dopo la migrazione.
-5. Testare almeno: stesso tesserato in due stagioni, stesso tesserato in due corsi, nuovo certificato, pagamento annuale, mensilita e consenso foto negato o revocato.
-6. Attivare la nuova stagione dal 1 agosto; l'eccezione manuale e riservata all'Amministratore.
+================================================================================
+15. INVENTARIO COMPLETO FILE DA RICREARE
+================================================================================
+Radice repository:
+- README.md: identificazione sintetica repository.
+- SPECIFICHE PROGETTO.TXT: questo documento, fonte per ricostruzione.
+- vercel.json: cron Vercel; eseguire GET /api/scadenze-alert alle 08:00 UTC.
+- SQL_FIX_URGENTE.sql: policy go-live anon, pulizia FK duplicate e indice
+  normalizzato per iscrizioni_corsi.
+- SQL_ANNUALITA_STORICO_2027.sql: migrazione annualità, documenti medici,
+  consensi e anno_accademico pagamenti.
+- SQL_GESTIONE_ISTRUTTORI.sql: richiesta istruttore e corsi_disabilitati.
+- SQL_PAGAMENTI_VALIDAZIONE.sql: audit del validatore quota annuale.
+- SQL_CONTABILITA_ISTRUTTORI.sql: configurazione riparti e lock contabili.
+- SQL_VERIFICA_INTEGRITA_ANNUALITA.sql: query di audit prima/dopo migrazioni.
+- SQL_POLICY_ANNUALITA_GO_LIVE.sql: policy temporanee per tabelle annualità.
+- SQL_POLICY_PROD.sql: esempio di policy target Supabase Auth; non compatibile
+  con il login client legacy finché non si introduce Supabase Auth.
+- TEST_SESSION_GO_LIVE_2026_2027.md: checklist/sessione di test go-live.
+- query_api.js e query_supabase.js: utility locali diagnostiche, non deploy.
+- asd-fight-academy-db-backup-2026-08-18/: backup JSON/SQL locale, non deploy.
 
-Rollback:
-- Se una migrazione non viene completata, la transazione deve effettuare rollback senza modifiche parziali.
-- Se il problema emerge dopo un rilascio applicativo, sospendere il nuovo flusso, conservare i dati inseriti e ripristinare solo tramite backup e procedura documentata; non usare cancellazioni manuali non tracciate.
-- La sicurezza server-side e Storage privato restano una fase successiva pianificata e non devono essere introdotti parzialmente durante il go-live della Fase 1.1.
+public/:
+- index.html: pagina pubblica, presentazione ASD e catalogo corsi.
+- iscrizione.html: modulo iscrizione; scrive soci, iscrizioni, consensi,
+  documenti e invia conferma email.
+- socio.html: area tesserato; accesso CF, pagamenti, certificati e regolamento.
+- admin.html: login presidente/istruttore, registro tesserati, istruttori,
+  approvazioni, scadenze e azioni amministrative.
+- presenze.html: selezione corso, appello, salvataggio presenze, storico.
+- admin-scadenze.html: tabella scadenze e pulsante invio alert manuale.
+- admin-contabilita.html: registro pagamenti, configurazione corsi, conguagli,
+  override e stato OPEN/LOCKED.
+- manifest.json: manifest PWA.
+- sw.js: service worker PWA/cache; ricreare/aggiornare quando cambiano asset.
+- logo.png: logo applicazione/PWA.
+- favicon.ico: icona browser.
 
-------------------------------------------------------------------------------------------------
-11. ROADMAP EVOLUTIVA
-------------------------------------------------------------------------------------------------
+api/:
+- index.js: endpoint stato applicazione.
+- send-email.js: conferma domanda, approvazione e notifica amministratore.
+- scadenze-alert.js: endpoint ufficiale alert e cron Vercel.
+- check-expirations.js: endpoint alternativo/compatibile alert.
+- regolamento-pagamenti.js: verifica socio e URL firmato regolamento.
+- notifica-conguaglio.js: email HTML riepilogo conguaglio istruttore.
+- delete-socio.js: verifica password presidente e cancellazione domanda inattiva.
 
-Fase 1 - MVP gestione base
-- anagrafiche, iscrizioni, corsi, pagamenti, presenze
-- documenti obbligatori e notifiche
-- verifica duplicati e corretti vincoli di integrità
+File JSON e configurazione:
+- public/manifest.json deve riferire nome app, colori e logo.png.
+- vercel.json deve mantenere il cron sotto la chiave crons.
+- public/manifest.json attuale: short_name FightAcademy; name "A.S.D. Fight
+  Academy - Gestione Soci"; start_url /index.html; scope /; display standalone;
+  orientation portrait; background_color #0f172a; theme_color #b91c1c; due
+  icone /logo.png 512x512, una con purpose maskable.
+- public/sw.js è volutamente minimale: CACHE_NAME fight-academy-shell-v1,
+  skipWaiting/install, clients.claim/activate e fetch pass-through di rete;
+  non fornisce una cache offline affidabile.
+- I dati JSON nel backup (soci.json, pagamenti.json, presenze.json, corsi.json,
+  iscrizioni_corsi.json, istruttori_corsi.json) sono snapshot di backup e non
+  fonti runtime: il runtime legge sempre Supabase.
 
-Fase 1.1 - Go-live tesseramento annuale
-- storicizzazione del tesseramento sportivo per anno accademico settembre-agosto
-- aggiornamento dell'anagrafica corrente senza storico generalizzato delle variazioni
-- tracciamento annuale di corsi, pagamenti, certificati medici e consensi
-- selezione automatica della nuova stagione dal 1 agosto, con eccezione manuale dell'Amministratore
-- backup, migrazione non distruttiva, verifica integrità e test dei flussi prima della pubblicazione
-
-Fase 2 - automazione amministrativa
-- checklist pagamenti e report di morosità
-- flussi di approvazione contabile più rapidi
-- gestione avanzata scadenze e alert
-
-Fase 3 - evoluzione avanzata
-- importazione CSV bancari
-- riconciliazione automatica pagamenti
-- analisi storiche e reporting annuale
-- sicurezza server-side: sessioni verificate, Storage privato, URL firmati e autorizzazioni per ruolo
-- gestione automatizzata della retention e cancellazione dei documenti medici alla scadenza della politica ASD
-
-12. NOTE FINALE
-------------------------------------------------------------------------------------------------
-
-Il progetto si trova in una fase di consolidamento e stabilizzazione del modello dati. I requisiti aggiornati riflettono il passaggio da una configurazione iniziale basata su logica applicativa a una soluzione più robusta, con garanzia di unicità, controllo qualità e maggiore stabilità del database.
-
-Il lavoro svolto ha portato a riconoscere la necessità di:
-- rimuovere indici ridondanti
-- mantenere vincoli univoci per dati critici
-- usare script di audit e bonifica
-- eseguire verifiche prima di un reset finale del database di test
-
-Questo approccio garantisce un ambiente di sviluppo più sano, più riutilizzabile e più vicino a un sistema produttivo, senza sacrificare la rapidità di test e cambiamento del progetto.
+File che non devono contenere segreti:
+- tutti i file public/*.html e public/*.js impliciti.
+- tutti i file api/*.js.
+- vercel.json e documentazione.
+Le chiavi RESEND_API_KEY e SUPABASE_SERVICE_ROLE_KEY devono esistere soltanto
+nei secrets/environment variables Vercel; l'anon key Supabase è pubblica per
+necessità dell'architettura legacy.
