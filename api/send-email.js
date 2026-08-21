@@ -17,16 +17,25 @@ module.exports = async (req, res) => {
 
   const { tipo, nome, cognome, email, telefono, codice_fiscale, corso } = req.body;
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
+  const ADMIN_EMAIL = 'kawasemidojo@gmail.com';
+  const FROM_EMAIL = process.env.EMAIL_FROM || 'Fight Academy <info@kawasemidojo.it>';
 
   if (!RESEND_API_KEY) {
     return res.status(500).json({ error: 'Chiave RESEND_API_KEY non configurata su Vercel' });
   }
 
-  // Vincolo piano gratuito Resend: forziamo l'invio all'account proprietario verificato per evitare blocchi
-  const targetEmail = 'erubini@gmail.com';
+  const buildMemberMail = (memberEmail) => {
+    const validEmail = typeof memberEmail === 'string' ? memberEmail.trim() : '';
+    return {
+      to: validEmail ? [validEmail] : [ADMIN_EMAIL],
+      cc: validEmail && validEmail !== ADMIN_EMAIL ? [ADMIN_EMAIL] : undefined,
+      reply_to: ADMIN_EMAIL
+    };
+  };
 
   try {
     if (tipo === 'approvazione') {
+      const memberMail = buildMemberMail(email);
       const resendApproval = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -34,8 +43,10 @@ module.exports = async (req, res) => {
           'Authorization': `Bearer ${RESEND_API_KEY}`
         },
         body: JSON.stringify({
-          from: 'A.S.D. Fight Academy <onboarding@resend.dev>',
-          to: [email],
+          from: FROM_EMAIL,
+          to: memberMail.to,
+          cc: memberMail.cc,
+          reply_to: memberMail.reply_to,
           subject: 'Iscrizione approvata - A.S.D. Fight Academy',
           html: `
             <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
@@ -55,7 +66,8 @@ module.exports = async (req, res) => {
       return res.status(200).json({ success: true, message: 'Email di approvazione inviata' });
     }
 
-    // 1. Email di conferma simulata al Tesserato
+    const memberMail = buildMemberMail(email);
+
     const resendUser = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -63,15 +75,17 @@ module.exports = async (req, res) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`
       },
       body: JSON.stringify({
-        from: 'A.S.D. Fight Academy <onboarding@resend.dev>',
-        to: [targetEmail],
-        subject: `[TEST UTENTE] Ricezione Domanda - ${nome} ${cognome}`,
+        from: FROM_EMAIL,
+        to: memberMail.to,
+        cc: memberMail.cc,
+        reply_to: memberMail.reply_to,
+        subject: `Ricezione Domanda - ${nome} ${cognome}`,
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
             <h2 style="color: #b91c1c;">A.S.D. FIGHT ACADEMY</h2>
             <p>Ciao <strong>${nome} ${cognome}</strong>,</p>
             <p>Abbiamo ricevuto correttamente la tua domanda di tesseramento per il corso <strong>${corso || 'Selezionato'}</strong>.</p>
-            <p>Email originale destinatario: ${email}</p>
+            <p>Ti contatteremo al più presto.</p>
           </div>
         `
       })
@@ -79,11 +93,10 @@ module.exports = async (req, res) => {
 
     const userResult = await resendUser.json();
     if (!resendUser.ok) {
-      console.error("Errore Resend utente:", userResult);
-      return res.status(500).json({ error: "Errore invio email utente: " + JSON.stringify(userResult) });
+      console.error('Errore Resend utente:', userResult);
+      return res.status(500).json({ error: 'Errore invio email utente: ' + JSON.stringify(userResult) });
     }
 
-    // 2. Email di notifica al Presidente / Admin
     const resendAdmin = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -91,8 +104,9 @@ module.exports = async (req, res) => {
         'Authorization': `Bearer ${RESEND_API_KEY}`
       },
       body: JSON.stringify({
-        from: 'A.S.D. Fight Academy <onboarding@resend.dev>',
-        to: [targetEmail],
+        from: FROM_EMAIL,
+        to: [ADMIN_EMAIL],
+        reply_to: ADMIN_EMAIL,
         subject: `[NUOVA ISCRIZIONE ADMIN] ${nome} ${cognome} - ${corso || 'Corso'}`,
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
@@ -111,13 +125,13 @@ module.exports = async (req, res) => {
 
     const adminResult = await resendAdmin.json();
     if (!resendAdmin.ok) {
-      console.error("Errore Resend admin:", adminResult);
-      return res.status(500).json({ error: "Errore invio email admin: " + JSON.stringify(adminResult) });
+      console.error('Errore Resend admin:', adminResult);
+      return res.status(500).json({ error: 'Errore invio email admin: ' + JSON.stringify(adminResult) });
     }
 
     return res.status(200).json({ success: true, message: 'Email elaborate con successo' });
   } catch (error) {
-    console.error("Eccezione invio email:", error);
+    console.error('Eccezione invio email:', error);
     return res.status(500).json({ error: error.message });
   }
 };

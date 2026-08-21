@@ -10,6 +10,18 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Variabili ambiente mancanti su Vercel (RESEND_API_KEY / SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)' });
   }
 
+  const ADMIN_EMAIL = 'kawasemidojo@gmail.com';
+  const FROM_EMAIL = process.env.EMAIL_FROM || 'Fight Academy <info@kawasemidojo.it>';
+
+  const buildMemberEmail = (memberEmail) => {
+    const validEmail = typeof memberEmail === 'string' ? memberEmail.trim() : '';
+    return {
+      to: validEmail ? [validEmail] : [ADMIN_EMAIL],
+      cc: validEmail && validEmail !== ADMIN_EMAIL ? [ADMIN_EMAIL] : undefined,
+      reply_to: ADMIN_EMAIL
+    };
+  };
+
   try {
     const supabaseResponse = await fetch(`${SUPABASE_URL}/rest/v1/v_scadenze_soci?select=*`, {
       headers: {
@@ -45,18 +57,18 @@ export default async function handler(req, res) {
         && (invioManuale ? giorniMedici <= 30 : [45, 30, 15].includes(giorniMedici));
 
       if (medicoDaInviare) {
-        let recipients = email ? [email] : [];
-        if (giorniMedici <= 30) {
-          recipients.push('kawasemidojo@gmail.com');
-        }
-        if (recipients.length > 0) {
+        const memberMail = buildMemberEmail(email);
+        if (memberMail.to.length > 0) {
           await inviaEmail({
             apiKey: RESEND_API_KEY,
-            to: recipients,
+            from: FROM_EMAIL,
+            to: memberMail.to,
+            cc: memberMail.cc,
+            reply_to: memberMail.reply_to,
             subject: `AVVISO: Scadenza Certificato Medico tra ${giorniMedici} giorni`,
             html: `<p>Ciao <strong>${nome || ''} ${cognome || ''}</strong>,</p><p>ti ricordiamo che il tuo certificato medico scadrà tra <strong>${giorniMedici} giorni</strong>.</p>`
           });
-          emailLogs.push(`Certificato medico inviato a ${email || 'admin'} (${giorniMedici}gg)`);
+          emailLogs.push(`Certificato medico inviato a ${email || ADMIN_EMAIL} (${giorniMedici}gg)`);
         }
       }
 
@@ -67,7 +79,9 @@ export default async function handler(req, res) {
       if (asiDaInviare) {
         await inviaEmail({
           apiKey: RESEND_API_KEY,
-          to: ['kawasemidojo@gmail.com'],
+          from: FROM_EMAIL,
+          to: [ADMIN_EMAIL],
+          reply_to: ADMIN_EMAIL,
           subject: `ALERT ASI: Tessera per ${nome || ''} ${cognome || ''}`,
           html: `<p>La tessera ASI di <strong>${nome || ''} ${cognome || ''}</strong> scadrà tra <strong>${giorniAsi} giorni</strong>.</p>`
         });
@@ -82,7 +96,7 @@ export default async function handler(req, res) {
   }
 }
 
-async function inviaEmail({ apiKey, to, subject, html }) {
+async function inviaEmail({ apiKey, from, to, cc, reply_to, subject, html }) {
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -90,8 +104,10 @@ async function inviaEmail({ apiKey, to, subject, html }) {
       Authorization: `Bearer ${apiKey}`
     },
     body: JSON.stringify({
-      from: 'A.S.D. Fight Academy <onboarding@resend.dev>',
+      from,
       to,
+      cc,
+      reply_to,
       subject,
       html
     })
