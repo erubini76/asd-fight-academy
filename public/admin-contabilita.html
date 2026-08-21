@@ -300,14 +300,14 @@
                         <tr>
                             <th class="p-3"></th>
                             <th class="p-3">Mese</th>
+                            <th class="p-3 text-right">Alunni presenti</th>
                             <th class="p-3 text-right">Contanti</th>
                             <th class="p-3 text-right">Bonifici</th>
                             <th class="p-3 text-right">Totale</th>
-                            <th class="p-3 text-right">Quota Istr.</th>
                             <th class="p-3 text-right">Quota Pal.</th>
                             <th class="p-3 text-right">Conguaglio</th>
                             <th class="p-3 text-center">Stato</th>
-                            <th class="p-3 text-center">Override (quota istruttore)</th>
+                            <th class="p-3 text-center">Override / Quota istruttore</th>
                         </tr>
                     </thead>
                     <tbody id="conguaglio-tbody" class="divide-y divide-slate-700/50 text-slate-300"></tbody>
@@ -651,7 +651,7 @@
                     && pagamentoAppartieneAlCorso(p, sociFiltrati.find(s => s.id === p.socio_id), corsoFiltro)), sociFiltrati);
 
                 renderConfigCorsi();
-                renderConguaglio(corsoFiltro, mesiCur, typeYear, yearVal, allPags, allSoci);
+                renderConguaglio(corsoFiltro, mesiCur, typeYear, yearVal, allPags, allPres, allSoci);
             } catch (err) { console.error(err); }
         }
 
@@ -725,7 +725,7 @@
             return totale * (perc / 100);
         }
 
-        function renderConguaglio(corsoFiltro, mesiCur, typeYear, yearVal, allPags, allSoci) {
+        function renderConguaglio(corsoFiltro, mesiCur, typeYear, yearVal, allPags, allPres, allSoci) {
             const section = document.getElementById('conguaglio-section');
             if (corsoFiltro === 'tutti') { section.classList.add('hidden'); conguaglioRigheCorrenti = []; return; }
             section.classList.remove('hidden');
@@ -744,17 +744,22 @@
                 const contanti = pagamentiMese.filter(p => p.metodo === 'contanti').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
                 const bonifici = pagamentiMese.filter(p => p.metodo === 'bonifico').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
                 const totale = contanti + bonifici;
-                const numAlunniPaganti = new Set(pagamentiMese.map(p => p.socio_id)).size;
+                const alunniPresenti = new Set((allPres || []).filter(presenza => {
+                    const dataPresenza = new Date(presenza.data_presenza);
+                    return dataPresenza.getMonth() + 1 === m.id
+                        && dataPresenza.getFullYear() === anno
+                        && corsiCompatibili(presenza.corso, corsoFiltro);
+                }).map(presenza => presenza.socio_id)).size;
 
                 const meseContabile = getMeseContabile(corsoFiltro, m.id, anno);
-                const quotaIstruttore = calcolaQuotaIstruttore(config, meseContabile, totale, numAlunniPaganti);
+                const quotaIstruttore = calcolaQuotaIstruttore(config, meseContabile, totale, alunniPresenti);
                 const quotaPalestra = totale - quotaIstruttore;
                 const conguaglio = contanti - quotaIstruttore;
                 const stato = meseContabile?.stato || 'OPEN';
 
                 return {
                     nomeCorso: corsoFiltro, mese: m.id, meseLabel: m.nome, anno,
-                    contanti, bonifici, totale, quotaIstruttore, quotaPalestra, conguaglio, stato,
+                    alunniPresenti, contanti, bonifici, totale, quotaIstruttore, quotaPalestra, conguaglio, stato,
                     isCustomOverride: meseContabile?.is_custom_override || false,
                     tipoOverride: meseContabile?.tipo_override || 'percentuale',
                     valoreOverride: meseContabile?.valore_override ?? ''
@@ -763,7 +768,7 @@
 
             const tbody = document.getElementById('conguaglio-tbody');
             tbody.innerHTML = conguaglioRigheCorrenti.map(r => {
-                const checkbox = isAdmin
+                const checkbox = isAdmin && r.stato === 'OPEN'
                     ? `<input type="checkbox" data-conguaglio-check data-mese="${r.mese}" data-anno="${r.anno}">`
                     : '';
                 const badge = r.stato === 'LOCKED'
@@ -790,17 +795,42 @@
                     <tr>
                         <td class="p-3 text-center">${checkbox}</td>
                         <td class="p-3 font-bold text-white">${r.meseLabel} ${r.anno}</td>
+                        <td class="p-3 text-right font-bold text-white">${r.alunniPresenti}</td>
                         <td class="p-3 text-right">€${r.contanti.toFixed(2)}</td>
                         <td class="p-3 text-right">€${r.bonifici.toFixed(2)}</td>
                         <td class="p-3 text-right font-bold">€${r.totale.toFixed(2)}</td>
-                        <td class="p-3 text-right text-cyan-400">€${r.quotaIstruttore.toFixed(2)}</td>
                         <td class="p-3 text-right text-emerald-400">€${r.quotaPalestra.toFixed(2)}</td>
                         <td class="p-3 text-right font-bold ${r.conguaglio >= 0 ? 'text-amber-400' : 'text-red-400'}">€${r.conguaglio.toFixed(2)}</td>
                         <td class="p-3 text-center">${badge}${sbloccaBtn}</td>
-                        <td class="p-3 text-center">${overrideControls}</td>
+                        <td class="p-3 text-center">${overrideControls}<span class="block mt-2 pt-2 border-t border-slate-700 text-[10px] font-bold text-cyan-400">Quota istr.: €${r.quotaIstruttore.toFixed(2)}</span></td>
                     </tr>
                 `;
             }).join('');
+
+            const totali = conguaglioRigheCorrenti.reduce((acc, r) => ({
+                alunniPresenti: acc.alunniPresenti + r.alunniPresenti,
+                contanti: acc.contanti + r.contanti,
+                bonifici: acc.bonifici + r.bonifici,
+                totale: acc.totale + r.totale,
+                quotaIstruttore: acc.quotaIstruttore + r.quotaIstruttore,
+                quotaPalestra: acc.quotaPalestra + r.quotaPalestra,
+                conguaglio: acc.conguaglio + r.conguaglio
+            }), { alunniPresenti: 0, contanti: 0, bonifici: 0, totale: 0, quotaIstruttore: 0, quotaPalestra: 0, conguaglio: 0 });
+
+            tbody.innerHTML += `
+                <tr class="bg-slate-950 font-black text-white border-t-2 border-slate-600">
+                    <td class="p-3"></td>
+                    <td class="p-3 uppercase text-[9px]">Totali selezione</td>
+                    <td class="p-3 text-right">${totali.alunniPresenti}</td>
+                    <td class="p-3 text-right">€${totali.contanti.toFixed(2)}</td>
+                    <td class="p-3 text-right">€${totali.bonifici.toFixed(2)}</td>
+                    <td class="p-3 text-right text-white">€${totali.totale.toFixed(2)}</td>
+                    <td class="p-3 text-right text-emerald-400">€${totali.quotaPalestra.toFixed(2)}</td>
+                    <td class="p-3 text-right ${totali.conguaglio >= 0 ? 'text-amber-400' : 'text-red-400'}">€${totali.conguaglio.toFixed(2)}</td>
+                    <td class="p-3"></td>
+                    <td class="p-3 text-center text-cyan-400">Quota istr.: €${totali.quotaIstruttore.toFixed(2)}</td>
+                </tr>
+            `;
 
             document.getElementById('btn-conferma-conguaglio').classList.toggle('hidden', !isAdmin);
         }
@@ -830,7 +860,8 @@
 
         async function sbloccaMese(nomeCorso, mese, anno) {
             if (sessionUser.ruolo !== 'presidente') { alert('Solo l\'amministratore puo sbloccare un mese.'); return; }
-            if (!confirm(`Sbloccare ${nomeCorso} - ${mese}/${anno}?`)) return;
+            const nomeMese = (mesiAccademici.find(m => m.id === mese) || mesiSolari.find(m => m.id === mese))?.nome || mese;
+            if (!confirm(`Confermi di sbloccare solo ${nomeMese} ${anno} del corso ${nomeCorso}?\n\nLo sblocco non invia email. Una nuova email verrà inviata solo se confermerai nuovamente il conguaglio per questo mese.`)) return;
             try {
                 const { error } = await supabaseClient
                     .from('contabilita_mesi')
