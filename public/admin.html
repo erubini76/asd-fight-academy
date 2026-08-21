@@ -453,7 +453,11 @@
           const corsiVisibili = getCorsiVisibiliSocio(s);
           const annualita = (s.iscrizioni_annuali || []).find(i => corsiCompatibili(i.nome_corso, corsoDisplay)) || s.iscrizioni_annuali?.[0] || null;
           const documentoMedico = s.documento_medico_corrente;
-          const medScaduto = !documentoMedico?.scadenza || new Date(documentoMedico.scadenza) < new Date();
+          let medClass = 'text-red-500';
+          if (documentoMedico?.scadenza) {
+            const diffMedico = (new Date(documentoMedico.scadenza) - new Date()) / (1000 * 60 * 60 * 24);
+            medClass = diffMedico <= 0 ? 'text-red-500' : (diffMedico <= 30 ? 'text-amber-400 font-bold' : 'text-slate-300');
+          }
           const quota = s.quota_annuale;
           const privacy = (s.consensi_correnti || []).find(c => c.tipo === 'presa_visione_privacy');
           const foto = (s.consensi_correnti || []).find(c => c.tipo === 'foto_video');
@@ -510,7 +514,7 @@
             </td>
             <td class="p-4 text-center border-b border-slate-700/50">
                 <div class="flex flex-col items-center gap-1">
-                <p class="${medScaduto ? 'text-red-500' : 'text-slate-300'} font-bold">${formatDataItaliana(documentoMedico?.scadenza) || '---'}</p>
+                <p class="${medClass} font-bold">${formatDataItaliana(documentoMedico?.scadenza) || '---'}</p>
                     <div class="flex items-center gap-2">
                   ${currentUser.ruolo === 'presidente' && documentoMedico?.file_url ? `<a href="${documentoMedico.file_url}" target="_blank" rel="noopener noreferrer" class="text-blue-400 hover:text-white" title="Visualizza certificato medico"><i class="fa-solid fa-file-medical"></i></a>` : ''}
                   <button onclick="modificaScadenzaCertificato('${s.id}', '${documentoMedico?.id || ''}', '${formatDataItaliana(documentoMedico?.scadenza)}')" class="text-slate-500 hover:text-white" title="Modifica scadenza certificato medico"><i class="fa-solid fa-pen-to-square"></i></button>
