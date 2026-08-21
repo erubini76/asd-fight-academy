@@ -23,11 +23,12 @@ export default async function handler(req, res) {
   const socioId = typeof req.query?.socio_id === 'string' ? req.query.socio_id.trim() : '';
 
   try {
-    let query = supabase.from('v_scadenze_soci').select('*');
-    if (socioId) {
-      query = query.eq('socio_id', socioId);
-    }
-    const { data: sociScadenze, error } = await query;
+    const { data: tuttiSociScadenze, error } = await supabase
+      .from('v_scadenze_soci')
+      .select('*');
+    const sociScadenze = socioId
+      ? tuttiSociScadenze?.filter((socio) => socio.id === socioId || socio.socio_id === socioId)
+      : tuttiSociScadenze;
 
     if (error) {
       return res.status(200).json({ success: false, message: "Vista SQL non pronta o vuota: " + error.message });

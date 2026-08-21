@@ -24,8 +24,7 @@ export default async function handler(req, res) {
   };
 
   try {
-    const filtroSocio = socioId ? `&socio_id=eq.${encodeURIComponent(socioId)}` : '';
-    const supabaseResponse = await fetch(`${SUPABASE_URL}/rest/v1/v_scadenze_soci?select=*${filtroSocio}`, {
+    const supabaseResponse = await fetch(`${SUPABASE_URL}/rest/v1/v_scadenze_soci?select=*`, {
       headers: {
         apikey: SUPABASE_SERVICE_ROLE_KEY,
         Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
@@ -37,7 +36,9 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: false, message: 'Vista SQL non pronta o non accessibile: ' + (supabaseBody.message || supabaseBody.error || 'errore Supabase') });
     }
 
-    const sociScadenze = supabaseBody;
+    const sociScadenze = socioId
+      ? supabaseBody.filter((socio) => socio.id === socioId || socio.socio_id === socioId)
+      : supabaseBody;
 
     if (!sociScadenze || sociScadenze.length === 0) {
       return res.status(200).json({ success: true, processed: 0, logs: ["Nessun tesserato trovato nella vista di controllo."] });
