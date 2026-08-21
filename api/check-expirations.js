@@ -20,10 +20,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  const socioId = typeof req.query?.socio_id === 'string' ? req.query.socio_id.trim() : '';
+
   try {
-    const { data: sociScadenze, error } = await supabase
-      .from('v_scadenze_soci')
-      .select('*');
+    let query = supabase.from('v_scadenze_soci').select('*');
+    if (socioId) {
+      query = query.eq('socio_id', socioId);
+    }
+    const { data: sociScadenze, error } = await query;
 
     if (error) {
       return res.status(200).json({ success: false, message: "Vista SQL non pronta o vuota: " + error.message });

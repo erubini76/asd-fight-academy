@@ -10,6 +10,7 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Variabili ambiente mancanti su Vercel (RESEND_API_KEY / SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY)' });
   }
 
+  const socioId = typeof req.query?.socio_id === 'string' ? req.query.socio_id.trim() : '';
   const ADMIN_EMAIL = 'kawasemidojo@gmail.com';
   const FROM_EMAIL = process.env.EMAIL_FROM || 'Fight Academy <info@kawasemidojo.it>';
 
@@ -23,7 +24,8 @@ export default async function handler(req, res) {
   };
 
   try {
-    const supabaseResponse = await fetch(`${SUPABASE_URL}/rest/v1/v_scadenze_soci?select=*`, {
+    const filtroSocio = socioId ? `&socio_id=eq.${encodeURIComponent(socioId)}` : '';
+    const supabaseResponse = await fetch(`${SUPABASE_URL}/rest/v1/v_scadenze_soci?select=*${filtroSocio}`, {
       headers: {
         apikey: SUPABASE_SERVICE_ROLE_KEY,
         Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`
