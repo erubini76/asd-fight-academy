@@ -300,7 +300,7 @@
                         <tr>
                             <th class="p-3"></th>
                             <th class="p-3">Mese</th>
-                            <th class="p-3 text-right">Alunni presenti</th>
+                            <th class="p-3 text-right">Alunni</th>
                             <th class="p-3 text-right">Contanti</th>
                             <th class="p-3 text-right">Bonifici</th>
                             <th class="p-3 text-right">Totale</th>
@@ -746,9 +746,9 @@
                 const bonifici = pagamentiMese.filter(p => p.metodo === 'bonifico').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
                 const totale = contanti + bonifici;
                 const alunniPresenti = new Set((allPres || []).filter(presenza => {
-                    const dataPresenza = new Date(presenza.data_presenza);
-                    return dataPresenza.getMonth() + 1 === m.id
-                        && dataPresenza.getFullYear() === anno
+                    const [annoPresenza, mesePresenza] = String(presenza.data_presenza || '').split('-').map(Number);
+                    return mesePresenza === m.id
+                        && annoPresenza === anno
                     && corsiCompatibili(presenza.corso, corsoFiltro)
                     && pagamentiMese.some(pagamento => pagamento.socio_id === presenza.socio_id);
                 }).map(presenza => presenza.socio_id)).size;
