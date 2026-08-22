@@ -11,7 +11,7 @@ export default async function handler(req, res) {
   }
 
   const socioId = typeof req.query?.socio_id === 'string' ? req.query.socio_id.trim() : '';
-  const ADMIN_EMAIL = 'kawasemidojo@gmail.com';
+  const ADMIN_EMAIL = 'fighteste@gmail.com';
   const FROM_EMAIL = process.env.EMAIL_FROM || 'Fight Academy <info@kawasemidojo.it>';
 
   const buildMemberEmail = (memberEmail) => {

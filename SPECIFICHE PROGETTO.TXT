@@ -18,7 +18,7 @@ Dominio app corrente: https://asd-fight-academy.vercel.app
 Supabase project URL corrente: https://twiizsottstaacnvrxkg.supabase.co
 Dominio email verificato Resend: kawasemidojo.it
 Mittente email: Fight Academy <info@kawasemidojo.it>
-Risposte e copie amministrative: kawasemidojo@gmail.com
+Risposte e copie amministrative: fighteste@gmail.com
 
 Stack:
 - Frontend: HTML statico, JavaScript vanilla, Tailwind CDN, Font Awesome CDN.
@@ -60,8 +60,8 @@ Variabile opzionale ma raccomandata:
 
 Regole email:
 - Fallback EMAIL_FROM: Fight Academy <info@kawasemidojo.it>.
-- Reply-To: kawasemidojo@gmail.com.
-- Copia amministrativa: kawasemidojo@gmail.com.
+- Reply-To: fighteste@gmail.com.
+- Copia amministrativa: fighteste@gmail.com.
 - Mai usare onboarding@resend.dev in produzione.
 - Non hardcodare erubini@gmail.com: è un indirizzo presente nei dati di test,
   non un destinatario tecnico di sistema.
@@ -442,7 +442,7 @@ Body: socioId, adminEmail, password, confirmation="ELIMINA".
 ================================================================================
 Destinazioni:
 - Tesserato: email reale nel record soci.
-- Copia/notifiche amministrative: kawasemidojo@gmail.com.
+- Copia/notifiche amministrative: fighteste@gmail.com.
 - Per minori, email registrata è quella del genitore/tutore se indicata nel form.
 
 Test sicuro alert singolo:

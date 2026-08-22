@@ -17,7 +17,7 @@ module.exports = async (req, res) => {
 
   const { tipo, nome, cognome, email, telefono, codice_fiscale, corso } = req.body;
   const RESEND_API_KEY = process.env.RESEND_API_KEY;
-  const ADMIN_EMAIL = 'kawasemidojo@gmail.com';
+  const ADMIN_EMAIL = 'fighteste@gmail.com';
   const FROM_EMAIL = process.env.EMAIL_FROM || 'Fight Academy <info@kawasemidojo.it>';
 
   if (!RESEND_API_KEY) {

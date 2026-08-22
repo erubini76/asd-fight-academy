@@ -3,7 +3,7 @@
 -- STATO: DA REVISIONARE. NON ESEGUIRE SENZA BACKUP E CONSENSO ESPLICITO.
 --
 -- Obiettivo:
--- - mantenere il solo account presidente kawasemidojo@gmail.com;
+-- - mantenere il solo account presidente fighteste@gmail.com;
 -- - mantenere corsi e configurazioni di corso;
 -- - eliminare tesserati, istruttori test, presenze, pagamenti, annualita,
 --   documenti, consensi, stati contabili e notifiche applicative.
@@ -33,11 +33,11 @@ BEGIN
 
   SELECT COUNT(*) INTO admin_count
   FROM public.istruttori_corsi
-  WHERE lower(trim(email)) = 'kawasemidojo@gmail.com'
+  WHERE lower(trim(email)) = 'fighteste@gmail.com'
     AND ruolo = 'presidente';
 
   IF admin_count <> 1 THEN
-    RAISE EXCEPTION 'Reset annullato: atteso esattamente un presidente kawasemidojo@gmail.com, trovati % record.', admin_count;
+    RAISE EXCEPTION 'Reset annullato: atteso esattamente un presidente fighteste@gmail.com, trovati % record.', admin_count;
   END IF;
 END $$;
 
@@ -46,7 +46,7 @@ END $$;
 CREATE TEMP TABLE reset_admin AS
 SELECT id AS istruttore_id, socio_id
 FROM public.istruttori_corsi
-WHERE lower(trim(email)) = 'kawasemidojo@gmail.com'
+WHERE lower(trim(email)) = 'fighteste@gmail.com'
   AND ruolo = 'presidente';
 
 -- 1. Azzerare stato contabile e riferimenti agli istruttori test.

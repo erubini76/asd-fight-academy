@@ -1,4 +1,4 @@
-const ADMIN_EMAIL = 'kawasemidojo@gmail.com';
+const ADMIN_EMAIL = 'fighteste@gmail.com';
 const FROM_EMAIL = process.env.EMAIL_FROM || 'Fight Academy <info@kawasemidojo.it>';
 
 function escapeHtml(value) {
