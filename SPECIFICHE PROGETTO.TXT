@@ -1,8 +1,8 @@
 ================================================================================
 FIGHT ACADEMY - SPECIFICA DI RICOSTRUZIONE COMPLETA
 ================================================================================
-Versione: 3.0
-Ultimo aggiornamento: 21 agosto 2026
+Versione: 3.1
+Ultimo aggiornamento: 22 agosto 2026
 Scopo: questo documento deve bastare per ricostruire da zero database Supabase,
 frontend statico, API Vercel, automazioni email e configurazione operativa.
 
@@ -118,6 +118,10 @@ Permessi applicativi:
   certificato e ottiene il regolamento firmato. Non modifica oggi l'anagrafica.
 
 Gestione istruttori:
+- La domanda di ammissione del socio riguarda esclusivamente il tesseramento e
+  l'iscrizione ai corsi; non contiene flag o richieste per diventare istruttore.
+- L'eventuale incarico istruttore viene gestito separatamente dall'amministratore
+  tramite l'account applicativo e l'assegnazione delle competenze ai corsi.
 - Non eliminare un istruttore con attività storica.
 - Per cessazione o passaggio corso: chiudere/LOCKED i mesi maturati, disabilitare
   l'istruttore su tutti i corsi con corsi_disabilitati, creare/abilitare il nuovo
@@ -203,7 +207,8 @@ Account applicativo e competenze.
 - id bigint PK (richiesto dal FK contabile attuale).
 - socio_id uuid NULL FK -> soci.id.
 - email text unique, nome text, password_accesso text.
-- ruolo text: presidente | istruttore.
+- ruolo text: presidente | istruttore. Il valore presidente identifica l'account
+  amministratore globale; la UI lo mostra con l'etichetta AMMINISTRATORE.
 - corsi_competenze text[] NOT NULL.
 - corsi_disabilitati text[] NOT NULL DEFAULT '{}'.
 Regola: un istruttore con tutti i corsi disabilitati non accede al pannello.
@@ -223,9 +228,8 @@ Anno accademico: dal 1 agosto viene proposta la nuova stagione; formato
 - privacy_accettata boolean, liberatoria_immagini boolean: snapshot annuale.
 - scadenza_certificato_medico date, certificato_medico_url text: compatibilità.
 - data_invio timestamptz, data_approvazione timestamptz, approvata_da text.
-- richiesta_istruttore boolean default false.
-- stato_richiesta_istruttore text default "Nessuna", valori: Nessuna, In attesa,
-  Confermata, Rifiutata.
+- Non contiene flag o stato di richiesta istruttore: l'eventuale gestione come
+  istruttore avviene separatamente nella tabella istruttori_corsi.
 - created_at, updated_at timestamptz.
 Vincolo: UNIQUE (socio_id, nome_corso, anno_accademico).
 
@@ -460,7 +464,9 @@ il batch senza socio_id se non si vogliono processare tutti i tesserati.
 3. Applicare SQL_FIX_URGENTE.sql adattandolo al nuovo schema: una sola FK tra
    iscrizioni_corsi.socio_id e soci.id; indici anti duplicato; policy go-live.
 4. Applicare SQL_ANNUALITA_STORICO_2027.sql per annualità, documenti e consensi.
-5. Applicare SQL_GESTIONE_ISTRUTTORI.sql.
+5. Applicare SQL_GESTIONE_ISTRUTTORI.sql per corsi_disabilitati e per le
+  eventuali strutture legacy presenti; non collegare una richiesta istruttore
+  al flusso di ammissione del socio.
 6. Applicare SQL_PAGAMENTI_VALIDAZIONE.sql.
 7. Applicare SQL_CONTABILITA_ISTRUTTORI.sql.
 8. Creare/validare v_scadenze_soci.
@@ -534,7 +540,8 @@ Radice repository:
   normalizzato per iscrizioni_corsi.
 - SQL_ANNUALITA_STORICO_2027.sql: migrazione annualità, documenti medici,
   consensi e anno_accademico pagamenti.
-- SQL_GESTIONE_ISTRUTTORI.sql: richiesta istruttore e corsi_disabilitati.
+- SQL_GESTIONE_ISTRUTTORI.sql: corsi_disabilitati e compatibilita con eventuali
+  colonne legacy; la gestione dell'istruttore resta separata dall'ammissione.
 - SQL_PAGAMENTI_VALIDAZIONE.sql: audit del validatore quota annuale.
 - SQL_CONTABILITA_ISTRUTTORI.sql: configurazione riparti e lock contabili.
 - SQL_VERIFICA_INTEGRITA_ANNUALITA.sql: query di audit prima/dopo migrazioni.
