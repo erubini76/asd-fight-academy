@@ -68,6 +68,7 @@ module.exports = async (req, res) => {
 
     const memberMail = buildMemberMail(email);
 
+    // Niente cc all'admin: la mail di benvenuto è solo per il tesserato, l'admin riceve già la mail dati qui sotto
     const resendUser = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -77,7 +78,6 @@ module.exports = async (req, res) => {
       body: JSON.stringify({
         from: FROM_EMAIL,
         to: memberMail.to,
-        cc: memberMail.cc,
         reply_to: memberMail.reply_to,
         subject: `Ricezione Domanda - ${nome} ${cognome}`,
         html: `
@@ -107,7 +107,7 @@ module.exports = async (req, res) => {
         from: FROM_EMAIL,
         to: [ADMIN_EMAIL],
         reply_to: ADMIN_EMAIL,
-        subject: `[NUOVA ISCRIZIONE ADMIN] ${nome} ${cognome} - ${corso || 'Corso'}`,
+        subject: `[NUOVA ISCRIZIONE] ${nome} ${cognome} - ${corso || 'Corso'}`,
         html: `
           <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
             <h3 style="color: #b91c1c;">Nuovo Tesseramento</h3>
