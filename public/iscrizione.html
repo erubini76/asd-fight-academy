@@ -507,10 +507,12 @@
                     const fileName = `iscrizione_${cf}_${Date.now()}.${fileExt}`;
                     const filePath = `${fileName}`; // Salviamo direttamente nel bucket
 
+                    // Legge il file come ArrayBuffer: alcuni browser mobili inviano un body vuoto ("No content provided") passando direttamente l'oggetto File
+                    const fileBuffer = await file.arrayBuffer();
                     const { error: uploadError, data: uploadData } = await supabaseClient
                         .storage
                         .from('certificati_medici')
-                        .upload(filePath, file);
+                        .upload(filePath, fileBuffer, { contentType: file.type || 'application/octet-stream' });
 
                     if (uploadError) throw new Error("Errore upload file: " + uploadError.message);
 

@@ -371,7 +371,9 @@
             if (metodo === 'bonifico') {
                 if (!file) { alert("Allega ricevuta."); return; }
                 const fileName = `p_${tesseratoId}_${Date.now()}.${file.name.split('.').pop()}`;
-                const { error: e } = await supabaseClient.storage.from('ricevute_pagamenti').upload(fileName, file);
+                // Legge il file come ArrayBuffer per evitare l'errore "No content provided" su alcuni browser mobili
+                const fileBuffer = await file.arrayBuffer();
+                const { error: e } = await supabaseClient.storage.from('ricevute_pagamenti').upload(fileName, fileBuffer, { contentType: file.type || 'application/octet-stream' });
                 if (e) { alert(e.message); return; }
                 url = supabaseClient.storage.from('ricevute_pagamenti').getPublicUrl(fileName).data.publicUrl;
             }
@@ -411,7 +413,9 @@
             if (!f || !d) { alert("Dati mancanti."); return; }
             const fileName = `c_${tesseratoId}_${Date.now()}.${f.name.split('.').pop()}`;
             try {
-                await supabaseClient.storage.from('certificati_medici').upload(fileName, f);
+                // Legge il file come ArrayBuffer per evitare l'errore "No content provided" su alcuni browser mobili
+                const fileBuffer = await f.arrayBuffer();
+                await supabaseClient.storage.from('certificati_medici').upload(fileName, fileBuffer, { contentType: f.type || 'application/octet-stream' });
                 const url = supabaseClient.storage.from('certificati_medici').getPublicUrl(fileName).data.publicUrl;
                 const { error: disattivaError } = await supabaseClient
                     .from('documenti_medici')
