@@ -390,8 +390,19 @@ proviene da soci.scadenza_tessera_asi.
 
 8.6 Contabilità (admin-contabilita.html)
 - Griglia mensile pagamenti, filtro anno solare/accademico e corso.
-- Gestione pagamento rapido: contanti/bonifico, approvazione, morosità/non
-  praticante. Istruttore non modifica mesi LOCKED.
+- Gestione pagamento rapido: contanti/bonifico e approvazione. Nella griglia
+  mensile la cella è verde se esiste un pagamento Approvato; è gialla e
+  lampeggiante con etichetta "In verifica" se esiste un pagamento con stato
+  "In attesa di verifica"; è rossa e lampeggiante con icona "Moroso" se
+  esiste una presenza valida dello stesso socio, corso e mese/anno senza un
+  pagamento Approvato o In attesa di verifica; è grigia con "Non praticante"
+  se il mese è marcato in mesi_non_praticante e non ricade nei casi precedenti.
+  Questa priorità vale anche se nello stesso mese esistono più condizioni:
+  Approvato, poi In verifica, poi presenza senza pagamento, poi Non praticante.
+  Una cella vuota indica assenza sia di presenza sia di pagamento. Il rosso
+  non è calcolato sulla data di scadenza: indica esclusivamente presenza senza
+  pagamento. La cella Iscrizione Annuale può essere verde o gialla, ma non
+  diventa rossa per una presenza. Istruttore non modifica mesi LOCKED.
 - Presidente configura soglia, percentuali e istruttore principale.
 - Conguaglio visibile solo con un corso specifico, non "Tutti i corsi".
 - Pagamenti legacy con corso = "Mensilità" devono essere attribuiti al corso
