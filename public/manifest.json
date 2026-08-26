@@ -3,19 +3,19 @@
   "name": "A.S.D. Fight Academy - Gestione Soci",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/logo.png?v=5",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any"
     },
     {
-      "src": "/logo.png",
+      "src": "/logo.png?v=5",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any"
     },
     {
-      "src": "/logo.png",
+      "src": "/logo.png?v=5",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "maskable"
