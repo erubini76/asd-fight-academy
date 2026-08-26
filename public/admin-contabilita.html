@@ -252,7 +252,10 @@
                 <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-calendar-check text-emerald-400"></i> Registro Analitico Pagamenti
                 </h2>
-                <div class="flex gap-4 font-bold uppercase tracking-tighter">
+                <div class="flex flex-wrap justify-center gap-2 md:gap-4 font-bold uppercase tracking-tighter">
+                    <button id="btn-export-pagamenti-csv" onclick="esportaPagamentiCsv()" class="hidden bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-[10px] font-bold transition shadow-sm border border-emerald-500 flex items-center gap-2">
+                        <i class="fa-solid fa-file-csv"></i> Scarica CSV
+                    </button>
                     <span class="flex items-center gap-1.5 text-green-400 bg-green-400/10 px-2 py-1 rounded-lg border border-green-400/20"><i class="fa-solid fa-square text-[7px]"></i> Approvato</span>
                     <span class="flex items-center gap-1.5 text-green-300 bg-green-400/10 px-2 py-1 rounded-lg border border-green-400/20"><i class="fa-solid fa-money-bill-wave text-[8px]"></i> Contanti</span>
                     <span class="flex items-center gap-1.5 text-cyan-300 bg-green-400/10 px-2 py-1 rounded-lg border border-green-400/20"><i class="fa-solid fa-building-columns text-[8px]"></i> Bonifico</span>
@@ -367,6 +370,11 @@
         let contabilitaMesiCorrenti = [];
         let istruttoriDisponibili = [];
         let conguaglioRigheCorrenti = [];
+        let pagamentiExportCorrenti = [];
+
+        if (sessionUser?.ruolo === 'presidente') {
+            document.getElementById('btn-export-pagamenti-csv')?.classList.remove('hidden');
+        }
 
         function getConfigCorso(nomeCorso) {
             return configCorsiContabili.find(c => c.nome_corso === nomeCorso) || null;
@@ -505,6 +513,77 @@
                 : corsiIstruttore.some(corso => corsiCompatibili(corso, corsoFiltro));
         }
 
+        function pagamentoNelPeriodo(pagamento, typeYear, yearVal) {
+            if (pagamento.corso === 'Iscrizione Annuale' || pagamento.tipo_pagamento === 'Iscrizione Annuale') {
+                return pagamento.anno_accademico === `${yearVal}/${yearVal + 1}`;
+            }
+            const anno = Number(pagamento.anno_riferimento);
+            const mese = Number(pagamento.mese_riferimento);
+            if (!anno || !mese) return false;
+            if (typeYear === 'solare') return anno === yearVal;
+            return (mese >= 9 && anno === yearVal) || (mese <= 8 && anno === yearVal + 1);
+        }
+
+        function csvEscape(value) {
+            const text = value === null || value === undefined ? '' : String(value);
+            return `"${text.replace(/"/g, '""')}"`;
+        }
+
+        function formatValoreCsv(value) {
+            return value === null || value === undefined ? '' : String(value);
+        }
+
+        function esportaPagamentiCsv() {
+            if (sessionUser?.ruolo !== 'presidente') {
+                alert('Funzione riservata all’amministratore.');
+                return;
+            }
+            if (pagamentiExportCorrenti.length === 0) {
+                alert('Nessun pagamento da esportare con i filtri correnti.');
+                return;
+            }
+
+            const intestazioni = [
+                'id_pagamento', 'anno_accademico', 'nome', 'cognome', 'codice_fiscale',
+                'email', 'corso', 'tipo_pagamento', 'mese_riferimento', 'anno_riferimento',
+                'importo', 'metodo', 'stato', 'data_pagamento', 'data_inserimento',
+                'validato_da_nome', 'validato_da_email'
+            ];
+            const righe = pagamentiExportCorrenti.map(({ pagamento, socio }) => [
+                pagamento.id,
+                pagamento.anno_accademico || '',
+                socio?.nome || '',
+                socio?.cognome || '',
+                socio?.codice_fiscale || '',
+                socio?.email || '',
+                pagamento.corso || '',
+                pagamento.tipo_pagamento || '',
+                pagamento.mese_riferimento ?? '',
+                pagamento.anno_riferimento ?? '',
+                pagamento.importo ?? '',
+                pagamento.metodo || '',
+                pagamento.stato || '',
+                pagamento.data_pagamento || '',
+                pagamento.data_inserimento || '',
+                pagamento.validato_da_nome || '',
+                pagamento.validato_da_email || ''
+            ]);
+            const contenutoCsv = [
+                intestazioni.map(value => csvEscape(formatValoreCsv(value))).join(';'),
+                ...righe.map(riga => riga.map(value => csvEscape(formatValoreCsv(value))).join(';'))
+            ].join('\n');
+            const blob = new Blob([`\uFEFF${contenutoCsv}`], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            const dataOggi = new Date().toISOString().slice(0, 10);
+            link.href = url;
+            link.download = `registro-analitico-pagamenti-${dataOggi}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+        }
+
             function getAnnoAccademicoDaMese(mese, anno) {
                 const annoInizio = mese >= 8 ? anno : anno - 1;
                 return `${annoInizio}/${annoInizio + 1}`;
@@ -569,6 +648,17 @@
                 const corsoFiltro = selectCorso.value;
                 let sociFiltrati = allSoci;
                 sociFiltrati = allSoci.filter(s => socioAppartieneAlCorso(s, corsoFiltro));
+                pagamentiExportCorrenti = (allPags || [])
+                    .filter(pagamento => pagamentoNelPeriodo(pagamento, typeYear, yearVal))
+                    .filter(pagamento => {
+                        const socio = allSoci.find(s => s.id === pagamento.socio_id);
+                        return socio && sociFiltrati.some(s => s.id === socio.id)
+                            && pagamentoAppartieneAlCorso(pagamento, socio, corsoFiltro);
+                    })
+                    .map(pagamento => ({
+                        pagamento,
+                        socio: allSoci.find(s => s.id === pagamento.socio_id)
+                    }));
 
                 renderHeader();
                 tbody.innerHTML = '';
