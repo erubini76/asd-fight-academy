@@ -319,6 +319,73 @@
         : null;
     }
 
+    function formatInputDataItaliana(value) {
+      const cifre = String(value || '').replace(/\D/g, '').slice(0, 8);
+      return cifre.length > 4
+        ? `${cifre.slice(0, 2)}-${cifre.slice(2, 4)}-${cifre.slice(4)}`
+        : (cifre.length > 2 ? `${cifre.slice(0, 2)}-${cifre.slice(2)}` : cifre);
+    }
+
+    function promptDataItaliana(titolo, valoreAttuale = '') {
+      return new Promise((resolve) => {
+        const overlay = document.createElement('div');
+        overlay.className = 'fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4';
+
+        const panel = document.createElement('div');
+        panel.className = 'w-full max-w-sm rounded-2xl border border-slate-700 bg-slate-800 p-5 shadow-2xl';
+        panel.innerHTML = `
+          <h3 class="text-sm font-bold text-white uppercase tracking-wide">${titolo}</h3>
+          <p class="mt-1 text-[10px] text-slate-400 uppercase">Formato richiesto: GG-MM-AAAA</p>
+          <input id="datePromptInput" type="text" inputmode="numeric" placeholder="GG-MM-AAAA" class="mt-4 block w-full rounded-lg border border-slate-700 bg-slate-900 p-2 text-sm text-white outline-none focus:ring-1 focus:ring-cyan-500">
+          <div class="mt-4 flex justify-end gap-2">
+            <button id="datePromptCancel" class="rounded-lg border border-slate-600 bg-slate-700 px-3 py-1.5 text-[10px] font-bold uppercase text-white">Annulla</button>
+            <button id="datePromptClear" class="rounded-lg border border-amber-600/60 bg-amber-600/10 px-3 py-1.5 text-[10px] font-bold uppercase text-amber-300">Svuota</button>
+            <button id="datePromptSave" class="rounded-lg border border-cyan-500/40 bg-cyan-600 px-3 py-1.5 text-[10px] font-bold uppercase text-white">Salva</button>
+          </div>
+        `;
+
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
+
+        const input = panel.querySelector('#datePromptInput');
+        const btnCancel = panel.querySelector('#datePromptCancel');
+        const btnClear = panel.querySelector('#datePromptClear');
+        const btnSave = panel.querySelector('#datePromptSave');
+
+        input.value = formatInputDataItaliana(valoreAttuale || '');
+        input.focus();
+        input.setSelectionRange(input.value.length, input.value.length);
+
+        input.addEventListener('input', () => {
+          input.value = formatInputDataItaliana(input.value);
+        });
+
+        const close = (value) => {
+          overlay.remove();
+          resolve(value);
+        };
+
+        btnCancel.addEventListener('click', () => close(null));
+        btnClear.addEventListener('click', () => close(''));
+        btnSave.addEventListener('click', () => close(input.value.trim()));
+
+        overlay.addEventListener('click', (event) => {
+          if (event.target === overlay) close(null);
+        });
+
+        input.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            close(input.value.trim());
+          }
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            close(null);
+          }
+        });
+      });
+    }
+
     function getQuotaAnnuale(pagamenti, socioId, annoAccademico) {
       return pagamenti
         .filter(p => p.socio_id === socioId
@@ -751,7 +818,7 @@
     }
 
     async function modificaScadenza(id, campo, descrizione, valoreAttuale) {
-      const nuovaDataInput = prompt(`Modifica scadenza ${descrizione} (GG-MM-AAAA):`, valoreAttuale);
+      const nuovaDataInput = await promptDataItaliana(`Modifica scadenza ${descrizione}`, valoreAttuale);
       if (nuovaDataInput === null) return;
       const nuovaData = nuovaDataInput.trim() ? parseDataItaliana(nuovaDataInput) : null;
       if (nuovaDataInput.trim() && !nuovaData) { alert('Data non valida. Usa il formato GG-MM-AAAA.'); return; }
@@ -843,7 +910,7 @@
         return;
       }
 
-      const nuovaDataInput = prompt('Modifica scadenza certificato medico (GG-MM-AAAA):', valoreAttuale);
+      const nuovaDataInput = await promptDataItaliana('Modifica scadenza certificato medico', valoreAttuale);
       if (nuovaDataInput === null) return;
       const nuovaData = nuovaDataInput.trim() ? parseDataItaliana(nuovaDataInput) : null;
       if (nuovaDataInput.trim() && !nuovaData) { alert('Data non valida. Usa il formato GG-MM-AAAA.'); return; }

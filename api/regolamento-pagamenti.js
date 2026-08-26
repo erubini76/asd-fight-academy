@@ -1,5 +1,5 @@
 const REGOLAMENTO_BUCKET = 'regolamenti';
-const REGOLAMENTO_FILE = 'Anno associativo 2026-27.pdf';
+const REGOLAMENTO_FILES = ['Anno associativo.pdf', 'Anno associativo 2026-27.pdf'];
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -35,17 +35,28 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Accesso al regolamento non autorizzato' });
     }
 
-    const signedUrlResponse = await fetch(
-      `${supabaseUrl}/storage/v1/object/sign/${REGOLAMENTO_BUCKET}/${encodeURIComponent(REGOLAMENTO_FILE)}`,
-      {
-        method: 'POST',
-        headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ expiresIn: 600, download: REGOLAMENTO_FILE })
+    let signedUrlData = null;
+    for (const fileName of REGOLAMENTO_FILES) {
+      const signedUrlResponse = await fetch(
+        `${supabaseUrl}/storage/v1/object/sign/${REGOLAMENTO_BUCKET}/${encodeURIComponent(fileName)}`,
+        {
+          method: 'POST',
+          headers: { ...headers, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ expiresIn: 600, download: fileName })
+        }
+      );
+
+      if (!signedUrlResponse.ok) {
+        continue;
       }
-    );
-    if (!signedUrlResponse.ok) throw new Error('Creazione link firmato non riuscita');
-    const signedUrlData = await signedUrlResponse.json();
-    if (!signedUrlData.signedURL) throw new Error('Link firmato non ricevuto');
+
+      signedUrlData = await signedUrlResponse.json();
+      if (signedUrlData?.signedURL) break;
+    }
+
+    if (!signedUrlData?.signedURL) {
+      throw new Error('Creazione link firmato non riuscita');
+    }
 
     return res.status(200).json({
       url: `${supabaseUrl}/storage/v1${signedUrlData.signedURL}`
