@@ -150,6 +150,9 @@
         <div class="flex flex-col gap-3 border-b border-slate-700 p-4 md:flex-row md:items-center">
           <input id="registro-ricerca" type="search" oninput="aggiornaRegistro(true)" placeholder="Cerca nome, cognome o codice fiscale" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none md:max-w-sm">
           <select id="registro-corso" onchange="aggiornaRegistro(true)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white outline-none md:max-w-xs"></select>
+          <button onclick="esportaRegistroCsv()" class="w-full bg-emerald-700 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wide border border-emerald-500/40 md:ml-auto md:w-auto">
+            <i class="fa-solid fa-file-csv mr-1"></i> Export CSV Registro
+          </button>
         </div>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-[10px] border-collapse">
@@ -192,6 +195,7 @@
     let currentUser = null;
     const RIGHE_PER_PAGINA = 25;
     let paginaRegistro = 1;
+    let sociRegistroFiltratiExport = [];
 
     function aggiornaRegistro(resetPagina) {
       if (resetPagina) paginaRegistro = 1;
@@ -317,6 +321,132 @@
       return data.getFullYear() === Number(anno) && data.getMonth() === Number(mese) - 1 && data.getDate() === Number(giorno)
         ? `${anno}-${mese}-${giorno}`
         : null;
+    }
+
+    function csvEscape(value) {
+      const text = value === null || value === undefined ? '' : String(value);
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+
+    function estraiConsenso(consensi, tipo) {
+      return (consensi || []).find(c => c.tipo === tipo) || null;
+    }
+
+    function esportaRegistroCsv() {
+      if (!Array.isArray(sociRegistroFiltratiExport) || sociRegistroFiltratiExport.length === 0) {
+        alert('Nessun tesserato da esportare con i filtri correnti.');
+        return;
+      }
+
+      const intestazioni = [
+        'id_tesserato',
+        'anno_accademico',
+        'nome',
+        'cognome',
+        'codice_fiscale',
+        'data_nascita',
+        'luogo_nascita',
+        'email',
+        'telefono',
+        'residenza_indirizzo',
+        'residenza_cap',
+        'residenza_citta',
+        'nome_tutore',
+        'cognome_tutore',
+        'cf_tutore',
+        'scadenza_tessera_asi',
+        'stato_iscrizione',
+        'corso_iscrizione',
+        'data_invio_iscrizione',
+        'data_approvazione_iscrizione',
+        'approvata_da_iscrizione',
+        'certificato_medico_scadenza',
+        'certificato_medico_file_url',
+        'certificato_medico_data_upload',
+        'quota_iscrizione_stato',
+        'quota_iscrizione_importo',
+        'quota_iscrizione_metodo',
+        'quota_iscrizione_data_pagamento',
+        'quota_iscrizione_validato_da',
+        'quota_iscrizione_ricevuta_url',
+        'consenso_privacy_stato',
+        'consenso_privacy_versione',
+        'consenso_privacy_data',
+        'consenso_foto_video_stato',
+        'consenso_foto_video_versione',
+        'consenso_foto_video_data',
+        'corsi_tesserato',
+        'iscrizioni_annuali_json',
+        'consensi_json'
+      ];
+
+      const righe = sociRegistroFiltratiExport.map((socio) => {
+        const corsoDisplay = getCorsoDisplay(socio);
+        const iscrizione = (socio.iscrizioni_annuali || []).find(i => corsiCompatibili(i.nome_corso, corsoDisplay)) || socio.iscrizioni_annuali?.[0] || null;
+        const documento = socio.documento_medico_corrente || null;
+        const quota = socio.quota_annuale || null;
+        const consensoPrivacy = estraiConsenso(socio.consensi_correnti, 'presa_visione_privacy');
+        const consensoFoto = estraiConsenso(socio.consensi_correnti, 'foto_video');
+        const corsiTesserato = getCorsiNomiSocio(socio).join(' | ');
+
+        return [
+          socio.id,
+          socio.anno_accademico || '',
+          socio.nome || '',
+          socio.cognome || '',
+          socio.codice_fiscale || '',
+          formatDataItaliana(socio.data_nascita) || '',
+          socio.luogo_nascita || '',
+          socio.email || '',
+          socio.telefono || '',
+          socio.residenza_indirizzo || '',
+          socio.residenza_cap || '',
+          socio.residenza_citta || '',
+          socio.nome_tutore || '',
+          socio.cognome_tutore || '',
+          socio.cf_tutore || '',
+          formatDataItaliana(socio.scadenza_tessera_asi) || '',
+          iscrizione?.stato || '',
+          iscrizione?.nome_corso || '',
+          iscrizione?.data_invio ? String(iscrizione.data_invio).slice(0, 10) : '',
+          iscrizione?.data_approvazione ? String(iscrizione.data_approvazione).slice(0, 10) : '',
+          iscrizione?.approvata_da || '',
+          formatDataItaliana(documento?.scadenza) || '',
+          documento?.file_url || '',
+          documento?.caricato_il ? String(documento.caricato_il).slice(0, 10) : '',
+          quota?.stato || '',
+          quota?.importo ?? '',
+          quota?.metodo || '',
+          quota?.data_pagamento ? String(quota.data_pagamento).slice(0, 10) : '',
+          quota?.validato_da_nome || '',
+          quota?.ricevuta_url || '',
+          consensoPrivacy?.stato || '',
+          consensoPrivacy?.versione || '',
+          consensoPrivacy?.registrato_il ? String(consensoPrivacy.registrato_il).slice(0, 10) : '',
+          consensoFoto?.stato || '',
+          consensoFoto?.versione || '',
+          consensoFoto?.registrato_il ? String(consensoFoto.registrato_il).slice(0, 10) : '',
+          corsiTesserato,
+          JSON.stringify(socio.iscrizioni_annuali || []),
+          JSON.stringify(socio.consensi_correnti || [])
+        ];
+      });
+
+      const contenutoCsv = [
+        intestazioni.map(csvEscape).join(';'),
+        ...righe.map(riga => riga.map(csvEscape).join(';'))
+      ].join('\n');
+
+      const blob = new Blob([`\uFEFF${contenutoCsv}`], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const dataOggi = new Date().toISOString().slice(0, 10);
+      link.href = url;
+      link.download = `registro-unificato-${dataOggi}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
     }
 
     function formatInputDataItaliana(value) {
@@ -507,6 +637,7 @@
             || getCorsiVisibiliSocio(s).some(corso => corsiCompatibili(corso, selectCorso.value));
           return (!ricerca || nomeCompleto.includes(ricerca)) && corsoCorrisponde;
         });
+        sociRegistroFiltratiExport = sociRicercati;
 
         const totalePagine = Math.max(1, Math.ceil(sociRicercati.length / RIGHE_PER_PAGINA));
         paginaRegistro = Math.min(paginaRegistro, totalePagine);
