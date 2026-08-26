@@ -339,7 +339,6 @@
       }
 
       const intestazioni = [
-        'id_tesserato',
         'anno_accademico',
         'nome',
         'cognome',
@@ -375,9 +374,7 @@
         'consenso_foto_video_stato',
         'consenso_foto_video_versione',
         'consenso_foto_video_data',
-        'corsi_tesserato',
-        'iscrizioni_annuali_json',
-        'consensi_json'
+        'corsi_tesserato'
       ];
 
       const righe = sociRegistroFiltratiExport.map((socio) => {
@@ -390,7 +387,6 @@
         const corsiTesserato = getCorsiNomiSocio(socio).join(' | ');
 
         return [
-          socio.id,
           socio.anno_accademico || '',
           socio.nome || '',
           socio.cognome || '',
@@ -426,9 +422,7 @@
           consensoFoto?.stato || '',
           consensoFoto?.versione || '',
           consensoFoto?.registrato_il ? String(consensoFoto.registrato_il).slice(0, 10) : '',
-          corsiTesserato,
-          JSON.stringify(socio.iscrizioni_annuali || []),
-          JSON.stringify(socio.consensi_correnti || [])
+          corsiTesserato
         ];
       });
 
