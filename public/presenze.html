@@ -57,7 +57,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Data Lezione</label>
-                        <input type="text" id="data-lezione" placeholder="GG-MM-AAAA" inputmode="numeric" onchange="caricaIscritti()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none">
+                        <input type="date" id="data-lezione" onchange="caricaIscritti()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none">
                     </div>
                 </div>
             </section>
@@ -94,8 +94,8 @@
                         <div><label class="block text-xs font-bold text-slate-400 uppercase mb-1">Cerca tesserato</label><input id="storico-ricerca" type="search" oninput="filtraStoricoPresenze()" placeholder="Nome o cognome" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none"></div>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
-                        <div><label class="block text-xs font-bold text-slate-400 uppercase mb-1">Dal</label><input id="storico-dal" type="text" placeholder="GG-MM-AAAA" inputmode="numeric" onchange="caricaStoricoPresenze()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none"></div>
-                        <div><label class="block text-xs font-bold text-slate-400 uppercase mb-1">Al</label><input id="storico-al" type="text" placeholder="GG-MM-AAAA" inputmode="numeric" onchange="caricaStoricoPresenze()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none"></div>
+                        <div><label class="block text-xs font-bold text-slate-400 uppercase mb-1">Dal</label><input id="storico-dal" type="date" onchange="caricaStoricoPresenze()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none"></div>
+                        <div><label class="block text-xs font-bold text-slate-400 uppercase mb-1">Al</label><input id="storico-al" type="date" onchange="caricaStoricoPresenze()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white outline-none"></div>
                     </div>
                 </div>
                 <div id="storico-riepilogo" class="grid grid-cols-3 gap-2"></div>
@@ -138,32 +138,24 @@
         }
 
         function parseDataItaliana(value) {
-            const match = String(value || '').trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+            const match = String(value || '').trim().match(/^(?:(\d{2})-(\d{2})-(\d{4})|(\d{4})-(\d{2})-(\d{2}))$/);
             if (!match) return null;
-            const [, giorno, mese, anno] = match;
+            const [, giornoIt, meseIt, annoIt, annoIso, meseIso, giornoIso] = match;
+            const giorno = giornoIt || giornoIso;
+            const mese = meseIt || meseIso;
+            const anno = annoIt || annoIso;
             const data = new Date(Number(anno), Number(mese) - 1, Number(giorno));
             return data.getFullYear() === Number(anno) && data.getMonth() === Number(mese) - 1 && data.getDate() === Number(giorno)
                 ? `${anno}-${mese}-${giorno}`
                 : null;
         }
 
-        // Inserisce automaticamente i trattini GG-MM-AAAA: sui tastierini numerici (iPhone/Android) il trattino non è digitabile
-        document.addEventListener('input', (e) => {
-            if (!e.target.matches('input[placeholder="GG-MM-AAAA"]')) return;
-            const cifre = e.target.value.replace(/\D/g, '').slice(0, 8);
-            e.target.value = cifre.length > 4
-                ? `${cifre.slice(0, 2)}-${cifre.slice(2, 4)}-${cifre.slice(4)}`
-                : cifre.length > 2
-                    ? `${cifre.slice(0, 2)}-${cifre.slice(2)}`
-                    : cifre;
-        });
-        
-        document.getElementById('data-lezione').value = formatDataItaliana(new Date().toISOString().split('T')[0]);
+        document.getElementById('data-lezione').value = new Date().toISOString().split('T')[0];
         const oggi = new Date();
         const inizioAnnoAccademico = new Date(oggi.getFullYear() - (oggi.getMonth() < 7 ? 1 : 0), 7, 1);
         const dataInizioAnnoAccademico = inizioAnnoAccademico.toISOString().split('T')[0];
-        document.getElementById('storico-dal').value = formatDataItaliana(dataInizioAnnoAccademico);
-        document.getElementById('storico-al').value = formatDataItaliana(oggi.toISOString().split('T')[0]);
+        document.getElementById('storico-dal').value = dataInizioAnnoAccademico;
+        document.getElementById('storico-al').value = oggi.toISOString().split('T')[0];
 
         // Popolamento dinamico select corsi in base ai permessi
         const corsoSelect = document.getElementById('corso-select');
@@ -241,7 +233,7 @@
             const corsoSelezionato = storicoCorsoSelect.value;
             const dal = parseDataItaliana(document.getElementById('storico-dal').value);
             const al = parseDataItaliana(document.getElementById('storico-al').value);
-            if (!dal || !al) { alert('Inserisci le date nel formato GG-MM-AAAA.'); return; }
+            if (!dal || !al) { alert('Seleziona le date di inizio e fine periodo.'); return; }
             const tbody = document.getElementById('storico-tbody');
             tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center"><i class="fa-solid fa-spinner fa-spin text-purple-500"></i></td></tr>';
 
@@ -414,7 +406,7 @@
         async function salvaPresenze() {
             const corso = document.getElementById('corso-select').value;
             const dataLezione = parseDataItaliana(document.getElementById('data-lezione').value);
-            if (!dataLezione) { alert('Inserisci la data della lezione nel formato GG-MM-AAAA.'); return; }
+            if (!dataLezione) { alert('Seleziona la data della lezione.'); return; }
             
             if (presentiIds.size === 0) {
                 if (!confirm("Nessun presente selezionato. Vuoi salvare un appello senza presenti?")) return;

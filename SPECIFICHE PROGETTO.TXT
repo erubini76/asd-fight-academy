@@ -1,7 +1,7 @@
 ================================================================================
 FIGHT ACADEMY - SPECIFICA DI RICOSTRUZIONE COMPLETA
 ================================================================================
-Versione: 3.2
+Versione: 3.3
 Ultimo aggiornamento: 2 settembre 2026
 Scopo: questo documento deve bastare per ricostruire da zero database Supabase,
 frontend statico, API Vercel, automazioni email e configurazione operativa.
@@ -352,8 +352,8 @@ proviene da soci.scadenza_tessera_asi.
 - Il certificato richiede file_url e data scadenza opzionale.
 - Invia POST /api/send-email con formData e corso: formData.corso_scelto.
   L'API legge il campo corso, non corso_scelto.
-- Usare UI data italiana GG-MM-AAAA; convertire in ISO AAAA-MM-GG prima di
-  salvare in PostgreSQL.
+- Per l'immissione date usare controlli calendario nativi (`input type="date"`)
+  in tutti i moduli e registri; salvare in PostgreSQL il valore ISO AAAA-MM-GG.
 
 8.2 Area tesserato (socio.html)
 - Accesso con codice fiscale.

@@ -73,7 +73,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300">Data di Nascita</label>
-                        <input type="text" id="data_nascita" placeholder="GG-MM-AAAA" inputmode="numeric" onchange="verificaEta()" required class="mt-1 block w-full rounded-lg bg-slate-900 border-slate-700 text-white shadow-sm border p-2 text-sm focus:border-red-500 focus:ring-red-500">
+                        <input type="date" id="data_nascita" onchange="verificaEta()" required class="mt-1 block w-full rounded-lg bg-slate-900 border-slate-700 text-white shadow-sm border p-2 text-sm focus:border-red-500 focus:ring-red-500">
                     </div>
                 </div>
 
@@ -135,7 +135,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-slate-300">Scadenza Certificato Medico</label>
-                        <input type="text" id="scadenza_medico" placeholder="GG-MM-AAAA" inputmode="numeric" class="mt-1 block w-full rounded-lg bg-slate-900 border-slate-700 text-white shadow-sm border p-2 text-sm focus:border-red-500 focus:ring-red-500">
+                        <input type="date" id="scadenza_medico" class="mt-1 block w-full rounded-lg bg-slate-900 border-slate-700 text-white shadow-sm border p-2 text-sm focus:border-red-500 focus:ring-red-500">
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300">Upload Certificato (PDF/Foto)</label>
@@ -219,25 +219,17 @@
         }
 
         function parseDataItaliana(value) {
-            const match = String(value || '').trim().match(/^(\d{2})-(\d{2})-(\d{4})$/);
+            const match = String(value || '').trim().match(/^(?:(\d{2})-(\d{2})-(\d{4})|(\d{4})-(\d{2})-(\d{2}))$/);
             if (!match) return null;
-            const [, giorno, mese, anno] = match;
+            const [, giornoIt, meseIt, annoIt, annoIso, meseIso, giornoIso] = match;
+            const giorno = giornoIt || giornoIso;
+            const mese = meseIt || meseIso;
+            const anno = annoIt || annoIso;
             const data = new Date(Number(anno), Number(mese) - 1, Number(giorno));
             return data.getFullYear() === Number(anno) && data.getMonth() === Number(mese) - 1 && data.getDate() === Number(giorno)
                 ? `${anno}-${mese}-${giorno}`
                 : null;
         }
-
-        // Inserisce automaticamente i trattini GG-MM-AAAA: sui tastierini numerici (iPhone/Android) il trattino non è digitabile
-        document.addEventListener('input', (e) => {
-            if (!e.target.matches('input[placeholder="GG-MM-AAAA"]')) return;
-            const cifre = e.target.value.replace(/\D/g, '').slice(0, 8);
-            e.target.value = cifre.length > 4
-                ? `${cifre.slice(0, 2)}-${cifre.slice(2, 4)}-${cifre.slice(4)}`
-                : cifre.length > 2
-                    ? `${cifre.slice(0, 2)}-${cifre.slice(2)}`
-                    : cifre;
-        });
 
         function getDataConservazioneCertificato(annoAccademico) {
             const annoFine = Number(annoAccademico.slice(5, 9));
@@ -286,7 +278,7 @@
                 document.getElementById('nome').value = data.nome || '';
                 document.getElementById('cognome').value = data.cognome || '';
                 document.getElementById('codice_fiscale').value = data.codice_fiscale || '';
-                document.getElementById('data_nascita').value = formatDataItaliana(data.data_nascita);
+                document.getElementById('data_nascita').value = data.data_nascita || '';
                 document.getElementById('luogo_nascita').value = data.luogo_nascita || '';
                 document.getElementById('residenza_indirizzo').value = data.residenza_indirizzo || '';
                 document.getElementById('residenza_cap').value = data.residenza_cap || '';
@@ -489,7 +481,7 @@
             const dataNascita = parseDataItaliana(document.getElementById('data_nascita').value);
             const scadenzaMedico = parseDataItaliana(document.getElementById('scadenza_medico').value);
             if (!dataNascita || (document.getElementById('scadenza_medico').value.trim() && !scadenzaMedico)) {
-                alert('Controlla le date: usa il formato GG-MM-AAAA.');
+                alert('Controlla le date selezionate.');
                 isSubmitting = false;
                 btn.disabled = false;
                 btn.textContent = 'Invia domanda';
