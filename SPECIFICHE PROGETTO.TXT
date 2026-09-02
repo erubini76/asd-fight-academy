@@ -1,8 +1,8 @@
 ================================================================================
 FIGHT ACADEMY - SPECIFICA DI RICOSTRUZIONE COMPLETA
 ================================================================================
-Versione: 3.1
-Ultimo aggiornamento: 22 agosto 2026
+Versione: 3.2
+Ultimo aggiornamento: 2 settembre 2026
 Scopo: questo documento deve bastare per ricostruire da zero database Supabase,
 frontend statico, API Vercel, automazioni email e configurazione operativa.
 
@@ -378,8 +378,12 @@ proviene da soci.scadenza_tessera_asi.
 8.4 Presenze (presenze.html)
 - Il presidente vede tutti i corsi; istruttore solo i propri corsi attivi.
 - Salva righe socio_id, data_presenza ISO, corso esatto.
+- Alla selezione o modifica della data lezione, carica le presenze già salvate
+  per il corso e la data selezionati e mostra pre-selezionati i relativi allievi.
+- L'istruttore può selezionare o deselezionare liberamente ogni allievo; le
+  presenze già segnate non devono essere deselezionate automaticamente.
 - Prima rimuove le presenze di quel corso/data per gli iscritti e poi inserisce
-  l'elenco aggiornato, evitando duplicati.
+  l'elenco completo aggiornato, evitando duplicati e cancellazioni involontarie.
 - Calcola percentuale presenza su lezioni uniche del corso.
 
 8.5 Scadenze (admin-scadenze.html)

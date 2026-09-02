@@ -57,7 +57,7 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase mb-1">Data Lezione</label>
-                        <input type="text" id="data-lezione" placeholder="GG-MM-AAAA" inputmode="numeric" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none">
+                        <input type="text" id="data-lezione" placeholder="GG-MM-AAAA" inputmode="numeric" onchange="caricaIscritti()" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm text-white focus:ring-2 focus:ring-purple-500 outline-none">
                     </div>
                 </div>
             </section>
@@ -283,7 +283,8 @@
 
         async function caricaIscritti() {
             const corso = document.getElementById('corso-select').value;
-            if (!corso) return;
+            const dataLezione = parseDataItaliana(document.getElementById('data-lezione').value);
+            if (!corso || !dataLezione) return;
 
             const listContainer = document.getElementById('lista-allievi-container');
             const placeholder = document.getElementById('placeholder');
@@ -339,6 +340,10 @@
                 const dateUniche = [...new Set(presenzeCorso.map(p => p.data_presenza))];
                 const totaleLezioni = dateUniche.length;
 
+                presenzeCorso
+                    .filter(p => p.data_presenza === dataLezione)
+                    .forEach(p => presentiIds.add(p.socio_id));
+
                 allieviCaricati = (soci || []).map(s => {
                     const presenzeTesserato = presenzeCorso.filter(p => p.socio_id === s.id).length;
                     const percentuale = totaleLezioni > 0 ? Math.round((presenzeTesserato / totaleLezioni) * 100) : 0;
@@ -362,12 +367,13 @@
             listContent.innerHTML = allieviCaricati.map(allievo => {
                 const isIdoneo = allievo.percentuale >= 70;
                 const colorClass = isIdoneo ? 'text-green-400' : 'text-red-400';
+                const isPresente = presentiIds.has(allievo.id);
                 
                 return `
                     <div class="flex items-center justify-between p-4 hover:bg-slate-700/50 transition cursor-pointer" onclick="togglePresence('${allievo.id}')">
                         <div class="flex items-center gap-3">
-                            <div id="check-${allievo.id}" class="w-6 h-6 border-2 border-slate-600 rounded-lg flex items-center justify-center transition-all">
-                                <i class="fa-solid fa-check text-white text-xs hidden"></i>
+                            <div id="check-${allievo.id}" class="w-6 h-6 border-2 ${isPresente ? 'bg-purple-600 border-purple-600' : 'border-slate-600'} rounded-lg flex items-center justify-center transition-all">
+                                <i class="fa-solid fa-check text-white text-xs ${isPresente ? '' : 'hidden'}"></i>
                             </div>
                             <div>
                                 <p class="text-sm font-bold text-white">${allievo.cognome} ${allievo.nome}</p>
