@@ -287,8 +287,8 @@
         <!-- CONGUAGLIO ISTRUTTORE -->
         <main id="conguaglio-section" class="hidden bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden">
             <div class="p-6 border-b border-slate-700 bg-slate-700/30 flex flex-col md:flex-row justify-between items-center gap-4">
-                <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-scale-balanced text-amber-400"></i> Conguaglio Istruttore / Palestra
+                        <h2 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-scale-balanced text-amber-400"></i> Conguaglio Istruttore / Palestra (+ se istruttore deve dare a palestra)
                 </h2>
                 <button id="btn-conferma-conguaglio" onclick="confermaConguaglio()" class="hidden bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition shadow-lg flex items-center gap-2 uppercase">
                     <i class="fa-solid fa-lock"></i> Conferma e Notifica Mesi Selezionati
@@ -493,7 +493,8 @@
             return pagamenti
                 .filter(p => p.socio_id === socioId
                     && (p.corso === 'Iscrizione Annuale' || p.tipo_pagamento === 'Iscrizione Annuale')
-                    && p.anno_accademico === annoAccademico)
+                    && (p.anno_accademico === annoAccademico
+                        || (!p.anno_accademico && String(p.data_pagamento || p.data_inserimento || '').slice(0, 4) === String(anno))))
                 .sort((a, b) => {
                     const statoA = a.stato === 'Approvato' ? 1 : 0;
                     const statoB = b.stato === 'Approvato' ? 1 : 0;
@@ -503,11 +504,20 @@
         }
 
         function quotaAnnualeAppartieneAlCorso(quota, corsoFiltro, istruttori) {
-            if (!quota?.validato_da_email) return false;
-            const emailValidatore = String(quota.validato_da_email).trim().toLowerCase();
-            if (sessionUser.ruolo !== 'presidente' && emailValidatore !== String(sessionUser.email || '').trim().toLowerCase()) return false;
+            const normalizzaIdentificativo = value => String(value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            const emailValidatore = normalizzaIdentificativo(quota?.validato_da_email);
+            const nomeValidatore = normalizzaIdentificativo(quota?.validato_da_nome);
+            if (!emailValidatore && !nomeValidatore) return false;
+            const emailSessione = normalizzaIdentificativo(sessionUser.email);
+            const nomeSessione = normalizzaIdentificativo(sessionUser.nome);
+            if (sessionUser.ruolo !== 'presidente' && emailValidatore !== emailSessione && nomeValidatore !== nomeSessione) return false;
             if (corsoFiltro === 'tutti' && sessionUser.ruolo === 'presidente') return true;
-            const istruttore = (istruttori || []).find(i => String(i.email || '').trim().toLowerCase() === emailValidatore);
+            const istruttore = (istruttori || []).find(i => {
+                const emailIstruttore = normalizzaIdentificativo(i.email);
+                const nomeIstruttore = normalizzaIdentificativo(i.nome);
+                return (emailValidatore && emailIstruttore === emailValidatore)
+                    || (nomeValidatore && nomeIstruttore === nomeValidatore);
+            });
             if (!istruttore) return false;
             const corsiIstruttore = Array.isArray(istruttore.corsi_competenze)
                 ? istruttore.corsi_competenze
@@ -705,7 +715,7 @@
                     html += `<td class="p-2 text-center border-l border-slate-800 ${annualCursor} ${annualStyle}" ${annualAction}>${pIsc ? quotaDettaglio : (pIscPending ? `<span class="block"><i class="fa-solid fa-clock text-[8px]"></i> In verifica</span>${quotaDettaglio}` : quotaDettaglio)}</td>`;
 
                     mesiCur.forEach(m => {
-                        const anno = typeYear === 'solare' ? yearVal : (m.id >= 9 ? yearVal : yearVal + 1);
+                        const anno = typeYear === 'solare' ? yearVal : (m.id >= 8 ? yearVal : yearVal + 1);
                         const p = allPags.find(pag => pag.socio_id === s.id && pag.mese_riferimento === m.id && pag.anno_riferimento === anno && pag.stato === 'Approvato' && pagamentoAppartieneAlCorso(pag, s, corsoFiltro));
                         const pPend = allPags.find(pag => pag.socio_id === s.id && pag.mese_riferimento === m.id && pag.anno_riferimento === anno && pag.stato === 'In attesa di verifica' && pagamentoAppartieneAlCorso(pag, s, corsoFiltro));
                         if (p) totaliMese[m.id] += (parseFloat(p.importo) || 0);
@@ -836,7 +846,7 @@
             const isAdmin = sessionUser.ruolo === 'presidente';
 
             conguaglioRigheCorrenti = mesiCur.map(m => {
-                const anno = typeYear === 'solare' ? yearVal : (m.id >= 9 ? yearVal : yearVal + 1);
+                const anno = typeYear === 'solare' ? yearVal : (m.id >= 8 ? yearVal : yearVal + 1);
                 const pagamentiMese = allPags.filter(p => p.stato === 'Approvato'
                     && p.mese_riferimento === m.id
                     && p.anno_riferimento === anno
