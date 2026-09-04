@@ -511,20 +511,11 @@
             const emailSessione = normalizzaIdentificativo(sessionUser.email);
             const nomeSessione = normalizzaIdentificativo(sessionUser.nome);
             if (sessionUser.ruolo !== 'presidente' && emailValidatore !== emailSessione && nomeValidatore !== nomeSessione) return false;
+            // Se è il presidente, includi sempre il tesseramento
             if (corsoFiltro === 'tutti' && sessionUser.ruolo === 'presidente') return true;
-            if (!socioAppartieneAlCorso(socio, corsoFiltro)) return false;
-            const istruttore = (istruttori || []).find(i => {
-                const emailIstruttore = normalizzaIdentificativo(i.email);
-                const nomeIstruttore = normalizzaIdentificativo(i.nome);
-                return (emailValidatore && emailIstruttore === emailValidatore)
-                    || (nomeValidatore && nomeIstruttore === nomeValidatore);
-            });
-            if (!istruttore) return false;
-            const corsiIstruttore = Array.isArray(istruttore.corsi_competenze)
-                ? istruttore.corsi_competenze
-                : [istruttore.corso, istruttore.nome_corso].filter(Boolean);
-            return corsiIstruttore.includes('TUTTI')
-                || corsiIstruttore.some(corso => corsiCompatibili(corso, corsoFiltro));
+            // Il tesseramento è generico: se è stato ritirato (validato) da questo istruttore, deve essere incluso nel conguaglio
+            // indipendentemente da quale corso sia selezionato
+            return true;
         }
 
         function pagamentoNelPeriodo(pagamento, typeYear, yearVal) {
