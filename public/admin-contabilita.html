@@ -513,9 +513,9 @@
             if (sessionUser.ruolo !== 'presidente' && emailValidatore !== emailSessione && nomeValidatore !== nomeSessione) return false;
             // Se è il presidente, includi sempre il tesseramento
             if (corsoFiltro === 'tutti' && sessionUser.ruolo === 'presidente') return true;
-            // Il tesseramento è generico: se è stato ritirato (validato) da questo istruttore, deve essere incluso nel conguaglio
-            // indipendentemente da quale corso sia selezionato
-            return true;
+            // Il tesseramento è generico e non specifico del corso: se è stato validato da questo istruttore,
+            // deve essere incluso nel conguaglio indipendentemente dal filtro corso selezionato
+            return sessionUser.ruolo === 'presidente' || (emailValidatore === emailSessione || nomeValidatore === nomeSessione);
         }
 
         function pagamentoNelPeriodo(pagamento, typeYear, yearVal) {
