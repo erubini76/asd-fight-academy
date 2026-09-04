@@ -503,7 +503,7 @@
                 })[0] || null;
         }
 
-        function quotaAnnualeAppartieneAlCorso(quota, corsoFiltro, istruttori) {
+        function quotaAnnualeAppartieneAlCorso(quota, socio, corsoFiltro, istruttori) {
             const normalizzaIdentificativo = value => String(value || '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
             const emailValidatore = normalizzaIdentificativo(quota?.validato_da_email);
             const nomeValidatore = normalizzaIdentificativo(quota?.validato_da_nome);
@@ -512,6 +512,7 @@
             const nomeSessione = normalizzaIdentificativo(sessionUser.nome);
             if (sessionUser.ruolo !== 'presidente' && emailValidatore !== emailSessione && nomeValidatore !== nomeSessione) return false;
             if (corsoFiltro === 'tutti' && sessionUser.ruolo === 'presidente') return true;
+            if (!socioAppartieneAlCorso(socio, corsoFiltro)) return false;
             const istruttore = (istruttori || []).find(i => {
                 const emailIstruttore = normalizzaIdentificativo(i.email);
                 const nomeIstruttore = normalizzaIdentificativo(i.nome);
@@ -683,12 +684,13 @@
                 tbody.innerHTML = '';
                 const totaliMese = { iscrizioneContanti: 0, iscrizioneBonifici: 0 };
                 mesiCur.forEach(m => totaliMese[m.id] = 0);
-                const tesseramentiVisibili = (allPags || []).filter(pagamento =>
-                    pagamento.stato === 'Approvato'
-                    && (pagamento.corso === 'Iscrizione Annuale' || pagamento.tipo_pagamento === 'Iscrizione Annuale')
-                    && pagamentoNelPeriodo(pagamento, typeYear, yearVal)
-                    && quotaAnnualeAppartieneAlCorso(pagamento, corsoFiltro, istruttoriDisponibili)
-                );
+                const tesseramentiVisibili = (allPags || []).filter(pagamento => {
+                    const socio = allSoci.find(item => item.id === pagamento.socio_id);
+                    return pagamento.stato === 'Approvato'
+                        && (pagamento.corso === 'Iscrizione Annuale' || pagamento.tipo_pagamento === 'Iscrizione Annuale')
+                        && pagamentoNelPeriodo(pagamento, typeYear, yearVal)
+                        && quotaAnnualeAppartieneAlCorso(pagamento, socio, corsoFiltro, istruttoriDisponibili);
+                });
                 totaliMese.iscrizioneContanti = tesseramentiVisibili
                     .filter(pagamento => pagamento.metodo === 'contanti')
                     .reduce((totale, pagamento) => totale + (parseFloat(pagamento.importo) || 0), 0);
@@ -865,7 +867,7 @@
                     return p.stato === 'Approvato'
                         && (p.corso === 'Iscrizione Annuale' || p.tipo_pagamento === 'Iscrizione Annuale')
                         && pagamentoNelMese(p, m.id, anno)
-                        && quotaAnnualeAppartieneAlCorso(p, corsoFiltro, istruttoriDisponibili);
+                        && quotaAnnualeAppartieneAlCorso(p, socio, corsoFiltro, istruttoriDisponibili);
                 });
 
                 const contanti = pagamentiMese.filter(p => p.metodo === 'contanti').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
