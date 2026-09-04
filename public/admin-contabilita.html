@@ -508,14 +508,12 @@
             const emailValidatore = normalizzaIdentificativo(quota?.validato_da_email);
             const nomeValidatore = normalizzaIdentificativo(quota?.validato_da_nome);
             if (!emailValidatore && !nomeValidatore) return false;
+            if (sessionUser.ruolo === 'presidente') return corsoFiltro === 'tutti';
+            // Il tesseramento va interamente alla palestra: se l'ha ritirato questo istruttore
+            // deve comparire nel suo conguaglio, indipendentemente dal corso filtrato
             const emailSessione = normalizzaIdentificativo(sessionUser.email);
             const nomeSessione = normalizzaIdentificativo(sessionUser.nome);
-            if (sessionUser.ruolo !== 'presidente' && emailValidatore !== emailSessione && nomeValidatore !== nomeSessione) return false;
-            // Se è il presidente, includi sempre il tesseramento
-            if (corsoFiltro === 'tutti' && sessionUser.ruolo === 'presidente') return true;
-            // Il tesseramento è generico e non specifico del corso: se è stato validato da questo istruttore,
-            // deve essere incluso nel conguaglio indipendentemente dal filtro corso selezionato
-            return sessionUser.ruolo === 'presidente' || (emailValidatore === emailSessione || nomeValidatore === nomeSessione);
+            return emailValidatore === emailSessione || nomeValidatore === nomeSessione;
         }
 
         function pagamentoNelPeriodo(pagamento, typeYear, yearVal) {
@@ -880,6 +878,7 @@
                 const meseContabile = getMeseContabile(corsoFiltro, m.id, anno);
                 const quotaIstruttore = calcolaQuotaIstruttore(config, meseContabile, totale, alunniPresenti);
                 const quotaPalestra = totale - quotaIstruttore;
+                // Il conguaglio riguarda solo le quote mensili; il tesseramento è mostrato a parte
                 const conguaglio = contanti - quotaIstruttore;
                 const stato = meseContabile?.stato || 'OPEN';
 
