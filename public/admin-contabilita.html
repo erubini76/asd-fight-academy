@@ -304,6 +304,7 @@
                             <th class="p-3"></th>
                             <th class="p-3">Mese</th>
                             <th class="p-3 text-right">Alunni</th>
+                            <th class="p-3 text-right">Tesseramento</th>
                             <th class="p-3 text-right">Contanti</th>
                             <th class="p-3 text-right">Bonifici</th>
                             <th class="p-3 text-right">Totale</th>
@@ -502,15 +503,16 @@
         }
 
         function quotaAnnualeAppartieneAlCorso(quota, corsoFiltro, istruttori) {
-            if (!quota || !quota.validato_da_email) return sessionUser.ruolo === 'presidente';
-            const istruttore = istruttori.find(i => i.email === quota.validato_da_email);
+            if (!quota?.validato_da_email) return false;
+            const emailValidatore = String(quota.validato_da_email).trim().toLowerCase();
+            if (sessionUser.ruolo !== 'presidente' && emailValidatore !== String(sessionUser.email || '').trim().toLowerCase()) return false;
+            if (corsoFiltro === 'tutti' && sessionUser.ruolo === 'presidente') return true;
+            const istruttore = (istruttori || []).find(i => String(i.email || '').trim().toLowerCase() === emailValidatore);
             if (!istruttore) return false;
             const corsiIstruttore = Array.isArray(istruttore.corsi_competenze)
                 ? istruttore.corsi_competenze
                 : [istruttore.corso, istruttore.nome_corso].filter(Boolean);
-            return corsoFiltro === 'tutti'
-                ? istruttore.email === sessionUser.email
-                : corsiIstruttore.some(corso => corsiCompatibili(corso, corsoFiltro));
+            return corsiIstruttore.some(corso => corsiCompatibili(corso, corsoFiltro));
         }
 
         function pagamentoNelPeriodo(pagamento, typeYear, yearVal) {
@@ -522,6 +524,12 @@
             if (!anno || !mese) return false;
             if (typeYear === 'solare') return anno === yearVal;
             return (mese >= 9 && anno === yearVal) || (mese <= 8 && anno === yearVal + 1);
+        }
+
+        function pagamentoNelMese(pagamento, mese, anno) {
+            const dataPagamento = String(pagamento?.data_pagamento || pagamento?.data_inserimento || '').slice(0, 10);
+            const [annoPagamento, mesePagamento] = dataPagamento.split('-').map(Number);
+            return annoPagamento === anno && mesePagamento === mese;
         }
 
         function csvEscape(value) {
@@ -835,8 +843,18 @@
                     && p.corso !== 'Iscrizione Annuale' && p.tipo_pagamento !== 'Iscrizione Annuale'
                     && pagamentoAppartieneAlCorso(p, allSoci.find(s => s.id === p.socio_id), corsoFiltro));
 
+                const tesseramentiMese = allPags.filter(p => {
+                    const socio = allSoci.find(s => s.id === p.socio_id);
+                    return p.stato === 'Approvato'
+                        && (p.corso === 'Iscrizione Annuale' || p.tipo_pagamento === 'Iscrizione Annuale')
+                        && pagamentoNelMese(p, m.id, anno)
+                        && quotaAnnualeAppartieneAlCorso(p, corsoFiltro, istruttoriDisponibili);
+                });
+
                 const contanti = pagamentiMese.filter(p => p.metodo === 'contanti').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
                 const bonifici = pagamentiMese.filter(p => p.metodo === 'bonifico').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
+                const tesseramentoContanti = tesseramentiMese.filter(p => p.metodo === 'contanti').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
+                const tesseramentoBonifici = tesseramentiMese.filter(p => p.metodo === 'bonifico').reduce((s, p) => s + (parseFloat(p.importo) || 0), 0);
                 const totale = contanti + bonifici;
                 const sociPresenti = (allPres || []).filter(presenza => {
                     const [annoPresenza, mesePresenza] = String(presenza.data_presenza || '').split('-').map(Number);
@@ -857,7 +875,7 @@
 
                 return {
                     nomeCorso: corsoFiltro, mese: m.id, meseLabel: m.nome, anno,
-                    alunniPresenti, contanti, bonifici, totale, quotaIstruttore, quotaPalestra, conguaglio, stato,
+                    alunniPresenti, tesseramentoContanti, tesseramentoBonifici, contanti, bonifici, totale, quotaIstruttore, quotaPalestra, conguaglio, stato,
                     isCustomOverride: meseContabile?.is_custom_override || false,
                     tipoOverride: meseContabile?.tipo_override || 'percentuale',
                     valoreOverride: meseContabile?.valore_override ?? ''
@@ -894,6 +912,7 @@
                         <td class="p-3 text-center">${checkbox}</td>
                         <td class="p-3 font-bold text-white">${r.meseLabel} ${r.anno}</td>
                         <td class="p-3 text-right font-bold text-white">${r.alunniPresenti}</td>
+                        <td class="p-3 text-right"><span class="block text-green-300">€${r.tesseramentoContanti.toFixed(2)}</span><span class="block text-cyan-300">€${r.tesseramentoBonifici.toFixed(2)}</span></td>
                         <td class="p-3 text-right">€${r.contanti.toFixed(2)}</td>
                         <td class="p-3 text-right">€${r.bonifici.toFixed(2)}</td>
                         <td class="p-3 text-right font-bold">€${r.totale.toFixed(2)}</td>
@@ -908,19 +927,22 @@
 
             const totali = conguaglioRigheCorrenti.reduce((acc, r) => ({
                 alunniPresenti: acc.alunniPresenti + r.alunniPresenti,
+                tesseramentoContanti: acc.tesseramentoContanti + r.tesseramentoContanti,
+                tesseramentoBonifici: acc.tesseramentoBonifici + r.tesseramentoBonifici,
                 contanti: acc.contanti + r.contanti,
                 bonifici: acc.bonifici + r.bonifici,
                 totale: acc.totale + r.totale,
                 quotaIstruttore: acc.quotaIstruttore + r.quotaIstruttore,
                 quotaPalestra: acc.quotaPalestra + r.quotaPalestra,
                 conguaglio: acc.conguaglio + r.conguaglio
-            }), { alunniPresenti: 0, contanti: 0, bonifici: 0, totale: 0, quotaIstruttore: 0, quotaPalestra: 0, conguaglio: 0 });
+            }), { alunniPresenti: 0, tesseramentoContanti: 0, tesseramentoBonifici: 0, contanti: 0, bonifici: 0, totale: 0, quotaIstruttore: 0, quotaPalestra: 0, conguaglio: 0 });
 
             tbody.innerHTML += `
                 <tr class="bg-slate-950 font-black text-white border-t-2 border-slate-600">
                     <td class="p-3"></td>
                     <td class="p-3 uppercase text-[9px]">Totali selezione</td>
                     <td class="p-3 text-right">${totali.alunniPresenti}</td>
+                    <td class="p-3 text-right"><span class="block text-green-300">€${totali.tesseramentoContanti.toFixed(2)}</span><span class="block text-cyan-300">€${totali.tesseramentoBonifici.toFixed(2)}</span></td>
                     <td class="p-3 text-right">€${totali.contanti.toFixed(2)}</td>
                     <td class="p-3 text-right">€${totali.bonifici.toFixed(2)}</td>
                     <td class="p-3 text-right text-white">€${totali.totale.toFixed(2)}</td>
