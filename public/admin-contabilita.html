@@ -522,7 +522,8 @@
             const corsiIstruttore = Array.isArray(istruttore.corsi_competenze)
                 ? istruttore.corsi_competenze
                 : [istruttore.corso, istruttore.nome_corso].filter(Boolean);
-            return corsiIstruttore.some(corso => corsiCompatibili(corso, corsoFiltro));
+            return corsiIstruttore.includes('TUTTI')
+                || corsiIstruttore.some(corso => corsiCompatibili(corso, corsoFiltro));
         }
 
         function pagamentoNelPeriodo(pagamento, typeYear, yearVal) {
@@ -682,6 +683,18 @@
                 tbody.innerHTML = '';
                 const totaliMese = { iscrizioneContanti: 0, iscrizioneBonifici: 0 };
                 mesiCur.forEach(m => totaliMese[m.id] = 0);
+                const tesseramentiVisibili = (allPags || []).filter(pagamento =>
+                    pagamento.stato === 'Approvato'
+                    && (pagamento.corso === 'Iscrizione Annuale' || pagamento.tipo_pagamento === 'Iscrizione Annuale')
+                    && pagamentoNelPeriodo(pagamento, typeYear, yearVal)
+                    && quotaAnnualeAppartieneAlCorso(pagamento, corsoFiltro, istruttoriDisponibili)
+                );
+                totaliMese.iscrizioneContanti = tesseramentiVisibili
+                    .filter(pagamento => pagamento.metodo === 'contanti')
+                    .reduce((totale, pagamento) => totale + (parseFloat(pagamento.importo) || 0), 0);
+                totaliMese.iscrizioneBonifici = tesseramentiVisibili
+                    .filter(pagamento => pagamento.metodo === 'bonifico')
+                    .reduce((totale, pagamento) => totale + (parseFloat(pagamento.importo) || 0), 0);
 
                 sociFiltrati.forEach(s => {
                     const tr = document.createElement('tr');
@@ -692,12 +705,6 @@
                     const quotaAnnuale = getQuotaAnnuale(allPags, s.id, yearVal);
                     const pIsc = quotaAnnuale?.stato === 'Approvato' ? quotaAnnuale : null;
                     const pIscPending = quotaAnnuale?.stato === 'In attesa di verifica' ? quotaAnnuale : null;
-                    if (pIsc && quotaAnnualeAppartieneAlCorso(pIsc, corsoFiltro, istruttori || [])) {
-                        const importoIscrizione = parseFloat(pIsc.importo) || 0;
-                        if (pIsc.metodo === 'contanti') totaliMese.iscrizioneContanti += importoIscrizione;
-                        if (pIsc.metodo === 'bonifico') totaliMese.iscrizioneBonifici += importoIscrizione;
-                    }
-
                     const corsoPagamento = corsoFiltro !== 'tutti' ? corsoFiltro : (getCorsiNomiSocio(s).find(corsoIstruttoreCompatibile) || corsoDisplay);
                     const actionIsc = buildPayPayload(s.id, `${s.nome} ${s.cognome}`, 0, yearVal, 'Iscrizione Annuale', corsoPagamento, pIsc ? pIsc.id : (pIscPending ? pIscPending.id : null), pIsc ? pIsc.ricevuta_url : (pIscPending ? pIscPending.ricevuta_url : ''), pIsc ? pIsc.importo : (pIscPending ? pIscPending.importo : 0), pIsc ? pIsc.metodo : (pIscPending ? pIscPending.metodo : ''));
                     const annualStyle = pIsc
@@ -936,7 +943,6 @@
             }).join('');
 
             const totali = conguaglioRigheCorrenti.reduce((acc, r) => ({
-                alunniPresenti: acc.alunniPresenti + r.alunniPresenti,
                 tesseramentoContanti: acc.tesseramentoContanti + r.tesseramentoContanti,
                 tesseramentoBonifici: acc.tesseramentoBonifici + r.tesseramentoBonifici,
                 contanti: acc.contanti + r.contanti,
@@ -945,13 +951,13 @@
                 quotaIstruttore: acc.quotaIstruttore + r.quotaIstruttore,
                 quotaPalestra: acc.quotaPalestra + r.quotaPalestra,
                 conguaglio: acc.conguaglio + r.conguaglio
-            }), { alunniPresenti: 0, tesseramentoContanti: 0, tesseramentoBonifici: 0, contanti: 0, bonifici: 0, totale: 0, quotaIstruttore: 0, quotaPalestra: 0, conguaglio: 0 });
+            }), { tesseramentoContanti: 0, tesseramentoBonifici: 0, contanti: 0, bonifici: 0, totale: 0, quotaIstruttore: 0, quotaPalestra: 0, conguaglio: 0 });
 
             tbody.innerHTML += `
                 <tr class="bg-slate-950 font-black text-white border-t-2 border-slate-600">
                     <td class="p-3"></td>
                     <td class="p-3 uppercase text-[9px]">Totali selezione</td>
-                    <td class="p-3 text-right">${totali.alunniPresenti}</td>
+                    <td class="p-3"></td>
                     <td class="p-3 text-right"><span class="block text-green-300">€${totali.tesseramentoContanti.toFixed(2)}</span><span class="block text-cyan-300">€${totali.tesseramentoBonifici.toFixed(2)}</span></td>
                     <td class="p-3 text-right">€${totali.contanti.toFixed(2)}</td>
                     <td class="p-3 text-right">€${totali.bonifici.toFixed(2)}</td>
