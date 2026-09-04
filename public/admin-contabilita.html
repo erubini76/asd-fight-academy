@@ -662,7 +662,7 @@
 
                 renderHeader();
                 tbody.innerHTML = '';
-                const totaliMese = { iscrizione: 0 };
+                const totaliMese = { iscrizioneContanti: 0, iscrizioneBonifici: 0 };
                 mesiCur.forEach(m => totaliMese[m.id] = 0);
 
                 sociFiltrati.forEach(s => {
@@ -675,13 +675,15 @@
                     const pIsc = quotaAnnuale?.stato === 'Approvato' ? quotaAnnuale : null;
                     const pIscPending = quotaAnnuale?.stato === 'In attesa di verifica' ? quotaAnnuale : null;
                     if (pIsc && quotaAnnualeAppartieneAlCorso(pIsc, corsoFiltro, istruttori || [])) {
-                        totaliMese.iscrizione += (parseFloat(pIsc.importo) || 0);
+                        const importoIscrizione = parseFloat(pIsc.importo) || 0;
+                        if (pIsc.metodo === 'contanti') totaliMese.iscrizioneContanti += importoIscrizione;
+                        if (pIsc.metodo === 'bonifico') totaliMese.iscrizioneBonifici += importoIscrizione;
                     }
 
                     const corsoPagamento = corsoFiltro !== 'tutti' ? corsoFiltro : (getCorsiNomiSocio(s).find(corsoIstruttoreCompatibile) || corsoDisplay);
                     const actionIsc = buildPayPayload(s.id, `${s.nome} ${s.cognome}`, 0, yearVal, 'Iscrizione Annuale', corsoPagamento, pIsc ? pIsc.id : (pIscPending ? pIscPending.id : null), pIsc ? pIsc.ricevuta_url : (pIscPending ? pIscPending.ricevuta_url : ''), pIsc ? pIsc.importo : (pIscPending ? pIscPending.importo : 0), pIsc ? pIsc.metodo : (pIscPending ? pIscPending.metodo : ''));
                     const annualStyle = pIsc
-                        ? 'bg-green-600/20 text-green-400 font-bold'
+                        ? `bg-green-600/20 ${getPaymentTextClass(pIsc)} font-bold`
                         : (pIscPending ? 'bg-amber-400/20 text-amber-400 animate-pulse' : 'bg-slate-900/30');
                     const quota = pIsc || pIscPending;
                     const validataDaAltro = pIsc?.validato_da_nome
@@ -734,7 +736,8 @@
 
                 const trTot = document.createElement('tr');
                 trTot.className = "bg-slate-950 font-black text-white border-t-2 border-slate-600";
-                let tHtml = `<td class="p-4 sticky left-0 bg-slate-950 z-10 uppercase tracking-widest text-[9px] text-left">Totali Mensili</td><td class="p-2 text-center border-l border-slate-700 text-cyan-400 font-extrabold">€${totaliMese.iscrizione.toFixed(0)}</td>`;
+                const iscrizioniTotali = `<span class="block text-green-300">€${totaliMese.iscrizioneContanti.toFixed(0)}</span><span class="block text-cyan-300">€${totaliMese.iscrizioneBonifici.toFixed(0)}</span>`;
+                let tHtml = `<td class="p-4 sticky left-0 bg-slate-950 z-10 uppercase tracking-widest text-[9px] text-left">Totali Mensili</td><td class="p-2 text-center border-l border-slate-700 font-extrabold">${iscrizioniTotali}</td>`;
                 mesiCur.forEach(m => tHtml += `<td class="p-2 text-center border-l border-slate-800">€${totaliMese[m.id].toFixed(0)}</td>`);
                 trTot.innerHTML = tHtml; tbody.appendChild(trTot);
 
